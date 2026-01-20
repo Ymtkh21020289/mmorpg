@@ -58,8 +58,33 @@ function create() {
             }
         });
     });
+    // マップ移動処理関数
+    this.socket.on('mapChanged', function (data) {
+        console.log("マップ移動しました: " + data.room);
+        self.isChangingMap = false;
 
-    // 4. 移動同期：誰かが動いたら位置を更新
+        // 1. 今表示されている他のプレイヤーを全員消す
+        self.otherPlayers.clear(true, true); // (true, true)でGameObjectも削除
+
+        // 2. 移動先の部屋にいるプレイヤーを表示しなおす
+        Object.keys(data.players).forEach(function (id) {
+            if (data.players[id].playerId !== self.socket.id) {
+                addOtherPlayers(self, data.players[id]);
+            }
+        });
+
+        // 3. 背景色を変えて雰囲気を出す（仮の演出）
+        if (data.room === 'adventure') {
+            self.cameras.main.setBackgroundColor('#330000'); // 危険な赤黒い色
+            // ここで「敵対モブスポーン」のロジックが動く準備完了！
+        } else {
+            self.cameras.main.setBackgroundColor('#000000'); // 落ち着いた黒
+        }
+    
+        // プレイヤー位置更新
+        self.player.setPosition(400, 300);
+    });
+        // 4. 移動同期：誰かが動いたら位置を更新
     this.socket.on('playerMoved', function (playerInfo) {
         self.otherPlayers.getChildren().forEach(function (otherPlayer) {
             if (playerInfo.playerId === otherPlayer.playerId) {
