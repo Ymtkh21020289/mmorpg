@@ -291,7 +291,6 @@ function addPlayer(self, playerInfo) {
     self.cameras.main.startFollow(self.player);
     self.cameras.main.setBounds(0, 0, self.map.widthInPixels, self.map.heightInPixels);
 }
-}
 
 // 他のプレイヤーを作る関数（赤）
 function addOtherPlayers(self, playerInfo) {
