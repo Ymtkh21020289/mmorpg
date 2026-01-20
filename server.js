@@ -11,34 +11,78 @@ app.use(express.static(path.join(__dirname, 'public')));
 let players = {};
 
 io.on('connection', (socket) => {
-    console.log('ユーザーが接続しました: ' + socket.id);
+    console.log('ユーザー接続: ' + socket.id);
 
-    // 新しいプレイヤーのデータを作成
+    // 初期データ作成（最初は 'town' にいるとする）
     players[socket.id] = {
         rotation: 0,
-        x: 400, // 初期位置X
-        y: 300, // 初期位置Y
-        playerId: socket.id
+        x: 400,
+        y: 300,
+        playerId: socket.id,
+        room: 'town' // ★現在いるマップ情報を追加
     };
 
-    // 1. 新しく来た人に、現在の全プレイヤー情報を送る
-    socket.emit('currentPlayers', players);
+    // ★Socket.ioの「town」という部屋に参加させる
+    socket.join('town');
 
-    // 2. 既にいる人たちに、新しい人が来たことを知らせる
-    socket.broadcast.emit('newPlayer', players[socket.id]);
+    // ★ 'town' 部屋にいる人たちだけに、新入り情報を送る
+    // io.to('room名').emit(...) で、その部屋の人だけに送信できます
+    socket.to('town').emit('newPlayer', players[socket.id]);
 
-    // プレイヤーが動いた時の処理
+    // 自分に対して、今の部屋にいる他のプレイヤー情報を送る
+    // (全プレイヤーから、同じ部屋の人だけをフィルタリングして送る)
+    const playersInRoom = {};
+    Object.keys(players).forEach(id => {
+        if (players[id].room === 'town') {
+            playersInRoom[id] = players[id];
+        }
+    });
+    socket.emit('currentPlayers', playersInRoom);
+
+    // --- 移動処理 ---
     socket.on('playerMovement', (movementData) => {
         if (players[socket.id]) {
             players[socket.id].x = movementData.x;
             players[socket.id].y = movementData.y;
             players[socket.id].rotation = movementData.rotation;
             
-            // 他のプレイヤーに動きを伝える
-            socket.broadcast.emit('playerMoved', players[socket.id]);
+            // ★ そのプレイヤーがいる部屋の人だけに動きを伝える
+            const currentRoom = players[socket.id].room;
+            socket.to(currentRoom).emit('playerMoved', players[socket.id]);
         }
     });
 
+    // --- ★ エリア移動リクエスト（クライアントから送られてくる） ---
+    socket.on('changeArea', (targetRoom) => {
+        const currentRoom = players[socket.id].room;
+        
+        // 1. 今の部屋から出る
+        socket.leave(currentRoom);
+        // 今の部屋の人たちに「あいつ消えたよ」と伝える
+        socket.to(currentRoom).emit('disconnectUser', socket.id);
+
+        // 2. データ更新
+        players[socket.id].room = targetRoom;
+        // 座標もリセット（例：入り口にワープ）
+        players[socket.id].x = 400; 
+        players[socket.id].y = 300;
+
+        // 3. 新しい部屋に入る
+        socket.join(targetRoom);
+
+        // 4. 新しい部屋の人たちに「新入りが来たよ」と伝える
+        socket.to(targetRoom).emit('newPlayer', players[socket.id]);
+
+        // 5. 本人に「新しい部屋の現状」を伝える
+        const roomPlayers = {};
+        Object.keys(players).forEach(id => {
+            if (players[id].room === targetRoom) {
+                roomPlayers[id] = players[id];
+            }
+        });
+        // クライアント側で「マップ切り替え処理」をするためのイベント
+        socket.emit('mapChanged', { room: targetRoom, players: roomPlayers });
+    });
     // 切断時の処理
     socket.on('disconnect', () => {
         console.log('ユーザーが切断しました: ' + socket.id);
