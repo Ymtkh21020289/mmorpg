@@ -104,7 +104,16 @@ function update() {
     } else if (this.keys.down.isDown) {
         this.player.body.setVelocityY(speed);
     }
-
+    // 画面の右端（例えば x > 1250）に行ったら「冒険エリア」へ
+    if (this.player.x > 1250 && !this.isChangingMap) {
+        this.isChangingMap = true; // 連続送信防止
+        this.socket.emit('changeArea', 'adventure');
+    }
+    // 画面の左端（例えば x < 30）に行ったら「居住地エリア」へ
+    if (this.player.x < 30 && !this.isChangingMap) {
+        this.isChangingMap = true;
+        this.socket.emit('changeArea', 'town');
+    }
     // --- 回転処理 (マウスエイム) ---
     // プレイヤーからマウスカーソルへの角度を計算
     const angle = Phaser.Math.Angle.Between(
