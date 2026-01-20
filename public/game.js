@@ -17,6 +17,31 @@ const config = {
     }
 };
 
+const mapData = {
+    town: [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 右端が開いている（出口）
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ],
+    adventure: [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+        [1, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+        [1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 1],
+        [1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 1],
+        [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3, 1], // 左端が開いている（入口）
+        [1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ]
+};
+
 const game = new Phaser.Game(config);
 let socket;
 let cursors;
@@ -24,14 +49,75 @@ let keys; // Z, Xキーなど
 let otherPlayers; // 他のプレイヤーを管理するグループ
 
 function preload() {
-    // 画像があればここで読み込みます: this.load.image('player', 'assets/player.png');
+    // 画像の読み込み
+    this.load.image('tiles', 'assets/tiles.png');
 }
+
+let map;   // マップ管理用変数
+let layer; // レイヤー管理用変数
 
 function create() {
     const self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
 
+    // --- マップ初期化関数 ---
+    this.createMap = (roomName) => {
+        // すでにマップがあれば消す
+        if (this.map) this.map.destroy();
+        
+        // 配列からマップを作成 (32x32サイズと仮定)
+        const level = mapData[roomName] || mapData['town'];
+        this.map = this.make.tilemap({ data: level, tileWidth: 32, tileHeight: 32 });
+        
+        // 画像を割り当て ('tiles'はpreloadのキー)
+        const tiles = this.map.addTilesetImage('tiles');
+        
+        // レイヤーを作成
+        this.layer = this.map.createLayer(0, tiles, 0, 0);
+        
+        // 壁の当たり判定（画像の番号 1, 2 は通れないとする設定）
+        // ※ お手持ちの画像に合わせて「通れない番号」を指定してください
+        this.layer.setCollision([1, 2]);
+        
+        // ワールドの広さをマップサイズに合わせる
+        this.physics.world.bounds.width = this.map.widthInPixels;
+        this.physics.world.bounds.height = this.map.heightInPixels;
+    };
+
+    // 最初は 'town' マップを作る
+    this.createMap('town');
+
+    // --- ソケット受信処理 ---
+    
+    // マップ移動受信時の処理を更新
+    this.socket.on('mapChanged', function (data) {
+        console.log("マップ移動: " + data.room);
+        self.isChangingMap = false;
+
+        // 他プレイヤー消去
+        self.otherPlayers.clear(true, true);
+        
+        // ★ マップを作り直す
+        self.createMap(data.room);
+
+        // 自分の位置をリセット（入口付近へ）
+        if (data.room === 'town') {
+            self.player.setPosition(500, 200); // 街のスポーン位置
+        } else {
+            self.player.setPosition(50, 200);  // 冒険エリアのスポーン位置
+        }
+
+        // カメラ設定再適用
+        self.cameras.main.setBounds(0, 0, self.map.widthInPixels, self.map.heightInPixels);
+
+        // 新しい部屋のプレイヤー表示
+        Object.keys(data.players).forEach(function (id) {
+            if (data.players[id].playerId !== self.socket.id) {
+                addOtherPlayers(self, data.players[id]);
+            }
+        });
+    });
     // --- ソケット通信のイベント設定 ---
 
     // 1. 接続時：現在の全プレイヤーを表示
@@ -129,13 +215,15 @@ function update() {
     } else if (this.keys.down.isDown) {
         this.player.body.setVelocityY(speed);
     }
-    // 画面の右端（例えば x > 1250）に行ったら「冒険エリア」へ
-    if (this.player.x > 1250 && !this.isChangingMap) {
-        this.isChangingMap = true; // 連続送信防止
+    // マップの右端付近（タイルの数 x 32px）
+    if (this.player.x > this.map.widthInPixels - 32 && !this.isChangingMap && this.player.room !== 'adventure') {
+        this.isChangingMap = true;
         this.socket.emit('changeArea', 'adventure');
     }
-    // 画面の左端（例えば x < 30）に行ったら「居住地エリア」へ
-    if (this.player.x < 30 && !this.isChangingMap) {
+
+    // マップの左端付近
+    if (this.player.x < 32 && !this.isChangingMap && this.player.room !== 'town') { // room判定はサーバー側で管理したほうが良いですが簡易的に
+        // ※ クライアント側で現在のルーム名を保持する変数を作っておくと便利です
         this.isChangingMap = true;
         this.socket.emit('changeArea', 'town');
     }
@@ -193,7 +281,16 @@ function addPlayer(self, playerInfo) {
         .setOrigin(0.5, 0.5)
         .setDisplaySize(32, 32);
     
+    // ★ 画面外に出ないようにする
     self.player.setCollideWorldBounds(true);
+    
+    // ★ マップの壁とぶつかるようにする
+    self.physics.add.collider(self.player, self.layer);
+
+    // ★ カメラがプレイヤーを追いかける設定
+    self.cameras.main.startFollow(self.player);
+    self.cameras.main.setBounds(0, 0, self.map.widthInPixels, self.map.heightInPixels);
+}
 }
 
 // 他のプレイヤーを作る関数（赤）
