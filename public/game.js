@@ -61,28 +61,38 @@ function create() {
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
 
-    // --- マップ初期化関数 ---
+    // --- マップ初期化関数（修正版） ---
     this.createMap = (roomName) => {
-        // すでにマップがあれば消す
+        // 1. データがあるか確認（エラーの原因対策）
+        const level = mapData[roomName];
+        if (!level) {
+            console.error(`エラー: マップデータ '${roomName}' が見つかりません。mapDataのキー名を確認してください。`);
+            return; // 処理を中断してフリーズを防ぐ
+        }
+
+        // 2. 古いレイヤーとマップがあれば消す（重要！）
+        // マップだけ消しても、レイヤーが残っているとバグになります
+        if (this.layer) this.layer.destroy();
         if (this.map) this.map.destroy();
         
-        // 配列からマップを作成 (32x32サイズと仮定)
-        const level = mapData[roomName] || mapData['town'];
+        // 3. マップを作成
         this.map = this.make.tilemap({ data: level, tileWidth: 32, tileHeight: 32 });
-        
-        // 画像を割り当て ('tiles'はpreloadのキー)
         const tiles = this.map.addTilesetImage('tiles');
         
-        // レイヤーを作成
+        // 4. レイヤー作成
         this.layer = this.map.createLayer(0, tiles, 0, 0);
+        this.layer.setCollision([1, 2]); // 壁の番号
         
-        // 壁の当たり判定（画像の番号 1, 2 は通れないとする設定）
-        // ※ お手持ちの画像に合わせて「通れない番号」を指定してください
-        this.layer.setCollision([1, 2]);
-        
-        // ワールドの広さをマップサイズに合わせる
+        // 5. ワールドの広さを更新
         this.physics.world.bounds.width = this.map.widthInPixels;
         this.physics.world.bounds.height = this.map.heightInPixels;
+
+        // 6. ★重要：当たり判定の再設定
+        // マップ（レイヤー）が新しくなると、古い当たり判定は無効になります。
+        // プレイヤーが存在する場合は、新しいレイヤーとの当たり判定を結び直します。
+        if (this.player) {
+            this.physics.add.collider(this.player, this.layer);
+        }
     };
 
     // 最初は 'town' マップを作る
