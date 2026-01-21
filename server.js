@@ -20,6 +20,7 @@ io.on('connection', (socket) => {
         y: 300,
         playerId: socket.id,
         room: 'town' // ★現在いるマップ情報を追加
+        name: 'Player ' + socket.id.substr(0, 4)
     };
 
     // ★Socket.ioの「town」という部屋に参加させる
