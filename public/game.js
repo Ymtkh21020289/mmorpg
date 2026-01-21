@@ -65,6 +65,22 @@ function create() {
     this.createMap = (roomName) => {
         // 1. データがあるか確認（エラーの原因対策）
         const level = mapData[roomName];
+        
+        // --- 追加：デバッグ用コード ---
+        console.log(`マップ作成開始: ${roomName}`);
+        if (!Array.isArray(level)) {
+            console.error("エラー: マップデータが配列ではありません", level);
+            return;
+        }
+        // 各行の長さをチェック
+        const width = level[0].length;
+        for (let i = 0; i < level.length; i++) {
+            if (level[i].length !== width) {
+                console.error(`致命的エラー: ${i}行目の長さが違います！期待値:${width}, 実際:${level[i].length}`);
+                console.error("該当行のデータ:", level[i]);
+                return; // 処理を止める
+            }
+        }
         if (!level) {
             console.error(`エラー: マップデータ '${roomName}' が見つかりません。mapDataのキー名を確認してください。`);
             return; // 処理を中断してフリーズを防ぐ
