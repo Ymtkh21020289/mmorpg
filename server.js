@@ -19,7 +19,7 @@ io.on('connection', (socket) => {
         x: 400,
         y: 300,
         playerId: socket.id,
-        room: 'town' // ★現在いるマップ情報を追加
+        room: 'town', // ★現在いるマップ情報を追加
         name: 'Player ' + socket.id.substr(0, 4)
     };
 
