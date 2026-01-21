@@ -154,6 +154,15 @@ function create() {
             if (playerInfo.playerId === otherPlayer.playerId) {
                 otherPlayer.setRotation(playerInfo.rotation);
                 otherPlayer.setPosition(playerInfo.x, playerInfo.y);
+                // ... 名前の追従 (既存) ...
+                if (otherPlayer.nameLabel) {
+                    otherPlayer.nameLabel.setPosition(playerInfo.x, playerInfo.y - 30);
+                }
+
+                // ★追加：吹き出しの追従
+                if (otherPlayer.chatBubble) {
+                    otherPlayer.chatBubble.setPosition(playerInfo.x, playerInfo.y - 60);
+                }
             }
         });
     });
@@ -195,13 +204,56 @@ function create() {
         left: Phaser.Input.Keyboard.KeyCodes.A,
         right: Phaser.Input.Keyboard.KeyCodes.D,
     });
+
+    // --- チャット入力の制御 ---
+    const chatInput = document.getElementById('chatInput');
+    
+    // エンターキーが押されたら入力ボックスを表示/非表示
+    this.input.keyboard.on('keydown-ENTER', () => {
+        if (chatInput.style.display === 'none') {
+            // 入力モード開始
+            chatInput.style.display = 'block';
+            chatInput.focus(); // カーソルを合わせる
+            self.isTyping = true; // ★移動を止めるためのフラグ
+        } else {
+            // 送信処理
+            const text = chatInput.value;
+            if (text.trim().length > 0) {
+                self.socket.emit('chatMessage', text); // サーバーへ送信
+            }
+            chatInput.value = ''; // 空にする
+            chatInput.style.display = 'none'; // 隠す
+            self.isTyping = false; // 移動許可
+        }
+    });
+
+    // --- サーバーからチャットを受け取った時の処理 ---
+    this.socket.on('chatUpdate', function (data) {
+        // 喋ったのが自分か他人かを探す
+        let targetSprite = null;
+
+        if (self.player && data.playerId === self.socket.id) {
+            targetSprite = self.player;
+        } else {
+            self.otherPlayers.getChildren().forEach(function (other) {
+                if (other.playerId === data.playerId) {
+                    targetSprite = other;
+                }
+            });
+        }
+
+        // 対象が見つかったら吹き出しを表示
+        if (targetSprite) {
+            displayChatBubble(self, targetSprite, data.msg);
+        }
+    });
     
     this.input.mouse.disableContextMenu();
 }
 
 function update() {
-    // ★重要：マップ準備中 or プレイヤー未生成なら何もしない
-    if (!this.player || !mapReady) return;
+    // 既存のチェックに追加： isTyping が true なら動かない
+    if (!this.player || !mapReady || this.isTyping) return;
 
     const speed = 200;
     this.player.body.setVelocity(0);
@@ -227,9 +279,13 @@ function update() {
     }
     this.player.oldPosition = { x: x, y: y, rotation: r };
 
-    // 名前を表示
     if (this.player && this.playerNameText) {
         this.playerNameText.setPosition(this.player.x, this.player.y - 30);
+        
+        // ★追加：自分の吹き出し追従
+        if (this.player.chatBubble) {
+            this.player.chatBubble.setPosition(this.player.x, this.player.y - 60);
+        }
     }
 
     // --- エリア移動判定 ---
@@ -307,4 +363,39 @@ function addOtherPlayers(self, playerInfo) {
     nameText.setDepth(20);
     otherPlayer.playerId = playerInfo.playerId;
     self.otherPlayers.add(otherPlayer);
+}
+
+// ★追加：チャット吹き出しを表示する関数
+function displayChatBubble(scene, sprite, text) {
+    // 既に吹き出しが出ていたら、古いものを消す
+    if (sprite.chatBubble) {
+        sprite.chatBubble.destroy();
+    }
+
+    // 吹き出しのテキスト作成
+    // 名前(y-30)よりさらに上(y-60)に表示
+    const bubble = scene.add.text(sprite.x, sprite.y - 60, text, {
+        fontSize: '16px',
+        fill: '#000000',     // 文字は黒
+        backgroundColor: '#ffffff', // 背景は白
+        padding: { x: 5, y: 5 },
+        align: 'center'
+    }).setOrigin(0.5);
+    
+    bubble.setDepth(30); // 名前(20)よりさらに手前
+
+    // スプライトに紐付けて、移動時に追従させる（updateで処理が必要ですが、簡易的にここでTweenを使います）
+    sprite.chatBubble = bubble;
+
+    // アニメーション：3秒待ってから、1秒かけて透明になって消える
+    scene.tweens.add({
+        targets: bubble,
+        alpha: 0,       // 透明度を0に
+        duration: 1000, // 1秒かけて
+        delay: 3000,    // 3秒待機してから開始
+        onComplete: () => {
+            bubble.destroy();
+            sprite.chatBubble = null;
+        }
+    });
 }
