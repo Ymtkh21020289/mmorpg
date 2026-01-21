@@ -297,6 +297,14 @@ function addOtherPlayers(self, playerInfo) {
     }
     const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayerTexture')
         .setOrigin(0.5, 0.5).setDisplaySize(32, 32);
+    self.otherPlayers.setDepth(10);
+    const nameText = self.add.text(playerInfo.x, playerInfo.y - 30, playerInfo.name, { 
+        fontSize: '14px', 
+        fill: '#ffffff', // 他人は色を変えてもいいかも（例: '#ffcccc'）
+        stroke: '#000000',
+        strokeThickness: 3
+    }).setOrigin(0.5);
+    nameText.setDepth(20);
     otherPlayer.playerId = playerInfo.playerId;
     self.otherPlayers.add(otherPlayer);
 }
