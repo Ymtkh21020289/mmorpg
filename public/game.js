@@ -59,6 +59,23 @@ function create() {
 
     // --- マップ作成関数 ---
     this.createMap = (roomName) => {
+        // --- 犯人特定ログ ---
+        console.log("-----------------------------------");
+        console.log("1. 要求された部屋名:", roomName);
+        console.log("2. mapDataの中身:", mapData);
+        console.log("3. mapData['adventure']の確認:", mapData['adventure']);
+        console.log("4. 取得したデータ(level):", mapData[roomName]);
+        
+        // データの型チェック
+        if (typeof mapData === 'undefined') {
+            console.error("【原因判明】mapData 変数自体が存在しません。定義場所が間違っています！");
+            return;
+        }
+        if (mapData[roomName] === undefined) {
+             console.error(`【原因判明】mapDataの中に '${roomName}' というキーがありません。スペルミスか、データ定義漏れです。`);
+             console.log("現在使えるキー一覧:", Object.keys(mapData));
+             return;
+        }
         // 1. 安全装置：マップ作成中はupdateを止める
         mapReady = false; 
 
