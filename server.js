@@ -10,6 +10,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 // プレイヤーデータを格納するオブジェクト
 let players = {};
 
+// 敵データを格納する変数
+let enemies = {
+    kakashi1: {
+        id: 'kakashi1',
+        x: 600,
+        y: 400,
+        hp: 100,
+        maxHp: 100,
+        room: 'town', // 街に配置
+        isDead: false
+    }
+};
+
 io.on('connection', (socket) => {
     console.log('ユーザー接続: ' + socket.id);
 
@@ -30,6 +43,8 @@ io.on('connection', (socket) => {
     // io.to('room名').emit(...) で、その部屋の人だけに送信できます
     socket.to('town').emit('newPlayer', players[socket.id]);
 
+    socket.emit('currentEnemies', enemies);
+
     // メッセージを受け取る
     socket.on('chatMessage', function (message) {
         console.log(`チャット受信: ${socket.id} -> ${message}`);
@@ -47,6 +62,33 @@ io.on('connection', (socket) => {
     });
     socket.emit('currentPlayers', playersInRoom);
 
+    
+
+    socket.on('attackEnemy', (enemyId) => {
+        const enemy = enemies[enemyId];
+        
+        // 敵が存在し、死んでいなければダメージ
+        if (enemy && !enemy.isDead) {
+            enemy.hp -= 10; // 10ダメージ
+            
+            // HPが0以下になったら「死亡」状態にする
+            if (enemy.hp <= 0) {
+                enemy.hp = 0;
+                enemy.isDead = true;
+                
+                // 5秒後に復活させるタイマー
+                setTimeout(() => {
+                    enemy.hp = enemy.maxHp;
+                    enemy.isDead = false;
+                    io.emit('updateEnemy', enemy); // 復活を全員に通知
+                    console.log('カカシ復活！');
+                }, 5000);
+            }
+
+            // 全員に「カカシのHP変わったよ」と教える
+            io.emit('updateEnemy', enemy);
+        }
+    });
     // --- 移動処理 ---
     socket.on('playerMovement', (movementData) => {
         if (players[socket.id]) {
