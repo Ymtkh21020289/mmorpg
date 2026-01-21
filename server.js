@@ -30,6 +30,13 @@ io.on('connection', (socket) => {
     // io.to('room名').emit(...) で、その部屋の人だけに送信できます
     socket.to('town').emit('newPlayer', players[socket.id]);
 
+    // メッセージを受け取る
+    socket.on('chatMessage', function (message) {
+        console.log(`チャット受信: ${socket.id} -> ${message}`);
+        // 全員に送る (送信者ID と メッセージ内容)
+        io.emit('chatUpdate', { playerId: socket.id, msg: message });
+    });
+
     // 自分に対して、今の部屋にいる他のプレイヤー情報を送る
     // (全プレイヤーから、同じ部屋の人だけをフィルタリングして送る)
     const playersInRoom = {};
