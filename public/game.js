@@ -227,6 +227,11 @@ function update() {
     }
     this.player.oldPosition = { x: x, y: y, rotation: r };
 
+    // 名前を表示
+    if (this.player && this.playerNameText) {
+        this.playerNameText.setPosition(this.player.x, this.player.y - 30);
+    }
+
     // --- エリア移動判定 ---
     // mapReadyのチェックがあるため、ここで this.map.widthInPixels を呼んでも安全
     if (this.player.x > this.map.widthInPixels - 32 && !this.isChangingMap) {
@@ -261,6 +266,14 @@ function addPlayer(self, playerInfo) {
     // ★追加：プレイヤーは常に手前（10）に表示する
     self.player.setDepth(10);
     self.player.setCollideWorldBounds(true);
+    self.playerNameText = self.add.text(playerInfo.x, playerInfo.y - 30, playerInfo.name, { 
+        fontSize: '14px', 
+        fill: '#ffffff',
+        stroke: '#000000', // 黒い縁取りで見やすく
+        strokeThickness: 3
+    }).setOrigin(0.5); // 文字の中心を基準にする
+
+    self.playerNameText.setDepth(20); // プレイヤー(10)より手前に表示
     
     // マップがあれば衝突判定設定
     if (self.layer) {
