@@ -62,61 +62,62 @@ function create() {
     // --- マップ作成関数 ---
 
     this.createMap = (roomName) => {
-        // 1. マップ作成中は更新を停止
+        // 1. マップ更新中はフラグを下ろす
         mapReady = false;
 
-        // 2. データ取得
-        let rawData = mapData[roomName];
-        if (!rawData) {
-            console.error(`エラー: ${roomName} のデータが見つかりません。townを使用します。`);
-            rawData = mapData['town'];
+        // ★重要：古い「当たり判定」が残っていたら、まずそれを消す！
+        // これをやらないと、消えたマップにアクセスしようとしてエラーになります
+        if (this.collider) {
+            this.physics.world.removeCollider(this.collider);
+            this.collider = null;
         }
 
-        // --- ★ここが修正のキモ：データの自動整形（サニタイズ） ---
-        // 1行目の長さを基準にする
-        const targetWidth = rawData[0].length;
-        
-        // 新しい配列を作り直す（元のデータを汚さないため）
-        const fixedLevel = rawData.map((row, index) => {
-            if (row.length === targetWidth) {
-                return row; // 正常ならそのまま
-            } else {
-                console.warn(`警告: ${index}行目の長さが不正です（${row.length}/${targetWidth}）。自動修正します。`);
-                // 足りなければ0（床）で埋め、多すぎればカットする
-                const newRow = [...row];
-                while (newRow.length < targetWidth) newRow.push(0);
-                return newRow.slice(0, targetWidth);
-            }
-        });
-        // -------------------------------------------------------
-
-        // 3. 古いマップのお掃除
+        // 古いレイヤーとマップを削除
         if (this.layer) this.layer.destroy();
         if (this.map) this.map.destroy();
 
+        // 2. データ取得 & 自動修復（前回のコードと同じ）
+        let rawData = mapData[roomName];
+        if (!rawData) rawData = mapData['town']; // エラーならtownへ
+
+        const targetWidth = rawData[0].length;
+        const fixedLevel = rawData.map((row) => {
+            if (row.length === targetWidth) return row;
+            const newRow = [...row];
+            while (newRow.length < targetWidth) newRow.push(0);
+            return newRow.slice(0, targetWidth);
+        });
+
         try {
-            // 4. マップ作成（修正済みの fixedLevel を使う）
+            // 3. マップ作成
             this.map = this.make.tilemap({ data: fixedLevel, tileWidth: 32, tileHeight: 32 });
             const tiles = this.map.addTilesetImage('tiles');
             
+            // もし画像読み込みに失敗していたら止める（安全策）
+            if (!tiles) {
+                console.error("タイル画像の読み込みに失敗しました。assets/tiles.png はありますか？");
+                return;
+            }
+
             this.layer = this.map.createLayer(0, tiles, 0, 0);
-            this.layer.setCollision([1, 2]); // 衝突設定
+            this.layer.setCollision([1, 2]); // 壁の設定
             
             // ワールド境界更新
             this.physics.world.bounds.width = this.map.widthInPixels;
             this.physics.world.bounds.height = this.map.heightInPixels;
 
-            // ★地形貫通対策：プレイヤーとの衝突判定を「毎回」作り直す
-            // 既存のコライダーがあれば削除したほうが安全ですが、上書きでも動作はします
+            // ★重要：新しい「当たり判定」を作り、変数に保存する
+            // 変数(this.collider)に入れておかないと、後で削除できません
             if (this.player) {
-                this.physics.add.collider(this.player, this.layer);
+                this.collider = this.physics.add.collider(this.player, this.layer);
             }
 
+            // 完了
             mapReady = true;
-            console.log(`マップ作成成功: ${roomName} (自動補正済み)`);
+            console.log("マップ作成＆当たり判定リセット完了: " + roomName);
 
         } catch (error) {
-            console.error("マップ作成エラー（詳細）:", error);
+            console.error("マップ作成中の重大エラー:", error);
         }
     };
 
