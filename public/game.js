@@ -261,7 +261,7 @@ function addPlayer(self, playerInfo) {
     
     // マップがあれば衝突判定設定
     if (self.layer) {
-        self.physics.add.collider(self.player, self.layer);
+        self.collider = self.physics.add.collider(self.player, self.layer);
     }
     
     self.cameras.main.startFollow(self.player);
