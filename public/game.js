@@ -197,6 +197,43 @@ function create() {
         self.isChangingMap = false;
     });
 
+    // ★追加：敵を管理するグループを作る
+    this.enemies = this.physics.add.group();
+
+    // ★追加：攻撃キー（スペースキー）の設定
+    this.keys.attack = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.lastAttackTime = 0; // 連打防止用のタイマー
+
+    // --- Socketイベント追加 ---
+
+    // 1. 最初にカカシ情報をまとめて受け取る
+    this.socket.on('currentEnemies', (enemiesData) => {
+        Object.values(enemiesData).forEach((enemyInfo) => {
+            // 今いるマップと同じ部屋の敵だけ表示
+            // (簡易的に今は判定なしで全部作って、createMapで掃除させても良いですが今回は単純に)
+            createEnemy(self, enemyInfo);
+        });
+    });
+
+    // 2. カカシの状態更新（ダメージや復活）を受け取る
+    this.socket.on('updateEnemy', (updatedEnemy) => {
+        self.enemies.getChildren().forEach((enemySprite) => {
+            if (enemySprite.id === updatedEnemy.id) {
+                // HPを更新
+                enemySprite.hp = updatedEnemy.hp;
+                enemySprite.hpText.setText(`HP: ${updatedEnemy.hp}/${updatedEnemy.maxHp}`);
+                
+                // 死んでたら半透明にする、生きてたら戻す
+                if (updatedEnemy.isDead) {
+                    enemySprite.setAlpha(0.3);
+                    enemySprite.hpText.setText("RESPAWNING...");
+                } else {
+                    enemySprite.setAlpha(1);
+                }
+            }
+        });
+    });
+    
     // キー設定
     this.keys = this.input.keyboard.addKeys({
         up: Phaser.Input.Keyboard.KeyCodes.W,
