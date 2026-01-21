@@ -354,6 +354,7 @@ function addOtherPlayers(self, playerInfo) {
     const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayerTexture')
         .setOrigin(0.5, 0.5).setDisplaySize(32, 32);
     self.otherPlayers.setDepth(10);
+    // ★追加：他人の名前を表示
     const nameText = self.add.text(playerInfo.x, playerInfo.y - 30, playerInfo.name, { 
         fontSize: '14px', 
         fill: '#ffffff', // 他人は色を変えてもいいかも（例: '#ffcccc'）
@@ -361,6 +362,17 @@ function addOtherPlayers(self, playerInfo) {
         strokeThickness: 3
     }).setOrigin(0.5);
     nameText.setDepth(20);
+
+    // ★重要：スプライト自体に「あなたの名札はこれですよ」と覚えさせる
+    otherPlayer.nameLabel = nameText;
+    
+    // ★重要：スプライトが消されたら（切断や移動）、名札も道連れにして消す設定
+    otherPlayer.on('destroy', () => {
+        if (otherPlayer.nameLabel) {
+            otherPlayer.nameLabel.destroy();
+        }
+    });
+
     otherPlayer.playerId = playerInfo.playerId;
     self.otherPlayers.add(otherPlayer);
 }
