@@ -590,3 +590,30 @@ function showSlashEffect(scene, player) {
         }
     });
 }
+
+function showDamagePopup(scene, x, y, damage) {
+    // 1. テキストを作成
+    // 少し位置をランダムに散らすと、連続ヒットした時に見やすくなります
+    const randX = Phaser.Math.Between(-10, 10);
+    const damageText = scene.add.text(x + randX, y - 20, "-" + damage, {
+        fontSize: '20px',
+        fontStyle: 'bold',
+        fill: '#ff0000', // 赤色
+        stroke: '#ffffff', // 白い縁取り
+        strokeThickness: 2
+    }).setOrigin(0.5);
+
+    damageText.setDepth(40); // プレイヤーやエフェクトより手前
+
+    // 2. アニメーション (Tween)
+    scene.tweens.add({
+        targets: damageText,
+        y: y - 50,      // 上に30px移動
+        alpha: 0,       // 透明に
+        duration: 800,  // 0.8秒かけて
+        ease: 'Power1', // ふんわりと
+        onComplete: () => {
+            damageText.destroy(); // 終わったら消す
+        }
+    });
+}
