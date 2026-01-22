@@ -209,6 +209,14 @@ function create() {
     // ★追加：敵を管理するグループを作る
     this.enemies = this.physics.add.group();
 
+    // キー設定
+    this.keys = this.input.keyboard.addKeys({
+        up: Phaser.Input.Keyboard.KeyCodes.W,
+        down: Phaser.Input.Keyboard.KeyCodes.S,
+        left: Phaser.Input.Keyboard.KeyCodes.A,
+        right: Phaser.Input.Keyboard.KeyCodes.D,
+    });
+
     // ★追加：攻撃キー（スペースキー）の設定
     this.keys.attack = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.lastAttackTime = 0; // 連打防止用のタイマー
@@ -241,14 +249,6 @@ function create() {
                 }
             }
         });
-    });
-    
-    // キー設定
-    this.keys = this.input.keyboard.addKeys({
-        up: Phaser.Input.Keyboard.KeyCodes.W,
-        down: Phaser.Input.Keyboard.KeyCodes.S,
-        left: Phaser.Input.Keyboard.KeyCodes.A,
-        right: Phaser.Input.Keyboard.KeyCodes.D,
     });
 
     // --- チャット入力の制御 ---
