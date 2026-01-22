@@ -349,6 +349,32 @@ function update() {
         this.isChangingMap = true;
         this.socket.emit('changeArea', 'town');
     }
+
+    // 追加：攻撃処理
+    // スペースキーが押されている & チャット中じゃない & 前回の攻撃から0.5秒経過
+    if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
+        
+        this.lastAttackTime = Date.now();
+        console.log("攻撃！");
+
+        // 近くにいる敵を探す
+        this.enemies.getChildren().forEach((enemy) => {
+            // プレイヤーと敵の距離を計算
+            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+            
+            // 距離が 60ピクセル以内ならヒット！
+            if (distance < 60) {
+                // サーバーに「こいつを攻撃した」と伝える
+                this.socket.emit('attackEnemy', enemy.id);
+                
+                // 演出：カカシを一瞬赤くする
+                enemy.setTint(0xff0000);
+                this.time.delayedCall(200, () => {
+                    enemy.clearTint();
+                });
+            }
+        });
+    }
 }
 
 function addPlayer(self, playerInfo) {
