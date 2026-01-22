@@ -316,7 +316,19 @@ function update() {
     else if (this.keys.down.isDown) this.player.body.setVelocityY(speed);
 
     // 回転処理
-    const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.x, this.input.activePointer.y);
+    // --- ★修正後（worldX, worldY を使う） ---
+    // activePointerはマウスもタッチも両方対応できるので便利です
+    const pointer = this.input.activePointer;
+
+    // ワールド座標(worldX, worldY)を使って角度を計算
+    const angle = Phaser.Math.Angle.Between(
+        this.player.x, 
+        this.player.y, 
+        pointer.worldX, 
+        pointer.worldY
+    );
+        
+    // プレイヤーの向きを更新
     this.player.setRotation(angle);
 
     // 移動同期
