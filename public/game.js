@@ -584,8 +584,6 @@ function showSlashEffect(scene, player) {
     scene.tweens.add({
         targets: slash,
         alpha: 0,       // 透明度を0に
-        scaleX: 1.2,    // 少し拡大しながら
-        scaleY: 1.2,
         duration: 200,  // 0.2秒かけて
         onComplete: () => {
             slash.destroy(); // 終わったら削除
