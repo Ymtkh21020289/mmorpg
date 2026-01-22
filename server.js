@@ -31,7 +31,7 @@ io.on('connection', (socket) => {
     players[socket.id] = {
         rotation: 0,
         x: 400,
-        y: 300,
+        y: 200,
         playerId: socket.id,
         room: 'town', // ★現在いるマップ情報を追加
         name: 'Player ' + socket.id.substr(0, 4)
