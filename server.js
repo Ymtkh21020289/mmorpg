@@ -72,7 +72,14 @@ io.on('connection', (socket) => {
         
         // 敵が存在し、死んでいなければダメージ
         if (enemy && !enemy.isDead) {
-            enemy.hp -= 10; // 10ダメージ
+            const damage = 10; // ダメージ量を定義
+            enemy.hp -= damage;
+            
+            // ★追加：全員に「ダメージ演出して！」と依頼する
+            io.emit('enemyDamaged', { 
+                enemyId: enemyId, 
+                damage: damage 
+            });
             
             // HPが0以下になったら「死亡」状態にする
             if (enemy.hp <= 0) {
