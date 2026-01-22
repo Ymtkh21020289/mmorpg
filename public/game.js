@@ -168,7 +168,9 @@ function create() {
                 if (otherPlayer.nameLabel) {
                     otherPlayer.nameLabel.setPosition(playerInfo.x, playerInfo.y - 30);
                 }
-
+                if (otherPlayer.hpText) {
+                    otherPlayer.hpText.setPosition(playerInfo.x, playerInfo.y - 50);
+                }
                 // ★追加：吹き出しの追従
                 if (otherPlayer.chatBubble) {
                     otherPlayer.chatBubble.setPosition(playerInfo.x, playerInfo.y - 60);
@@ -193,6 +195,78 @@ function create() {
         }
     });
 
+    // create関数内
+
+    // --- ダメージを受けた時の処理 ---
+    // create関数内：playerDamaged の受信
+
+    this.socket.on('playerDamaged', (data) => {
+        // 1. 自分がダメージを受けた場合
+        if (self.player && self.socket.id === data.playerId) {
+            // 画面下のUIを更新
+            if (self.hpUI) {
+                self.hpUI.setText(`HP: ${data.hp}`);
+                
+                // 演出：赤くして戻す
+                self.hpUI.setColor('#ff0000');
+                setTimeout(() => self.hpUI.setColor('#00ff00'), 1000);
+            }
+            // プレイヤー本体を赤く点滅
+            self.player.setTint(0xff0000);
+            self.time.delayedCall(200, () => self.player.clearTint());
+
+        // 2. 他人がダメージを受けた場合
+        } else {
+            // 対象を探す
+            self.otherPlayers.getChildren().forEach((other) => {
+                if (other.playerId === data.playerId) {
+                    // 頭上のテキストを更新
+                    if (other.hpText) {
+                        other.hpText.setText(`HP: ${data.hp}`);
+                        other.hpText.setColor('#ff0000');
+                        setTimeout(() => other.hpText.setColor('#00ff00'), 1000);
+                    }
+                    other.setTint(0xff0000);
+                    self.time.delayedCall(200, () => other.clearTint());
+                }
+            });
+        }
+    });
+
+    // --- リスポーン（死亡→復活）処理 ---
+    // create関数内：playerRespawn の受信
+    this.socket.on('playerRespawn', (playerInfo) => {
+        // 1. 自分が復活した場合
+        if (self.player && self.socket.id === playerInfo.playerId) {
+            self.player.setPosition(playerInfo.x, playerInfo.y);
+            
+            // UIを更新
+            if (self.hpUI) {
+                self.hpUI.setText(`HP: ${playerInfo.hp}`);
+                self.hpUI.setColor('#00ff00');
+            }
+            // フェードイン演出
+            self.player.setAlpha(0);
+            self.tweens.add({ targets: self.player, alpha: 1, duration: 1000 });
+
+        // 2. 他人が復活した場合
+        } else {
+            self.otherPlayers.getChildren().forEach((other) => {
+                if (other.playerId === playerInfo.playerId) {
+                    other.setPosition(playerInfo.x, playerInfo.y);
+                    
+                    // 頭上のテキストを更新
+                    if (other.hpText) {
+                        other.hpText.setText(`HP: ${playerInfo.hp}`);
+                        other.hpText.setColor('#00ff00');
+                    }
+                    other.setAlpha(0);
+                    self.tweens.add({ targets: other, alpha: 1, duration: 1000 });
+                }
+            });
+        }
+    });
+    
     this.socket.on('mapChanged', function (data) {
         console.log("サーバーからマップ移動指示:", data.room);
         
@@ -457,13 +531,17 @@ function addPlayer(self, playerInfo) {
 
     self.playerNameText.setDepth(20); // プレイヤー(10)より手前に表示
 
-    self.player.hpText = self.add.text(playerInfo.x, playerInfo.y - 50, `HP: ${playerInfo.hp}`, { 
-        fontSize: '14px', 
-        fill: '#00ff00', // 緑色
-        stroke: '#000000',
-        strokeThickness: 3
-    }).setOrigin(0.5);
-    self.player.hpText.setDepth(20);
+    // 画面の左下あたりに表示
+    // setScrollFactor(0) をつけると、カメラが動いてもその場に固定されます
+    self.hpUI = self.add.text(20, self.cameras.main.height - 50, `HP: ${playerInfo.hp}`, { 
+        fontSize: '24px',       // 少し大きく
+        fill: '#00ff00',        // 緑色
+        stroke: '#000000',      // 黒い縁取り
+        strokeThickness: 4
+    });
+
+    self.hpUI.setScrollFactor(0); // ★重要：これでカメラ移動に追従せず固定される
+    self.hpUI.setDepth(100);      // 最前面に表示
     
     // マップがあれば衝突判定設定
     if (self.layer) {
