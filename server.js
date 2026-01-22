@@ -15,7 +15,7 @@ let enemies = {
     kakashi1: {
         id: 'kakashi1',
         x: 600,
-        y: 400,
+        y: 100,
         hp: 100,
         maxHp: 100,
         room: 'town', // 街に配置
