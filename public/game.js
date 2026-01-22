@@ -240,6 +240,14 @@ function create() {
     this.socket.on('updateEnemy', (updatedEnemy) => {
         self.enemies.getChildren().forEach((enemySprite) => {
             if (enemySprite.id === updatedEnemy.id) {
+                // --- ★追加：座標の更新 ---
+                enemySprite.setPosition(updatedEnemy.x, updatedEnemy.y);
+                // -----------------------
+
+                // HPテキストもついてくるように更新
+                if (enemySprite.hpText) {
+                    enemySprite.hpText.setPosition(updatedEnemy.x, updatedEnemy.y - 30);
+                }
                 // HPを更新
                 enemySprite.hp = updatedEnemy.hp;
                 enemySprite.hpText.setText(`HP: ${updatedEnemy.hp}/${updatedEnemy.maxHp}`);
