@@ -374,28 +374,42 @@ function update() {
         this.socket.emit('changeArea', 'town');
     }
 
-    // 追加：攻撃処理
-    // スペースキーが押されている & チャット中じゃない & 前回の攻撃から0.5秒経過
     if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
         
         this.lastAttackTime = Date.now();
-        console.log("攻撃！");
+        
+        // 1. 斬撃エフェクトを出す
+        showSlashEffect(this, this.player);
 
-        // 近くにいる敵を探す
+        // 2. 近くの敵を探す
         this.enemies.getChildren().forEach((enemy) => {
-            // プレイヤーと敵の距離を計算
+            // A. 距離のチェック (80px以内まで届くように延長)
             const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
             
-            // 距離が 60ピクセル以内ならヒット！
-            if (distance < 60) {
-                // サーバーに「こいつを攻撃した」と伝える
-                this.socket.emit('attackEnemy', enemy.id);
+            if (distance < 80) { // 以前は60でした
                 
-                // 演出：カカシを一瞬赤くする
-                enemy.setTint(0xff0000);
-                this.time.delayedCall(200, () => {
-                    enemy.clearTint();
-                });
+                // B. 角度のチェック（ここが新機能！）
+                
+                // 敵が「自分の位置から見てどの方角にいるか」を計算
+                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+                
+                // 「自分が向いている方向(rotation)」と「敵の方角」の差を計算
+                // Phaser.Math.Angle.Wrap は、角度のズレを -PI ～ +PI の範囲に綺麗に整えてくれる便利な関数です
+                const angleDiff = Phaser.Math.Angle.Wrap(this.player.rotation - angleToEnemy);
+
+                // 差が 90度(PI/2) 以内ならヒット
+                // (右90度 + 左90度 = 合計180度の半円範囲になります)
+                if (Math.abs(angleDiff) < Math.PI / 2) {
+                    
+                    // ヒット確定！
+                    this.socket.emit('attackEnemy', enemy.id);
+                    
+                    // ダメージ演出
+                    enemy.setTint(0xff0000);
+                    this.time.delayedCall(200, () => {
+                        enemy.clearTint();
+                    });
+                }
             }
         });
     }
