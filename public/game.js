@@ -177,6 +177,22 @@ function create() {
         });
     });
 
+    // ダメージ通知を受け取って表示
+    this.socket.on('enemyDamaged', (data) => {
+        // どの敵がダメージを受けたか探す
+        const targetEnemy = self.enemies.getChildren().find(e => e.id === data.enemyId);
+        
+        if (targetEnemy) {
+            // その敵の場所にポップアップを出す
+            showDamagePopup(self, targetEnemy.x, targetEnemy.y, data.damage);
+            
+            targetEnemy.setTint(0xff0000);
+            self.time.delayedCall(200, () => {
+                targetEnemy.clearTint();
+            });
+        }
+    });
+
     this.socket.on('mapChanged', function (data) {
         console.log("サーバーからマップ移動指示:", data.room);
         
