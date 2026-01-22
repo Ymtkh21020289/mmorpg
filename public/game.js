@@ -543,3 +543,38 @@ function createEnemy(scene, enemyInfo) {
 
     scene.enemies.add(enemy);
 }
+
+function showSlashEffect(scene, player) {
+    // 1. グラフィックスオブジェクトを作成
+    const slash = scene.add.graphics();
+    
+    // 2. 色と透明度の設定 (黄色, 透明度MAX)
+    slash.fillStyle(0xffff00, 0.8);
+
+    // 3. 扇形（Slice）を描く
+    // slice(x, y, 半径, 開始角度, 終了角度)
+    // ここでは半径80px、中心から左右に90度ずつ（合計180度の半円）を描きます
+    slash.slice(0, 0, 80, -Math.PI / 2, Math.PI / 2);
+    slash.fillPath();
+
+    // 4. プレイヤーの位置に合わせる
+    slash.setPosition(player.x, player.y);
+    
+    // 5. プレイヤーの向きに合わせる
+    slash.setRotation(player.rotation);
+    
+    // 6. プレイヤーより手前に表示
+    slash.setDepth(25); 
+
+    // 7. 一瞬で消えるアニメーション (Tween)
+    scene.tweens.add({
+        targets: slash,
+        alpha: 0,       // 透明度を0に
+        scaleX: 1.2,    // 少し拡大しながら
+        scaleY: 1.2,
+        duration: 200,  // 0.2秒かけて
+        onComplete: () => {
+            slash.destroy(); // 終わったら削除
+        }
+    });
+}
