@@ -164,11 +164,8 @@ http.listen(PORT, () => {
 
 // --- 敵AIループ（100ミリ秒ごとに実行 = 1秒間に10回） ---
 setInterval(() => {
-    // 敵ごとに処理
     Object.keys(enemies).forEach((enemyId) => {
         const enemy = enemies[enemyId];
-
-        // 死んでる敵は動かない
         if (enemy.isDead) return;
 
         // 1. 一番近くにいるプレイヤーを探す
@@ -177,40 +174,44 @@ setInterval(() => {
 
         Object.keys(players).forEach((id) => {
             const player = players[id];
-            
-            // 同じ部屋にいるプレイヤーだけターゲットにする
+            // 同じ部屋のプレイヤーのみ対象
             if (player.room === enemy.room) {
-                // 距離の計算（ピタゴラスの定理）
                 const dist = Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2);
-                
-                // 今までで一番近ければ記録更新
                 if (dist < minDistance) {
                     minDistance = dist;
                     nearestPlayer = player;
                 }
             }
-            // ★追加：移動後の距離を再チェックして、接触していたらダメージ
-            const distAfterMove = Math.sqrt((nearestPlayer.x - enemy.x) ** 2 + (nearestPlayer.y - enemy.y) ** 2);
+        });
+
+        // ★修正：プレイヤーが見つかった場合のみ処理を実行（これでエラーが消えます）
+        if (nearestPlayer) {
             
-            // 距離が40以下なら「接触」とみなす
-            if (distAfterMove < 40) {
+            // A. 移動処理（距離が30より離れていたら追いかける）
+            if (minDistance > 30) {
+                const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
+                enemy.x += Math.cos(angle) * enemy.speed;
+                enemy.y += Math.sin(angle) * enemy.speed;
+            }
+
+            // B. 攻撃判定処理（常にチェックする）
+            // 移動後の位置で再計算
+            const distCurrent = Math.sqrt((nearestPlayer.x - enemy.x) ** 2 + (nearestPlayer.y - enemy.y) ** 2);
+            
+            // 距離40以内なら攻撃
+            if (distCurrent < 40) {
                 const now = Date.now();
-                // 最後にダメージを受けてから1秒(1000ms)経過しているかチェック（無敵時間）
                 if (now - nearestPlayer.lastDamageTime > 1000) {
                     nearestPlayer.hp -= 10;
                     nearestPlayer.lastDamageTime = now;
 
-                    // 死んだ場合
+                    // 死亡判定
                     if (nearestPlayer.hp <= 0) {
-                        // リスポーン処理（HP全快で初期位置へ）
                         nearestPlayer.hp = nearestPlayer.maxHp;
                         nearestPlayer.x = 400; 
                         nearestPlayer.y = 300;
-                        
-                        // 全員に「あの人死んで生き返ったよ」と通知
                         io.emit('playerRespawn', nearestPlayer);
                     } else {
-                        // 生きてるならダメージ通知
                         io.emit('playerDamaged', { 
                             playerId: nearestPlayer.playerId, 
                             hp: nearestPlayer.hp 
@@ -219,25 +220,8 @@ setInterval(() => {
                 }
             }
 
-            // 3. 動いた情報を全員に送信 (既存)
-            io.emit('updateEnemy', enemy);
-        });
-
-        // 2. 近くにプレイヤーがいて、かつ距離が離れていれば追いかける
-        // (距離が30より近いときは、重なりすぎないように止まる)
-        if (nearestPlayer && minDistance > 30) {
-            // ターゲットへの角度を計算
-            const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
-            
-            // スピード分だけ移動
-            enemy.x += Math.cos(angle) * enemy.speed;
-            enemy.y += Math.sin(angle) * enemy.speed;
-
-            // 3. 動いた情報を全員に送信
-            // "updateEnemy" イベントを使い回します
+            // 位置情報を全員に送信
             io.emit('updateEnemy', enemy);
         }
-
-        
     });
-}, 100); // 100ミリ秒間隔
+}, 100);
