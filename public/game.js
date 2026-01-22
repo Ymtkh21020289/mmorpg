@@ -65,6 +65,15 @@ function create() {
         // 1. マップ更新中はフラグを下ろす
         mapReady = false;
 
+        // ★追加：前のマップの敵を消去
+        if (this.enemies) {
+            this.enemies.clear(true, true); 
+            // ※本来は roomName に応じてサーバーから再取得するのが正しいですが、
+            // 今回は「カカシはTownにしかいない」設定で、再取得イベントを簡易化します。
+            // サーバーから 'currentEnemies' を再送してもらうのがベストプラクティスです。
+            this.socket.emit('requestEnemies'); // 後述：サーバーにリクエストを送る
+        }
+
         // ★重要：古い「当たり判定」が残っていたら、まずそれを消す！
         // これをやらないと、消えたマップにアクセスしようとしてエラーになります
         if (this.collider) {
@@ -447,4 +456,40 @@ function displayChatBubble(scene, sprite, text) {
             sprite.chatBubble = null;
         }
     });
+}
+
+function createEnemy(scene, enemyInfo) {
+    // 既に同じIDの敵がいたら作らない（重複防止）
+    const existing = scene.enemies.getChildren().find(e => e.id === enemyInfo.id);
+    if (existing) return;
+
+    // カカシの見た目（緑色の四角）
+    // 本来は画像 ('enemyTexture') をロードしますが、ここではGraphicsで生成
+    if (!scene.textures.exists('enemyTexture')) {
+        const graphics = scene.add.graphics();
+        graphics.fillStyle(0x00ff00, 1); // 緑色
+        graphics.fillRect(-16, -16, 32, 32);
+        graphics.generateTexture('enemyTexture', 32, 32);
+        graphics.destroy();
+    }
+
+    const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'enemyTexture');
+    enemy.id = enemyInfo.id;
+    enemy.setImmovable(true); // 押しても動かない
+    enemy.hp = enemyInfo.hp;
+
+    // HP表示テキスト
+    const hpText = scene.add.text(enemyInfo.x, enemyInfo.y - 30, `HP: ${enemyInfo.hp}/${enemyInfo.maxHp}`, {
+        fontSize: '12px',
+        fill: '#ffffff'
+    }).setOrigin(0.5);
+    
+    enemy.hpText = hpText;
+
+    // 敵が消えるときにテキストも消す
+    enemy.on('destroy', () => {
+        hpText.destroy();
+    });
+
+    scene.enemies.add(enemy);
 }
