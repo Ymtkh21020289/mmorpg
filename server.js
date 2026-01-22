@@ -16,8 +16,8 @@ let enemies = {
         id: 'kakashi1',
         x: 600,
         y: 100,
-        hp: 100,
-        maxHp: 100,
+        hp: 10000,
+        maxHp: 10000,
         room: 'town', // 街に配置
         isDead: false,
         speed: 2 // ★追加：移動速度（プレイヤーより遅めがおすすめ）
