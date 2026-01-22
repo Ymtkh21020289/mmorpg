@@ -34,7 +34,11 @@ io.on('connection', (socket) => {
         y: 200,
         playerId: socket.id,
         room: 'town', // ★現在いるマップ情報を追加
-        name: 'Player ' + socket.id.substr(0, 4)
+        name: 'Player ' + socket.id.substr(0, 4),
+        // ★追加
+        hp: 100,
+        maxHp: 100,
+        lastDamageTime: 0 // 無敵時間の管理用
     };
 
     // ★Socket.ioの「town」という部屋に参加させる
