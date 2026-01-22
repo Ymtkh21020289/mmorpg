@@ -456,6 +456,14 @@ function addPlayer(self, playerInfo) {
     }).setOrigin(0.5); // 文字の中心を基準にする
 
     self.playerNameText.setDepth(20); // プレイヤー(10)より手前に表示
+
+    self.player.hpText = self.add.text(playerInfo.x, playerInfo.y - 50, `HP: ${playerInfo.hp}`, { 
+        fontSize: '14px', 
+        fill: '#00ff00', // 緑色
+        stroke: '#000000',
+        strokeThickness: 3
+    }).setOrigin(0.5);
+    self.player.hpText.setDepth(20);
     
     // マップがあれば衝突判定設定
     if (self.layer) {
@@ -491,13 +499,22 @@ function addOtherPlayers(self, playerInfo) {
 
     // ★重要：スプライト自体に「あなたの名札はこれですよ」と覚えさせる
     otherPlayer.nameLabel = nameText;
-    
-    // ★重要：スプライトが消されたら（切断や移動）、名札も道連れにして消す設定
-    otherPlayer.on('destroy', () => {
-        if (otherPlayer.nameLabel) {
-            otherPlayer.nameLabel.destroy();
-        }
-    });
+
+    otherPlayer.hpText = self.add.text(playerInfo.x, playerInfo.y - 50, `HP: ${playerInfo.hp}`, { 
+        fontSize: '14px', 
+        fill: '#00ff00',
+        stroke: '#000000',
+        strokeThickness: 3
+    }).setOrigin(0.5);
+    otherPlayer.hpText.setDepth(20);
+
+    // 削除時の連動 (名前と一緒にHPも消す)
+    const oldDestroy = otherPlayer.destroy; // 元のdestroyを保存
+    otherPlayer.destroy = function() { // 上書き
+        if (this.hpText) this.hpText.destroy();
+        if (this.nameLabel) this.nameLabel.destroy(); // 以前の実装
+        oldDestroy.call(this); // 元の処理も実行
+    };
 
     otherPlayer.playerId = playerInfo.playerId;
     self.otherPlayers.add(otherPlayer);
