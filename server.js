@@ -20,7 +20,7 @@ let enemies = {
         maxHp: 10000,
         room: 'town', // 街に配置
         isDead: false,
-        speed: 2 // ★追加：移動速度（プレイヤーより遅めがおすすめ）
+        speed: 0 // ★追加：移動速度（プレイヤーより遅めがおすすめ）
     }
 };
 
@@ -185,6 +185,38 @@ setInterval(() => {
                     nearestPlayer = player;
                 }
             }
+            // ★追加：移動後の距離を再チェックして、接触していたらダメージ
+            const distAfterMove = Math.sqrt((nearestPlayer.x - enemy.x) ** 2 + (nearestPlayer.y - enemy.y) ** 2);
+            
+            // 距離が40以下なら「接触」とみなす
+            if (distAfterMove < 40) {
+                const now = Date.now();
+                // 最後にダメージを受けてから1秒(1000ms)経過しているかチェック（無敵時間）
+                if (now - nearestPlayer.lastDamageTime > 1000) {
+                    nearestPlayer.hp -= 10;
+                    nearestPlayer.lastDamageTime = now;
+
+                    // 死んだ場合
+                    if (nearestPlayer.hp <= 0) {
+                        // リスポーン処理（HP全快で初期位置へ）
+                        nearestPlayer.hp = nearestPlayer.maxHp;
+                        nearestPlayer.x = 400; 
+                        nearestPlayer.y = 300;
+                        
+                        // 全員に「あの人死んで生き返ったよ」と通知
+                        io.emit('playerRespawn', nearestPlayer);
+                    } else {
+                        // 生きてるならダメージ通知
+                        io.emit('playerDamaged', { 
+                            playerId: nearestPlayer.playerId, 
+                            hp: nearestPlayer.hp 
+                        });
+                    }
+                }
+            }
+
+            // 3. 動いた情報を全員に送信 (既存)
+            io.emit('updateEnemy', enemy);
         });
 
         // 2. 近くにプレイヤーがいて、かつ距離が離れていれば追いかける
@@ -201,5 +233,7 @@ setInterval(() => {
             // "updateEnemy" イベントを使い回します
             io.emit('updateEnemy', enemy);
         }
+
+        
     });
 }, 100); // 100ミリ秒間隔
