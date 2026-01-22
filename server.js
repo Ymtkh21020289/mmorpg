@@ -62,7 +62,9 @@ io.on('connection', (socket) => {
     });
     socket.emit('currentPlayers', playersInRoom);
 
-    
+    socket.on('requestEnemies', () => {
+        socket.emit('currentEnemies', enemies);
+    });
 
     socket.on('attackEnemy', (enemyId) => {
         const enemy = enemies[enemyId];
