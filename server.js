@@ -19,7 +19,8 @@ let enemies = {
         hp: 100,
         maxHp: 100,
         room: 'town', // 街に配置
-        isDead: false
+        isDead: false,
+        speed: 2 // ★追加：移動速度（プレイヤーより遅めがおすすめ）
     }
 };
 
