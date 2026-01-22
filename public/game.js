@@ -64,7 +64,8 @@ function create() {
     this.createMap = (roomName) => {
         // 1. マップ更新中はフラグを下ろす
         mapReady = false;
-
+        this.currentRoomName = roomName;
+        
         // ★追加：前のマップの敵を消去
         if (this.enemies) {
             this.enemies.clear(true, true); 
@@ -227,8 +228,11 @@ function create() {
     this.socket.on('currentEnemies', (enemiesData) => {
         Object.values(enemiesData).forEach((enemyInfo) => {
             // 今いるマップと同じ部屋の敵だけ表示
-            // (簡易的に今は判定なしで全部作って、createMapで掃除させても良いですが今回は単純に)
-            createEnemy(self, enemyInfo);
+            // ★修正：敵のいる部屋(enemyInfo.room) と 今の部屋(self.currentRoomName) が
+            // 一致している時だけ、createEnemyを実行する
+            if (enemyInfo.room === self.currentRoomName) {
+                createEnemy(self, enemyInfo);
+            }
         });
     });
 
