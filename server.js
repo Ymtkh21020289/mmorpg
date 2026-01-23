@@ -154,38 +154,44 @@ io.on('connection', (socket) => {
                     attackPower: player.attackPower, hp: player.hp
                 });
     
-                // ★ここが変更点：復活ロジックの分岐
+                // ★ここが変更点：復活ロジックの修正
                 if (enemy.respawnType === 'static') {
-                    // A. カカシタイプ（その場で待機して復活）
+                    // A. カカシタイプ（変更なし）
                     enemy.hp = 0;
                     setTimeout(() => {
                         enemy.hp = enemy.maxHp;
                         enemy.isDead = false;
                         io.emit('updateEnemy', enemy);
                     }, 5000);
-                    io.emit('updateEnemy', enemy); // 死んだ状態(透明)を送信
-    
+                    io.emit('updateEnemy', enemy); 
+
                 } else {
-                    // B. 群れタイプ（完全に削除し、群れ判定を行う）
-                    
+                    // B. 群れタイプ
+
                     // 1. クライアントに「削除」命令を送る
                     io.emit('removeEnemy', enemyId);
-                    
-                    // 2. 所属しているスポーナーを特定
-                    const spawner = spawners[enemy.spawnerIndex];
-                    
+
+                    // ★修正1：死ぬ敵が属していた「スポーナーの番号」を保存しておく
+                    const targetSpawnerIndex = enemy.spawnerIndex;
+                    const spawner = spawners[targetSpawnerIndex];
+
                     // 3. サーバーのメモリから削除
                     delete enemies[enemyId];
-    
+
                     // 4. 群れが全滅したかチェック
-                    // enemiesの中に、同じスポーナー出身の生き残りがいるか探す
-                    const survivors = Object.values(enemies).filter(e => e.spawnerIndex === spawner.spawnerIndex);
-                    
+                    // ★修正2：保存しておいた targetSpawnerIndex と比較する
+                    const survivors = Object.values(enemies).filter(e => e.spawnerIndex === targetSpawnerIndex);
+
+                    console.log(`残り敵数: ${survivors.length}`); // ログで確認用
+
                     if (survivors.length === 0) {
                         console.log(`群れ全滅！ 10秒後に再スポーンします: ${spawner.type}`);
                         // 10秒後に再湧き
                         setTimeout(() => {
-                            spawnGroup(spawner);
+                            // 再湧き時にスポーナーが存在するかチェック（安全策）
+                            if (spawners[targetSpawnerIndex]) {
+                                spawnGroup(spawners[targetSpawnerIndex]);
+                            }
                         }, 10000);
                     }
                 }
