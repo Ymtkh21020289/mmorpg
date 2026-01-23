@@ -251,6 +251,7 @@ function create() {
                 // なければ新規作成（オレンジ色の丸）
                 sprite = self.add.circle(p.x, p.y, 10, 0xffa500);
                 sprite.id = id;
+                sprite.setDepth(200);
                 self.projectiles.add(sprite);
             }
         });
