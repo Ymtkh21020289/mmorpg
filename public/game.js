@@ -281,6 +281,54 @@ function create() {
             });
         }
     });
+
+    // 1. 経験値やレベルが変わった時の表示更新
+    this.socket.on('updateStats', (stats) => {
+        if (self.levelUI) {
+            self.levelUI.setText(`Lv.${stats.level} (EXP: ${stats.exp}/${stats.maxExp})`);
+        }
+        // HPも回復しているかもしれないのでUI更新
+        if (self.hpUI) {
+            self.hpUI.setText(`HP: ${stats.hp}`);
+        }
+    });
+
+    // 2. 誰かがレベルアップした時の派手な演出
+    this.socket.on('playerLevelUp', (data) => {
+        // レベルアップしたプレイヤーを探す（自分 または 他人）
+        let targetSprite = null;
+        if (self.player && self.socket.id === data.playerId) {
+            targetSprite = self.player;
+        } else {
+            self.otherPlayers.getChildren().forEach((other) => {
+                if (other.playerId === data.playerId) targetSprite = other;
+            });
+        }
+
+        if (targetSprite) {
+            // 頭上に「LEVEL UP!」と出す
+            const levelText = self.add.text(targetSprite.x, targetSprite.y - 60, "LEVEL UP!", {
+                fontSize: '24px',
+                fontStyle: 'bold',
+                fill: '#ffd700', // 金色
+                stroke: '#000000',
+                strokeThickness: 4
+            }).setOrigin(0.5);
+
+            // 上に昇りながら消えるアニメーション
+            self.tweens.add({
+                targets: levelText,
+                y: targetSprite.y - 100,
+                alpha: 0,
+                duration: 2000,
+                onComplete: () => levelText.destroy()
+            });
+
+            // 本体が金色に光る
+            targetSprite.setTint(0xffff00);
+            self.time.delayedCall(500, () => targetSprite.clearTint());
+        }
+    });
     
     this.socket.on('mapChanged', function (data) {
         console.log("サーバーからマップ移動指示:", data.room);
@@ -555,6 +603,15 @@ function addPlayer(self, playerInfo) {
         strokeThickness: 4
     });
 
+    self.levelUI = self.add.text(20, self.cameras.main.height - 80, `Lv.1 (EXP: 0/100)`, { 
+        fontSize: '18px',
+        fill: '#ffff00', // 黄色
+        stroke: '#000000',
+        strokeThickness: 3
+    });
+    self.levelUI.setScrollFactor(0); // 画面固定
+    self.levelUI.setDepth(100);
+    
     self.hpUI.setScrollFactor(0); // ★重要：これでカメラ移動に追従せず固定される
     self.hpUI.setDepth(100);      // 最前面に表示
     
