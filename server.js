@@ -10,19 +10,63 @@ app.use(express.static(path.join(__dirname, 'public')));
 // プレイヤーデータを格納するオブジェクト
 let players = {};
 
-// 敵データを格納する変数
-let enemies = {
-    kakashi1: {
-        id: 'kakashi1',
-        x: 600,
-        y: 100,
-        hp: 20,
-        maxHp: 20,
-        room: 'town', // 街に配置
-        isDead: false,
-        speed: 0 // ★追加：移動速度（プレイヤーより遅めがおすすめ）
-    }
+// 1. 敵の種類ごとのステータス定義
+const ENEMY_TYPES = {
+    // 既存のカカシ（とりあえずボス扱い）
+    kakashi: { hp: 100, maxHp: 100, exp: 0, speed: 0, color: 0x00ff00, respawnType: 'static' },
+    // 新しい敵：スライム（弱い、群れる、青い）
+    slime:   { hp: 30,  maxHp: 30,  exp: 10, speed: 1, color: 0x0000ff, respawnType: 'group' },
+    // 新しい敵：ウルフ（強い、速い、赤い）
+    wolf:    { hp: 60,  maxHp: 60,  exp: 30, speed: 3, color: 0xff0000, respawnType: 'group' }
 };
+
+// 2. 現在の敵リスト（初期状態は空にして、関数で生み出します）
+let enemies = {};
+
+// 3. 群れを管理するスポーナーの定義
+const spawners = [
+    // カカシ（単体）
+    { type: 'kakashi', x: 600, y: 400, count: 1, radius: 0, room: 'town' },
+    // スライムの群れ（Townの左上、5匹、半径100pxに散らばる）
+    { type: 'slime',   x: 200, y: 200, count: 5, radius: 100, room: 'town' },
+    // ウルフの群れ（Adventureマップ、3匹）
+    { type: 'wolf',    x: 800, y: 800, count: 3, radius: 150, room: 'adventure' }
+];
+
+// --- 関数：群れをスポーンさせる ---
+function spawnGroup(spawner) {
+    for (let i = 0; i < spawner.count; i++) {
+        // ユニークなIDを生成 (例: slime_17123456789_0)
+        const id = `${spawner.type}_${Date.now()}_${i}`;
+        const template = ENEMY_TYPES[spawner.type];
+
+        // 指定座標の周りにランダムに散らす
+        const randomAngle = Math.random() * Math.PI * 2;
+        const randomDist = Math.random() * spawner.radius;
+        const spawnX = spawner.x + Math.cos(randomAngle) * randomDist;
+        const spawnY = spawner.y + Math.sin(randomAngle) * randomDist;
+
+        enemies[id] = {
+            id: id,
+            x: spawnX,
+            y: spawnY,
+            hp: template.hp,
+            maxHp: template.maxHp,
+            speed: template.speed,
+            exp: template.exp,      // ★種類ごとの経験値
+            color: template.color,  // ★種類ごとの色
+            room: spawner.room,
+            isDead: false,
+            spawnerIndex: spawners.indexOf(spawner), // どのスポーナー出身か覚えておく
+            respawnType: template.respawnType        // 復活タイプ
+        };
+    }
+    // 全員に通知
+    io.emit('currentEnemies', enemies);
+}
+
+// サーバー起動時に全スポーナーを稼働
+spawners.forEach(spawner => spawnGroup(spawner));
 
 io.on('connection', (socket) => {
     console.log('ユーザー接続: ' + socket.id);
