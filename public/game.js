@@ -210,7 +210,58 @@ function create() {
         }
     });
 
-    // create関数内
+    this.input.mouse.disableContextMenu();
+
+    // ★追加：クリックイベント
+    this.input.on('pointerdown', (pointer) => {
+        if (!self.player) return;
+
+        // 右クリック (button === 2) なら魔法発射
+        if (pointer.rightButtonDown()) {
+            // サーバーに「この角度で撃って！」と依頼
+            // 自分の位置からマウスへの角度を計算
+            const angle = Phaser.Math.Angle.Between(self.player.x, self.player.y, pointer.worldX, pointer.worldY);
+            self.socket.emit('shootFireball', angle);
+        }
+    });
+
+    this.projectiles = this.add.group(); // 弾丸管理グループ
+
+    // ★追加：弾丸情報の受信と描画
+    this.socket.on('updateProjectiles', (serverProjectiles) => {
+        // 1. 存在する弾を移動 or 新規作成
+        Object.keys(serverProjectiles).forEach((id) => {
+            const p = serverProjectiles[id];
+            
+            // 自分の部屋にある弾だけ描画
+            if (p.room !== self.roomName) return;
+
+            let sprite = self.projectiles.getChildren().find(s => s.id === id);
+            
+            if (sprite) {
+                // 既に画面にあれば移動
+                // 少し補間して滑らかに動かす
+                self.tweens.add({
+                    targets: sprite,
+                    x: p.x,
+                    y: p.y,
+                    duration: 50
+                });
+            } else {
+                // なければ新規作成（オレンジ色の丸）
+                sprite = self.add.circle(p.x, p.y, 10, 0xffa500);
+                sprite.id = id;
+                self.projectiles.add(sprite);
+            }
+        });
+
+        // 2. サーバーから消えた弾を削除
+        self.projectiles.getChildren().forEach((sprite) => {
+            if (!serverProjectiles[sprite.id]) {
+                sprite.destroy();
+            }
+        });
+    });
 
     // --- ダメージを受けた時の処理 ---
     // create関数内：playerDamaged の受信
@@ -295,6 +346,8 @@ function create() {
         if (self.levelUI) {
             self.levelUI.setText(`Lv.${stats.level} (EXP: ${stats.exp}/${stats.maxExp})`);
         }
+        // ★追加：MP更新
+        if (self.mpUI) self.mpUI.setText(`MP: ${stats.mp}`);
         // HPも回復しているかもしれないのでUI更新
         if (self.hpUI) {
             self.hpUI.setText(`HP: ${stats.hp}`);
@@ -622,6 +675,16 @@ function addPlayer(self, playerInfo) {
     
     self.hpUI.setScrollFactor(0); // ★重要：これでカメラ移動に追従せず固定される
     self.hpUI.setDepth(100);      // 最前面に表示
+
+    // ★追加：MP表示UI
+    self.mpUI = self.add.text(20, self.cameras.main.height - 110, `MP: ${playerInfo.mp}/${playerInfo.maxMp}`, { 
+        fontSize: '18px',
+        fill: '#00ffff', // 水色
+        stroke: '#000000',
+        strokeThickness: 3
+    });
+    self.mpUI.setScrollFactor(0);
+    self.mpUI.setDepth(100);
     
     // マップがあれば衝突判定設定
     if (self.layer) {
