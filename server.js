@@ -35,10 +35,14 @@ io.on('connection', (socket) => {
         playerId: socket.id,
         room: 'town', // ★現在いるマップ情報を追加
         name: 'Player ' + socket.id.substr(0, 4),
-        // ★追加
         hp: 100,
         maxHp: 100,
-        lastDamageTime: 0 // 無敵時間の管理用
+        lastDamageTime: 0, // 無敵時間の管理用
+        // ★追加：レベルとステータス
+        level: 1,
+        exp: 0,
+        maxExp: 100,   // 次のレベルまでに必要な経験値
+        attackPower: 10 // 今の攻撃力
     };
 
     // ★Socket.ioの「town」という部屋に参加させる
@@ -71,35 +75,59 @@ io.on('connection', (socket) => {
         socket.emit('currentEnemies', enemies);
     });
 
+    // server.js の socket.on('attackEnemy') を書き換え
+
     socket.on('attackEnemy', (enemyId) => {
         const enemy = enemies[enemyId];
+        const player = players[socket.id]; // 攻撃したプレイヤー
+
+        // 敵が生きていて、プレイヤーも存在する場合
+        if (enemy && !enemy.isDead && player) {
         
-        // 敵が存在し、死んでいなければダメージ
-        if (enemy && !enemy.isDead) {
-            const damage = 10; // ダメージ量を定義
-            enemy.hp -= damage;
+            // 1. プレイヤーの攻撃力を使ってダメージ計算
+            enemy.hp -= player.attackPower;
             
-            // ★追加：全員に「ダメージ演出して！」と依頼する
+            // ダメージ通知
             io.emit('enemyDamaged', { 
                 enemyId: enemyId, 
-                damage: damage 
+                damage: player.attackPower 
             });
-            
-            // HPが0以下になったら「死亡」状態にする
+
+            // 2. 敵が倒れた場合
             if (enemy.hp <= 0) {
-                enemy.hp = 0;
                 enemy.isDead = true;
-                
-                // 5秒後に復活させるタイマー
-                setTimeout(() => {
-                    enemy.hp = enemy.maxHp;
-                    enemy.isDead = false;
-                    io.emit('updateEnemy', enemy); // 復活を全員に通知
-                    console.log('カカシ復活！');
-                }, 5000);
+                enemy.respawnTime = Date.now();
+
+                // ★経験値の処理
+                const expGain = 50; // 敵1体につき50経験値
+                player.exp += expGain;
+
+                // ★レベルアップ判定
+                if (player.exp >= player.maxExp) {
+                    player.level++;
+                    player.exp = 0; // 経験値をリセット（あるいは持ち越し: player.exp -= player.maxExp）
+                    player.maxExp = Math.floor(player.maxExp * 1.2); // 次の必要経験値を1.2倍に
+                    player.attackPower += 5; // 攻撃力が5アップ！
+                    player.hp = player.maxHp; // レベルアップでHP全快！
+
+                    // 全員にレベルアップを通知（演出用）
+                    io.emit('playerLevelUp', { 
+                        playerId: player.playerId, 
+                        level: player.level 
+                    });
+                }
+
+                // プレイヤー本人に最新ステータス（EXPなど）を送る
+                socket.emit('updateStats', {
+                    level: player.level,
+                    exp: player.exp,
+                    maxExp: player.maxExp,
+                    attackPower: player.attackPower,
+                    hp: player.hp
+                });
             }
 
-            // 全員に「カカシのHP変わったよ」と教える
+            // 敵情報の更新送信
             io.emit('updateEnemy', enemy);
         }
     });
