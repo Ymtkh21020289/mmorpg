@@ -153,84 +153,18 @@ io.on('connection', (socket) => {
         socket.emit('currentEnemies', enemies);
     });
 
-    // server.js の socket.on('attackEnemy') を書き換え
-
-        socket.on('attackEnemy', (enemyId) => {
+    socket.on('attackEnemy', (enemyId) => {
         const enemy = enemies[enemyId];
         const player = players[socket.id];
-    
+
         if (enemy && !enemy.isDead && player) {
-            
             enemy.hp -= player.attackPower;
-            
-            // ダメージ通知
             io.emit('enemyDamaged', { enemyId: enemyId, damage: player.attackPower });
-    
-            // --- 敵が倒れた時 ---
+
             if (enemy.hp <= 0) {
-                enemy.isDead = true;
-                
-                // 経験値付与 (敵データから取得)
-                const expGain = enemy.exp;
-                player.exp += expGain;
-                
-                // レベルアップ処理 (既存のコードそのまま)
-                if (player.exp >= player.maxExp) {
-                    player.level++;
-                    player.exp = 0;
-                    player.maxExp = Math.floor(player.maxExp * 1.2);
-                    player.attackPower += 5;
-                    player.hp = player.maxHp;
-                    io.emit('playerLevelUp', { playerId: player.playerId, level: player.level });
-                }
-                socket.emit('updateStats', {
-                    level: player.level, exp: player.exp, maxExp: player.maxExp,
-                    attackPower: player.attackPower, hp: player.hp
-                });
-    
-                // ★ここが変更点：復活ロジックの修正
-                if (enemy.respawnType === 'static') {
-                    // A. カカシタイプ（変更なし）
-                    enemy.hp = 0;
-                    setTimeout(() => {
-                        enemy.hp = enemy.maxHp;
-                        enemy.isDead = false;
-                        io.emit('updateEnemy', enemy);
-                    }, 5000);
-                    io.emit('updateEnemy', enemy); 
-
-                } else {
-                    // B. 群れタイプ
-
-                    // 1. クライアントに「削除」命令を送る
-                    io.emit('removeEnemy', enemyId);
-
-                    // ★修正1：死ぬ敵が属していた「スポーナーの番号」を保存しておく
-                    const targetSpawnerIndex = enemy.spawnerIndex;
-                    const spawner = spawners[targetSpawnerIndex];
-
-                    // 3. サーバーのメモリから削除
-                    delete enemies[enemyId];
-
-                    // 4. 群れが全滅したかチェック
-                    // ★修正2：保存しておいた targetSpawnerIndex と比較する
-                    const survivors = Object.values(enemies).filter(e => e.spawnerIndex === targetSpawnerIndex);
-
-                    console.log(`残り敵数: ${survivors.length}`); // ログで確認用
-
-                    if (survivors.length === 0) {
-                        console.log(`群れ全滅！ 10秒後に再スポーンします: ${spawner.type}`);
-                        // 10秒後に再湧き
-                        setTimeout(() => {
-                            // 再湧き時にスポーナーが存在するかチェック（安全策）
-                            if (spawners[targetSpawnerIndex]) {
-                                spawnGroup(spawners[targetSpawnerIndex]);
-                            }
-                        }, 10000);
-                    }
-                }
+                // ★たったこれだけでOK！
+                handleEnemyDeath(enemy, player);
             } else {
-                // 生きていれば状態更新
                 io.emit('updateEnemy', enemy);
             }
         }
@@ -395,45 +329,16 @@ setInterval(() => {
                 // ダメージ通知
                 io.emit('enemyDamaged', { enemyId: enemyId, damage: damage });
 
-                // 敵の死亡判定（attackEnemyと同じロジックを関数化するのが理想ですが、今回はコピペで簡略化）
                 if (enemy.hp <= 0) {
-                    // ★敵を倒した処理（経験値など）が必要ですが、
-                    // 長くなるので一旦「attackEnemy」と同じ処理をここにも書くか、
-                    // 簡易的に「経験値だけ入る」ようにします。
-                    
                     const owner = players[p.ownerId];
                     if (owner) {
-                        owner.exp += enemy.exp;
-                        if (owner.exp >= owner.maxExp) {
-                            // レベルアップ処理...（省略せず書くならattackEnemy参照）
-                            owner.level++;
-                            owner.exp = 0;
-                            owner.maxExp = Math.floor(owner.maxExp * 1.2);
-                            owner.attackPower += 5;
-                            owner.hp = owner.maxHp;
-                            owner.mp = owner.maxMp; // レベルアップでMPも全快
-                            io.emit('playerLevelUp', { playerId: owner.playerId, level: owner.level });
-                        }
-                        // ステータス更新
-                        io.to(p.ownerId).emit('updateStats', {
-                             level: owner.level, exp: owner.exp, maxExp: owner.maxExp,
-                             attackPower: owner.attackPower, hp: owner.hp, mp: owner.mp
-                        });
+                        // ★ここも関数を呼ぶだけで、群れの再湧きも完璧に動きます！
+                        handleEnemyDeath(enemy, owner);
                     }
-
-                    // 死亡・復活処理
-                    enemy.isDead = true;
-                    if (enemy.respawnType === 'static') {
-                        enemy.hp = 0;
-                        setTimeout(() => { enemy.hp = enemy.maxHp; enemy.isDead = false; io.emit('updateEnemy', enemy); }, 5000);
-                    } else {
-                        // 群れ処理（簡易版）
-                         io.emit('removeEnemy', enemyId);
-                         // ... (群れの再湧きロジックはここにも必要ですが、長くなるので割愛) ...
-                         // 本当は「敵死亡関数」を共通化すべき箇所です
-                    }
+                } else {
+                    // 生きていれば更新通知
+                    io.emit('updateEnemy', enemy);
                 }
-                io.emit('updateEnemy', enemy);
             }
         });
     });
@@ -460,3 +365,62 @@ setInterval(() => {
         }
     });
 }, 1000);
+
+function handleEnemyDeath(enemy, player) {
+    // 1. 経験値とレベルアップ処理
+    const expGain = enemy.exp;
+    player.exp += expGain;
+
+    if (player.exp >= player.maxExp) {
+        player.level++;
+        player.exp = 0;
+        player.maxExp = Math.floor(player.maxExp * 1.2);
+        player.attackPower += 5;
+        player.hp = player.maxHp;
+        player.mp = player.maxMp;
+        io.emit('playerLevelUp', { playerId: player.playerId, level: player.level });
+    }
+
+    // プレイヤー本人にステータス更新を通知
+    // (socket経由ではなくio.toを使うことで、どこから呼ばれても動くようにする)
+    io.to(player.playerId).emit('updateStats', {
+        level: player.level, exp: player.exp, maxExp: player.maxExp,
+        attackPower: player.attackPower, hp: player.hp, mp: player.mp
+    });
+
+    // 2. 死亡・復活処理
+    enemy.isDead = true;
+
+    if (enemy.respawnType === 'static') {
+        // A. カカシタイプ
+        enemy.hp = 0;
+        setTimeout(() => {
+            enemy.hp = enemy.maxHp;
+            enemy.isDead = false;
+            io.emit('updateEnemy', enemy);
+        }, 5000);
+        io.emit('updateEnemy', enemy); 
+
+    } else {
+        // B. 群れタイプ
+        io.emit('removeEnemy', enemy.id);
+        
+        const targetSpawnerIndex = enemy.spawnerIndex;
+        const spawner = spawners[targetSpawnerIndex];
+        
+        // 削除
+        delete enemies[enemy.id];
+
+        // 全滅チェック
+        const survivors = Object.values(enemies).filter(e => e.spawnerIndex === targetSpawnerIndex);
+        
+        if (survivors.length === 0) {
+            console.log(`群れ全滅！ 10秒後に再スポーンします: ${spawner.type}`);
+            setTimeout(() => {
+                if (spawners[targetSpawnerIndex]) {
+                    spawnGroup(spawners[targetSpawnerIndex]);
+                }
+            }, 10000);
+        }
+    }
+}
