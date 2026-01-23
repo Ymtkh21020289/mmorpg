@@ -96,7 +96,15 @@ io.on('connection', (socket) => {
             // 2. 敵が倒れた場合
             if (enemy.hp <= 0) {
                 enemy.isDead = true;
-                enemy.respawnTime = Date.now();
+                enemy.hp = 0; // マイナスにならないように
+
+                // ★追加：ここから復活タイマー（これを書き忘れていました！）
+                setTimeout(() => {
+                    enemy.hp = enemy.maxHp;
+                    enemy.isDead = false;
+                    io.emit('updateEnemy', enemy); // 全員に復活を通知
+                }, 5000); // 5秒後に復活
+                // ★ここまで追加
 
                 // ★経験値の処理
                 const expGain = 50; // 敵1体につき50経験値
