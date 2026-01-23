@@ -229,6 +229,7 @@ function create() {
 
     // ★追加：弾丸情報の受信と描画
     this.socket.on('updateProjectiles', (serverProjectiles) => {
+        console.log(serverProjectiles);
         // 1. 存在する弾を移動 or 新規作成
         Object.keys(serverProjectiles).forEach((id) => {
             const p = serverProjectiles[id];
