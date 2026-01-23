@@ -235,7 +235,7 @@ function create() {
             const p = serverProjectiles[id];
             
             // 自分の部屋にある弾だけ描画
-            if (p.room !== self.room) return;
+            if (p.room !== self.currentRoomName) return;
 
             let sprite = self.projectiles.getChildren().find(s => s.id === id);
             
