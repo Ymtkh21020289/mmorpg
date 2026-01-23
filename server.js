@@ -121,66 +121,78 @@ io.on('connection', (socket) => {
 
     // server.js の socket.on('attackEnemy') を書き換え
 
-    socket.on('attackEnemy', (enemyId) => {
+        socket.on('attackEnemy', (enemyId) => {
         const enemy = enemies[enemyId];
-        const player = players[socket.id]; // 攻撃したプレイヤー
-
-        // 敵が生きていて、プレイヤーも存在する場合
+        const player = players[socket.id];
+    
         if (enemy && !enemy.isDead && player) {
-        
-            // 1. プレイヤーの攻撃力を使ってダメージ計算
+            
             enemy.hp -= player.attackPower;
             
             // ダメージ通知
-            io.emit('enemyDamaged', { 
-                enemyId: enemyId, 
-                damage: player.attackPower 
-            });
-
-            // 2. 敵が倒れた場合
+            io.emit('enemyDamaged', { enemyId: enemyId, damage: player.attackPower });
+    
+            // --- 敵が倒れた時 ---
             if (enemy.hp <= 0) {
                 enemy.isDead = true;
-                enemy.hp = 0; // マイナスにならないように
-
-                // ★追加：ここから復活タイマー（これを書き忘れていました！）
-                setTimeout(() => {
-                    enemy.hp = enemy.maxHp;
-                    enemy.isDead = false;
-                    io.emit('updateEnemy', enemy); // 全員に復活を通知
-                }, 5000); // 5秒後に復活
-                // ★ここまで追加
-
-                // ★経験値の処理
-                const expGain = 50; // 敵1体につき50経験値
+                
+                // 経験値付与 (敵データから取得)
+                const expGain = enemy.exp;
                 player.exp += expGain;
-
-                // ★レベルアップ判定
+                
+                // レベルアップ処理 (既存のコードそのまま)
                 if (player.exp >= player.maxExp) {
                     player.level++;
-                    player.exp = 0; // 経験値をリセット（あるいは持ち越し: player.exp -= player.maxExp）
-                    player.maxExp = Math.floor(player.maxExp * 1.2); // 次の必要経験値を1.2倍に
-                    player.attackPower += 5; // 攻撃力が5アップ！
-                    player.hp = player.maxHp; // レベルアップでHP全快！
-
-                    // 全員にレベルアップを通知（演出用）
-                    io.emit('playerLevelUp', { 
-                        playerId: player.playerId, 
-                        level: player.level 
-                    });
+                    player.exp = 0;
+                    player.maxExp = Math.floor(player.maxExp * 1.2);
+                    player.attackPower += 5;
+                    player.hp = player.maxHp;
+                    io.emit('playerLevelUp', { playerId: player.playerId, level: player.level });
                 }
-
-                // プレイヤー本人に最新ステータス（EXPなど）を送る
                 socket.emit('updateStats', {
-                    level: player.level,
-                    exp: player.exp,
-                    maxExp: player.maxExp,
-                    attackPower: player.attackPower,
-                    hp: player.hp
+                    level: player.level, exp: player.exp, maxExp: player.maxExp,
+                    attackPower: player.attackPower, hp: player.hp
                 });
+    
+                // ★ここが変更点：復活ロジックの分岐
+                if (enemy.respawnType === 'static') {
+                    // A. カカシタイプ（その場で待機して復活）
+                    enemy.hp = 0;
+                    setTimeout(() => {
+                        enemy.hp = enemy.maxHp;
+                        enemy.isDead = false;
+                        io.emit('updateEnemy', enemy);
+                    }, 5000);
+                    io.emit('updateEnemy', enemy); // 死んだ状態(透明)を送信
+    
+                } else {
+                    // B. 群れタイプ（完全に削除し、群れ判定を行う）
+                    
+                    // 1. クライアントに「削除」命令を送る
+                    io.emit('removeEnemy', enemyId);
+                    
+                    // 2. 所属しているスポーナーを特定
+                    const spawner = spawners[enemy.spawnerIndex];
+                    
+                    // 3. サーバーのメモリから削除
+                    delete enemies[enemyId];
+    
+                    // 4. 群れが全滅したかチェック
+                    // enemiesの中に、同じスポーナー出身の生き残りがいるか探す
+                    const survivors = Object.values(enemies).filter(e => e.spawnerIndex === spawner.spawnerIndex);
+                    
+                    if (survivors.length === 0) {
+                        console.log(`群れ全滅！ 10秒後に再スポーンします: ${spawner.type}`);
+                        // 10秒後に再湧き
+                        setTimeout(() => {
+                            spawnGroup(spawner);
+                        }, 10000);
+                    }
+                }
+            } else {
+                // 生きていれば状態更新
+                io.emit('updateEnemy', enemy);
             }
-
-            // 敵情報の更新送信
-            io.emit('updateEnemy', enemy);
         }
     });
     // --- 移動処理 ---
