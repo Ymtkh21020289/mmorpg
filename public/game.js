@@ -66,6 +66,7 @@ let mapReady = false; // ★重要：マップ読み込み完了フラグ
 
 function preload() {
     this.load.image('tiles', 'assets/tiles.png');
+    this.load.image('slimeSprite', 'assets/slime.png');
     // プレイヤー画像がない場合の生成処理はcreate内で行うのでここでは不要
     this.load.spritesheet('playerSprite', 'assets/player.png', { 
         frameWidth: 32,  // キャラクター1体の幅
@@ -847,35 +848,34 @@ function displayChatBubble(scene, sprite, text) {
     });
 }
 
+// game.js の createEnemy 関数を丸ごと置き換え
+
 function createEnemy(scene, enemyInfo) {
-    // 既に同じIDの敵がいたら作らない（重複防止）
     const existing = scene.enemies.getChildren().find(e => e.id === enemyInfo.id);
     if (existing) return;
 
-    // カカシの見た目（緑色の四角）
-    // 本来は画像 ('enemyTexture') をロードしますが、ここではGraphicsで生成
-    if (!scene.textures.exists('enemyTexture')) {
-        const graphics = scene.add.graphics();
-        graphics.fillStyle(0x00ff00, 1); // 緑色
-        graphics.fillRect(-16, -16, 32, 32);
-        graphics.generateTexture('enemyTexture', 32, 32);
-        graphics.destroy();
-    }
-
-    const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'enemyTexture');
+    // ★修正：画像 'enemySprite' を使ってスプライトを作成
+    const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'slimeSprite');
     enemy.id = enemyInfo.id;
-    enemy.setImmovable(true); // 押しても動かない
+
+    // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
+    // これで同じ画像でも「青いスライム」「赤いウルフ」を表現できます
+    enemy.setTint(enemyInfo.color);
+
+    enemy.setImmovable(true);
+    enemy.setDepth(10); // プレイヤーと同じ高さに
     enemy.hp = enemyInfo.hp;
 
-    // HP表示テキスト
-    const hpText = scene.add.text(enemyInfo.x, enemyInfo.y - 30, `HP: ${enemyInfo.hp}/${enemyInfo.maxHp}`, {
+    // HPテキストの表示（既存）
+    const hpText = scene.add.text(enemyInfo.x, enemyInfo.y - 40, `HP: ${enemyInfo.hp}/${enemyInfo.maxHp}`, {
         fontSize: '12px',
-        fill: '#ffffff'
+        fill: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 2
     }).setOrigin(0.5);
-    
+    hpText.setDepth(11);
     enemy.hpText = hpText;
 
-    // 敵が消えるときにテキストも消す
     enemy.on('destroy', () => {
         hpText.destroy();
     });
