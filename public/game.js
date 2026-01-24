@@ -565,7 +565,6 @@ function update() {
 
     const speed = 200;
     this.player.body.setVelocity(0);
-    this.cursors = this.input.keyboard.createCursorKeys();
 
     // 移動処理
     if (this.keys.left.isDown) this.player.body.setVelocityX(-speed);
@@ -580,19 +579,19 @@ function update() {
 
         let moving = false;
 
-        if (this.cursors.left.isDown) {
+        if (this.keys.left.isDown) {
             this.player.anims.play('left', true); // 左アニメ再生
             moving = true;
         } 
-        else if (this.cursors.right.isDown) {
+        else if (this.keys.right.isDown) {
             this.player.anims.play('right', true); // 右アニメ再生
             moving = true;
         } 
-        else if (this.cursors.up.isDown) {
+        else if (this.keys.up.isDown) {
             this.player.anims.play('up', true); // 上アニメ再生
             moving = true;
         } 
-        else if (this.cursors.down.isDown) {
+        else if (this.keys.down.isDown) {
             this.player.anims.play('down', true); // 下アニメ再生
             moving = true;
         }
