@@ -858,8 +858,8 @@ function createEnemy(scene, enemyInfo) {
     const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'enemySprite');
     enemy.id = enemyInfo.id
     enemy.setDisplaySize(128, 128);
-    enemy.body.setSize(32, 32);
-    enemy.body.setOffset(0, 1000);
+    enemy.body.setSize(128, 128);
+    enemy.body.setOffset(128, 256);
 
     // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
     // これで同じ画像でも「青いスライム」「赤いウルフ」を表現できます
