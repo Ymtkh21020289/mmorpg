@@ -617,9 +617,6 @@ function update() {
         pointer.worldX, 
         pointer.worldY
     );
-        
-    // プレイヤーの向きを更新
-    this.player.setRotation(angle);
 
     // 移動同期
     const x = this.player.x;
