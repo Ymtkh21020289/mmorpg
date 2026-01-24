@@ -67,12 +67,47 @@ let mapReady = false; // ★重要：マップ読み込み完了フラグ
 function preload() {
     this.load.image('tiles', 'assets/tiles.png');
     // プレイヤー画像がない場合の生成処理はcreate内で行うのでここでは不要
+    this.load.spritesheet('playerSprite', 'assets/player.png', { 
+        frameWidth: 32,  // キャラクター1体の幅
+        frameHeight: 32  // キャラクター1体の高さ
+    });
 }
 
 function create() {
     const self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
+
+    this.anims.create({
+        key: 'down',
+        frames: this.anims.generateFrameNumbers('playerSprite', { start: 0, end: 2 }),
+        frameRate: 10,
+        repeat: -1 // ループする
+    });
+
+    // 左向き (フレーム番号 3, 4, 5)
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('playerSprite', { start: 3, end: 5 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    // 右向き (フレーム番号 6, 7, 8)
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('playerSprite', { start: 6, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    // 上向き (フレーム番号 9, 10, 11)
+    this.anims.create({
+        key: 'up',
+        frames: this.anims.generateFrameNumbers('playerSprite', { start: 9, end: 11 }),
+        frameRate: 10,
+        repeat: -1
+    });
 
     // --- マップ作成関数 ---
 
@@ -539,6 +574,38 @@ function update() {
     if (this.keys.up.isDown) this.player.body.setVelocityY(-speed);
     else if (this.keys.down.isDown) this.player.body.setVelocityY(speed);
 
+    if (this.player) {
+        // 移動キーのチェック部分
+        // (既にサーバーへ入力を送るコードがあると思いますが、そこにアニメ再生を追加します)
+
+        let moving = false;
+
+        if (this.cursors.left.isDown) {
+            this.player.anims.play('left', true); // 左アニメ再生
+            moving = true;
+        } 
+        else if (this.cursors.right.isDown) {
+            this.player.anims.play('right', true); // 右アニメ再生
+            moving = true;
+        } 
+        else if (this.cursors.up.isDown) {
+            this.player.anims.play('up', true); // 上アニメ再生
+            moving = true;
+        } 
+        else if (this.cursors.down.isDown) {
+            this.player.anims.play('down', true); // 下アニメ再生
+            moving = true;
+        }
+
+        // キーを離したらアニメーションを止める
+        if (!moving) {
+            this.player.anims.stop();
+                
+            // 止まった時に、最初のフレーム（立ち姿）で止める小技
+            // 今のアニメーションの最初のフレームを表示
+            // this.player.setFrame(0); // もし常に正面を向かせたいならこれ
+        }
+    }
     // 回転処理
     // --- ★修正後（worldX, worldY を使う） ---
     // activePointerはマウスもタッチも両方対応できるので便利です
@@ -643,7 +710,8 @@ function addPlayer(self, playerInfo) {
         graphics.destroy();
     }
 
-    self.player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'playerTexture')
+    //self.player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'playerTexture')
+    self.player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'playerSprite');
         .setOrigin(0.5, 0.5).setDisplaySize(32, 32);
     // ★追加：プレイヤーは常に手前（10）に表示する
     self.player.setDepth(10);
@@ -708,7 +776,12 @@ function addOtherPlayers(self, playerInfo) {
         graphics.generateTexture('otherPlayerTexture', 32, 32);
         graphics.destroy();
     }
-    const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'otherPlayerTexture')
+    // --- 修正後 ---
+    // 他人は物理演算が不要なので単純な add.sprite でOK
+    const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'playerSprite');
+    
+    // 他人と区別するために、少し色を混ぜる（赤みがかかる）
+    otherPlayer.setTint(0xffaaaa);
         .setOrigin(0.5, 0.5).setDisplaySize(32, 32);
     self.otherPlayers.setDepth(10);
     // ★追加：他人の名前を表示
