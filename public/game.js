@@ -859,7 +859,7 @@ function createEnemy(scene, enemyInfo) {
     enemy.id = enemyInfo.id
     enemy.setDisplaySize(128, 128);
     enemy.body.setSize(128, 128);
-    enemy.body.setOffset(128, 256);
+    enemy.body.setOffset(192, 320);
 
     // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
     // これで同じ画像でも「青いスライム」「赤いウルフ」を表現できます
