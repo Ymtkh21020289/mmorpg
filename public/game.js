@@ -781,7 +781,7 @@ function addOtherPlayers(self, playerInfo) {
     const otherPlayer = self.add.sprite(playerInfo.x, playerInfo.y, 'playerSprite');
     
     // 他人と区別するために、少し色を混ぜる（赤みがかかる）
-    otherPlayer.setTint(0xffaaaa);
+    otherPlayer.setTint(0xffaaaa)
         .setOrigin(0.5, 0.5).setDisplaySize(32, 32);
     self.otherPlayers.setDepth(10);
     // ★追加：他人の名前を表示
