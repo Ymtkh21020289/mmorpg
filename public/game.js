@@ -66,7 +66,7 @@ let mapReady = false; // ★重要：マップ読み込み完了フラグ
 
 function preload() {
     this.load.image('tiles', 'assets/tiles.png');
-    this.load.image('slimeSprite', 'assets/slime.png');
+    this.load.image('enemySprite', 'assets/slime.png');
     // プレイヤー画像がない場合の生成処理はcreate内で行うのでここでは不要
     this.load.spritesheet('playerSprite', 'assets/player.png', { 
         frameWidth: 32,  // キャラクター1体の幅
@@ -855,7 +855,7 @@ function createEnemy(scene, enemyInfo) {
     if (existing) return;
 
     // ★修正：画像 'enemySprite' を使ってスプライトを作成
-    const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'slimeSprite');
+    const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'enemySprite');
     enemy.id = enemyInfo.id;
 
     // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
