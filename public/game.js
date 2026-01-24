@@ -711,7 +711,7 @@ function addPlayer(self, playerInfo) {
     }
 
     //self.player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'playerTexture')
-    self.player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'playerSprite');
+    self.player = self.physics.add.sprite(playerInfo.x, playerInfo.y, 'playerSprite')
         .setOrigin(0.5, 0.5).setDisplaySize(32, 32);
     // ★追加：プレイヤーは常に手前（10）に表示する
     self.player.setDepth(10);
