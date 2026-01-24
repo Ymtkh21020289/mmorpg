@@ -492,7 +492,7 @@ function create() {
         self.enemies.getChildren().forEach((enemySprite) => {
             if (enemySprite.id === updatedEnemy.id) {
                 // --- ★追加：座標の更新 ---
-                enemySprite.setPosition(updatedEnemy.body.center.x, updatedEnemy.body.center.y);
+                enemySprite.setPosition(updatedEnemy.x, updatedEnemy.y);
                 // -----------------------
 
                 // HPテキストもついてくるように更新
