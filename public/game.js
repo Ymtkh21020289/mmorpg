@@ -237,7 +237,7 @@ function create() {
         
         if (targetEnemy) {
             // その敵の場所にポップアップを出す
-            showDamagePopup(self, targetEnemy.x, targetEnemy.y, data.damage);
+            showDamagePopup(self, targetEnemy.center.x, targetEnemy.center.y, data.damage);
             
             targetEnemy.setTint(0xff0000);
             self.time.delayedCall(200, () => {
@@ -492,12 +492,12 @@ function create() {
         self.enemies.getChildren().forEach((enemySprite) => {
             if (enemySprite.id === updatedEnemy.id) {
                 // --- ★追加：座標の更新 ---
-                enemySprite.setPosition(updatedEnemy.x, updatedEnemy.y);
+                enemySprite.setPosition(updatedEnemy.center.x, updatedEnemy.center.y);
                 // -----------------------
 
                 // HPテキストもついてくるように更新
                 if (enemySprite.hpText) {
-                    enemySprite.hpText.setPosition(updatedEnemy.x, updatedEnemy.y - 30);
+                    enemySprite.hpText.setPosition(updatedEnemy.center.x, updatedEnemy.center.y - 30);
                 }
                 // HPを更新
                 enemySprite.hp = updatedEnemy.hp;
@@ -664,14 +664,14 @@ function update() {
         // 2. 近くの敵を探す
         this.enemies.getChildren().forEach((enemy) => {
             // A. 距離のチェック (80px以内まで届くように延長)
-            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.center.x, enemy.center.y);
             
             if (distance < 80) { // 以前は60でした
                 
                 // B. 角度のチェック（ここが新機能！）
                 
                 // 敵が「自分の位置から見てどの方角にいるか」を計算
-                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.center.x, enemy.center.y);
                 
                 // 「自分が向いている方向(rotation)」と「敵の方角」の差を計算
                 // Phaser.Math.Angle.Wrap は、角度のズレを -PI ～ +PI の範囲に綺麗に整えてくれる便利な関数です
