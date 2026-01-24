@@ -496,7 +496,7 @@ function create() {
                 // -----------------------
 
                 // HPテキストもついてくるように更新
-                if (enemySprite.hpText) {
+                if (enemySprite.body && enemySprite.hpText) {
                     enemySprite.hpText.setPosition(updatedEnemy.body.center.x, updatedEnemy.body.center.y - 30);
                 }
                 // HPを更新
