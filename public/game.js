@@ -565,6 +565,7 @@ function update() {
 
     const speed = 200;
     this.player.body.setVelocity(0);
+    this.cursors = this.input.keyboard.createCursorKeys();
 
     // 移動処理
     if (this.keys.left.isDown) this.player.body.setVelocityX(-speed);
