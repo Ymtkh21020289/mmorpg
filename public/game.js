@@ -856,7 +856,8 @@ function createEnemy(scene, enemyInfo) {
 
     // ★修正：画像 'enemySprite' を使ってスプライトを作成
     const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'enemySprite');
-    enemy.id = enemyInfo.id;
+    enemy.id = enemyInfo.id
+    enemy.setDisplaySize(32, 32);;
 
     // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
     // これで同じ画像でも「青いスライム」「赤いウルフ」を表現できます
