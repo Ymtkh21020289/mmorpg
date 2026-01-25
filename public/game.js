@@ -910,10 +910,6 @@ function createEnemy(scene, enemyInfo) {
             break;
     }
 
-    // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
-    // これで同じ画像でも「青いスライム」「赤いウルフ」を表現できます
-    enemy.setTint(enemyInfo.color);
-
     enemy.setImmovable(true);
     enemy.setDepth(10); // プレイヤーと同じ高さに
     enemy.hp = enemyInfo.hp;
