@@ -15,11 +15,11 @@ let projectileIdCounter = 0; // ID採番用
 // 1. 敵の種類ごとのステータス定義
 const ENEMY_TYPES = {
     // 既存のカカシ（とりあえずボス扱い）
-    kakashi: { hp: 100, maxHp: 100, exp: 0, speed: 0, color: 0x00ff00, respawnType: 'static' },
+    kakashi: { hp: 100, maxHp: 100, exp: 0, speed: 0, respawnType: 'static' },
     // 新しい敵：スライム（弱い、群れる、青い）
-    slime:   { hp: 30,  maxHp: 30,  exp: 10, speed: 1, color: 0x0000ff, respawnType: 'group' },
+    slime:   { hp: 30,  maxHp: 30,  exp: 10, speed: 1, respawnType: 'group' },
     // 新しい敵：ウルフ（強い、速い、赤い）
-    wolf:    { hp: 60,  maxHp: 60,  exp: 30, speed: 3, color: 0xff0000, respawnType: 'group' }
+    wolf:    { hp: 60,  maxHp: 60,  exp: 30, speed: 3, respawnType: 'group' }
 };
 
 // 2. 現在の敵リスト（初期状態は空にして、関数で生み出します）
@@ -56,7 +56,6 @@ function spawnGroup(spawner) {
             maxHp: template.maxHp,
             speed: template.speed,
             exp: template.exp,      // ★種類ごとの経験値
-            color: template.color,  // ★種類ごとの色
             spriteKey: spawner.spriteKey,
             room: spawner.room,
             isDead: false,
