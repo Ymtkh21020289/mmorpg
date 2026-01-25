@@ -66,7 +66,8 @@ let mapReady = false; // ★重要：マップ読み込み完了フラグ
 
 function preload() {
     this.load.image('tiles', 'assets/tiles.png');
-    this.load.image('enemySprite', 'assets/slime.png');
+    this.load.image('slimeSprite', 'assets/slime.png');
+    this.load.spritesheet('wolfSprite', 'assets/wolf.png');
     // プレイヤー画像がない場合の生成処理はcreate内で行うのでここでは不要
     this.load.spritesheet('playerSprite', 'assets/player.png', { 
         frameWidth: 32,  // キャラクター1体の幅
@@ -855,9 +856,26 @@ function createEnemy(scene, enemyInfo) {
     if (existing) return;
 
     // ★修正：画像 'enemySprite' を使ってスプライトを作成
-    const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'enemySprite');
+    const textureKey = enemyInfo.spriteKey || 'slimeSprite';
+    const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, textureKey);
     enemy.id = enemyInfo.id
-    enemy.setDisplaySize(32, 32);
+    switch (enemyInfo.spriteKey) {
+        case 'wolfSprite':
+            enemy.setDisplaySize(48, 48);
+            enemy.body.setSize(48, 48); // 当たり判定
+            break;
+            
+        case 'bossSprite':
+            enemy.setDisplaySize(128, 128); // めっちゃでかい
+            enemy.body.setSize(100, 100);
+            break;
+            
+        case 'slimeSprite':
+        default:
+            enemy.setDisplaySize(32, 32);
+            enemy.body.setSize(32, 32);
+            break;
+    }
 
     // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
     // これで同じ画像でも「青いスライム」「赤いウルフ」を表現できます
