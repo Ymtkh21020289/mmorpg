@@ -249,6 +249,7 @@ function create() {
                 otherPlayer.setPosition(playerInfo.x, playerInfo.y);
                 otherPlayer.setRotation(playerInfo.rotation);
                 otherPlayer.setPosition(playerInfo.x, playerInfo.y);
+                otherPlayer.lastUpdate = Date.now();
                 // ... 名前の追従 (既存) ...
                 if (otherPlayer.nameLabel) {
                     otherPlayer.nameLabel.setPosition(playerInfo.x, playerInfo.y - 30);
@@ -639,6 +640,23 @@ function update() {
             // 今のアニメーションの最初のフレームを表示
             // this.player.setFrame(0); // もし常に正面を向かせたいならこれ
         }
+    }
+    if (this.otherPlayers) {
+        const now = Date.now();
+
+        this.otherPlayers.getChildren().forEach(otherPlayer => {
+            // lastUpdate がまだ無い場合（作りたて）は無視
+            if (!otherPlayer.lastUpdate) return;
+
+            // 最後の通信から 200ミリ秒 (0.2秒) 以上経過していたら
+            if (now - otherPlayer.lastUpdate > 200) {
+                // アニメーションを止める
+                otherPlayer.anims.stop();
+                    
+                // オプション: 止まった時に棒立ち画像に戻すなら
+                // otherPlayer.setFrame(0); // 正面向きのフレーム番号（素材によります）
+            }
+        });
     }
     // 回転処理
     // --- ★修正後（worldX, worldY を使う） ---
