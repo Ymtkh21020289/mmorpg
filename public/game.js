@@ -214,6 +214,39 @@ function create() {
     this.socket.on('playerMoved', function (playerInfo) {
         self.otherPlayers.getChildren().forEach(function (otherPlayer) {
             if (playerInfo.playerId === otherPlayer.playerId) {
+                // 1. 移動する前の位置との差（どれくらい動いたか）を計算
+                const dx = playerInfo.x - otherPlayer.x;
+                const dy = playerInfo.y - otherPlayer.y;
+
+                // 2. 位置を更新（先に更新してしまうと差分が0になるので注意ですが、
+                //    PhaserのsetPositionは瞬時に反映されるため、
+                //    厳密には計算用の変数を分けるのがベストですが、簡易的には直前の計算でOKです）
+                // わずかなズレ（0.1以下）は無視して、大きく動いた方向のアニメを再生
+                if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                    // 横移動の方が大きい場合
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        if (dx > 0) {
+                            otherPlayer.anims.play('right', true);
+                        } else {
+                            otherPlayer.anims.play('left', true);
+                        }
+                    } 
+                    // 縦移動の方が大きい場合
+                    else {
+                        if (dy > 0) {
+                            otherPlayer.anims.play('down', true);
+                        } else {
+                            otherPlayer.anims.play('up', true);
+                        }
+                    }
+                } else {
+                    // ほとんど動いていない（止まった）場合はアニメ停止
+                    otherPlayer.anims.stop();
+                    // オプション: 止まった時に最初のフレーム（棒立ち）に戻すなら
+                    // otherPlayer.setFrame(0); 
+                }
+                // 3. 実際に位置を移動させる
+                otherPlayer.setPosition(playerInfo.x, playerInfo.y);
                 otherPlayer.setRotation(playerInfo.rotation);
                 otherPlayer.setPosition(playerInfo.x, playerInfo.y);
                 // ... 名前の追従 (既存) ...
