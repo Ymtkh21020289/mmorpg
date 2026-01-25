@@ -30,9 +30,9 @@ const spawners = [
     // カカシ（単体）
     { type: 'kakashi', x: 600, y: 400, count: 1, radius: 0, room: 'town' },
     // スライムの群れ（Townの左上、5匹、半径100pxに散らばる）
-    { type: 'slime',   x: 200, y: 200, count: 5, radius: 100, room: 'town' },
+    { type: 'slime',   x: 200, y: 200, count: 5, radius: 100, room: 'adventure', spriteKey: 'slimeSprite' },
     // ウルフの群れ（Adventureマップ、3匹）
-    { type: 'wolf',    x: 800, y: 800, count: 3, radius: 150, room: 'adventure' }
+    { type: 'wolf',    x: 400, y: 400, count: 3, radius: 150, room: 'adventure', spriteKey: 'wolfSprite'}
 ];
 
 // --- 関数：群れをスポーンさせる ---
@@ -57,6 +57,7 @@ function spawnGroup(spawner) {
             speed: template.speed,
             exp: template.exp,      // ★種類ごとの経験値
             color: template.color,  // ★種類ごとの色
+            spriteKey: spawner.spriteKey,
             room: spawner.room,
             isDead: false,
             spawnerIndex: spawners.indexOf(spawner), // どのスポーナー出身か覚えておく
