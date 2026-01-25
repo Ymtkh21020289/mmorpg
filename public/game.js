@@ -237,7 +237,7 @@ function create() {
         
         if (targetEnemy) {
             // その敵の場所にポップアップを出す
-            showDamagePopup(self, targetEnemy.body.center.x, targetEnemy.body.center.y, data.damage);
+            showDamagePopup(self, targetEnemy.x, targetEnemy.y, data.damage);
             
             targetEnemy.setTint(0xff0000);
             self.time.delayedCall(200, () => {
@@ -497,7 +497,7 @@ function create() {
 
                 // HPテキストもついてくるように更新
                 if (enemySprite.body && enemySprite.hpText) {
-                    enemySprite.hpText.setPosition(enemySprite.body.center.x, enemySprite.body.center.y - 30);
+                    enemySprite.hpText.setPosition(enemySprite.x, enemySprite.y - 30);
                 }
                 // HPを更新
                 enemySprite.hp = updatedEnemy.hp;
@@ -664,14 +664,14 @@ function update() {
         // 2. 近くの敵を探す
         this.enemies.getChildren().forEach((enemy) => {
             // A. 距離のチェック (80px以内まで届くように延長)
-            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.body.center.x, enemy.body.center.y);
+            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
             
             if (distance < 80) { // 以前は60でした
                 
                 // B. 角度のチェック（ここが新機能！）
                 
                 // 敵が「自分の位置から見てどの方角にいるか」を計算
-                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.body.center.x, enemy.body.center.y);
+                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
                 
                 // 「自分が向いている方向(rotation)」と「敵の方角」の差を計算
                 // Phaser.Math.Angle.Wrap は、角度のズレを -PI ～ +PI の範囲に綺麗に整えてくれる便利な関数です
@@ -857,9 +857,7 @@ function createEnemy(scene, enemyInfo) {
     // ★修正：画像 'enemySprite' を使ってスプライトを作成
     const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, 'enemySprite');
     enemy.id = enemyInfo.id
-    enemy.setDisplaySize(128, 128);
-    enemy.body.setSize(128, 128);
-    enemy.body.setOffset(176, 320);
+    enemy.setDisplaySize(32, 32);
 
     // ★重要：サーバーから指定された色(enemyInfo.color)を画像に重ねる
     // これで同じ画像でも「青いスライム」「赤いウルフ」を表現できます
