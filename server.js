@@ -241,9 +241,8 @@ setInterval(() => {
         Object.keys(players).forEach((id) => {
             const player = players[id];
             // 同じ部屋のプレイヤーのみ対象
-            if (!enemy.body) return;
             if (player.room === enemy.room) {
-                const dist = Math.sqrt((player.x - enemy.body.center.x) ** 2 + (player.y - enemy.body.center.y) ** 2);
+                const dist = Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2);
                 if (dist < minDistance) {
                     minDistance = dist;
                     nearestPlayer = player;
@@ -256,15 +255,14 @@ setInterval(() => {
             
             // A. 移動処理（距離が30より離れていたら追いかける）
             if (minDistance > 30) {
-                const angle = Math.atan2(nearestPlayer.y - enemy.body.center.y, nearestPlayer.x - enemy.body.center.x);
+                const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
                 enemy.x += Math.cos(angle) * enemy.speed;
                 enemy.y += Math.sin(angle) * enemy.speed;
             }
 
             // B. 攻撃判定処理（常にチェックする）
             // 移動後の位置で再計算
-            if (!enemy.body) return;
-            const distCurrent = Math.sqrt((nearestPlayer.x - enemy.body.center.x) ** 2 + (nearestPlayer.y - enemy.body.center.y) ** 2);
+            const distCurrent = Math.sqrt((nearestPlayer.x - enemy.x) ** 2 + (nearestPlayer.y - enemy.y) ** 2);
             
             // 距離40以内なら攻撃
             if (distCurrent < 40) {
@@ -318,7 +316,7 @@ setInterval(() => {
             if (enemy.room !== p.room || enemy.isDead) return;
 
             // 距離判定（当たり判定サイズ: 30px）
-            const dist = Math.sqrt((p.x - enemy.body.center.x) ** 2 + (p.y - enemy.body.center.y) ** 2);
+            const dist = Math.sqrt((p.x - enemy.x) ** 2 + (p.y - enemy.y) ** 2);
             
             if (dist < 30) {
                 // 命中！
