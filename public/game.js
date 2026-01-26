@@ -42,13 +42,28 @@ const mapData = {
 };
 
 const ITEMS = {
-    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc }, // 短い・弱い
-    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00 }, // 普通・普通
-    'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000 },
-    'slime_gel': { name: 'スライムゼリー', type: 'material' },
-    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material' },
-    'magic_stone': { name: '魔石', type: 'material' }
+    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc, price: 50 }, // 短い・弱い
+    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00, price: 200 }, // 普通・普通
+    'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000, price: 200 },
+    'great_sword': { name: 'スゴイ斧', type: 'weapon', damage: 40, range: 120, radius: 90, color: 0x00ffff, price: 500 },
+    'slime_gel': { name: 'スライムゼリー', type: 'material', price: 20 },
+    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 50 },
+    'magic_stone': { name: '魔石', type: 'material', price: 100 },
+    'potion': { name: 'ポーション', type: 'consumable', price: 50 }
 };
+
+const RECIPES = [
+    {
+        id: 'great_sword', 
+        materials: { 'wolf_fur': 5, 'magic_stone': 1 }, // 必要な素材と数
+        cost: 100 // 手数料
+    },
+    {
+        id: 'spear', 
+        materials: { 'slime_gel': 10, 'wood': 2 }, // woodは未実装ですが例として
+        cost: 50
+    }
+];
 
 const config = {
     type: Phaser.AUTO,
