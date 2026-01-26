@@ -1221,36 +1221,6 @@ function toggleInventory(scene, forceClose = false) {
     }
 }
 
-// データの見た目を更新
-function updateInventoryUI(scene) {
-    // お金更新
-    scene.goldText.setText(`Gold: ${scene.myGold}`);
-
-    // アイテム枠更新
-    for (let i = 0; i < 30; i++) {
-        const item = scene.myInventory[i];
-        const ui = scene.invSlots[i];
-
-        // 選択中のホットバーを光らせる
-        if (ui.isHotbar) {
-            if (i === scene.selectedSlot) ui.bg.setStrokeStyle(4, 0xffff00);
-            else ui.bg.setStrokeStyle(2, 0xffffff);
-        }
-
-        if (item) {
-            // アイテムがある場合
-            // 本来は ITEMS[item.id].name を参照したいが、クライアントにも定数が必要
-            // 簡易的にIDを表示するか、クライアントにもITEMS定義を持ってくる必要があります
-            ui.text.setText(item.id); 
-            ui.countText.setText(item.count > 1 ? item.count : '');
-        } else {
-            // 空の場合
-            ui.text.setText('');
-            ui.countText.setText('');
-        }
-    }
-}
-
 // ドラッグの代わりに「クリック＆クリック」で入れ替えるロジック
 // (holdingIndex: 今掴んでいるアイテムの元スロット番号)
 // game.js の handleSlotClick 関数を修正
