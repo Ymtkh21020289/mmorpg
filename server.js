@@ -160,7 +160,6 @@ io.on('connection', (socket) => {
         if (enemy && !enemy.isDead && player) {
             const sum = player.attackPower + data.damage
             enemy.hp -= sum;
-            console.log(`与えたダメージ:${sum}`);
             io.emit('enemyDamaged', { enemyId: data.enemyId, damage: sum });
 
             if (enemy.hp <= 0) {
