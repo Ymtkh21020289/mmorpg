@@ -22,8 +22,8 @@ const ITEMS = {
 };
 
 const DROP_TABLE = {
-    'slime_group': { money: 10, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.1 }] },
-    'wolf_group':  { money: 30, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.05 }] },
+    'slime': { money: 10, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.1 }] },
+    'wolf':  { money: 30, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.05 }] },
 };
 
 // 1. 敵の種類ごとのステータス定義
