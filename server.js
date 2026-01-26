@@ -154,13 +154,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('attackEnemy', (data) => {
-        let enemyId, damage;
-        const enemy = enemies[enemyId];
+        const enemy = enemies[data.enemyId];
         const player = players[socket.id];
 
         if (enemy && !enemy.isDead && player) {
-            enemy.hp -= player.attackPower + weapon.damage;
-            io.emit('enemyDamaged', { enemyId: enemyId, damage: player.attackPower });
+            enemy.hp -= player.attackPower + data.damage;
+            io.emit('enemyDamaged', { enemyId: enemyId, damage: player.attackPower + data.damage });
 
             if (enemy.hp <= 0) {
                 // ★たったこれだけでOK！
@@ -266,7 +265,7 @@ setInterval(() => {
             const distCurrent = Math.sqrt((nearestPlayer.x - enemy.x) ** 2 + (nearestPlayer.y - enemy.y) ** 2);
             
             // 距離40以内なら攻撃
-            if (distCurrent < 40) {
+            if (distCurrent < 30) {
                 const now = Date.now();
                 if (now - nearestPlayer.lastDamageTime > 1000) {
                     nearestPlayer.hp -= 10;
