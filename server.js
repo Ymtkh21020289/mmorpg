@@ -352,6 +352,39 @@ io.on('connection', (socket) => {
         // 更新通知
         io.to(socket.id).emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
     });
+    socket.on('sellItem', (slotIndex) => {
+        const player = players[socket.id];
+        if (!player) return;
+
+        // 指定された場所のアイテムを確認
+        const slotItem = player.inventory[slotIndex];
+        if (!slotItem) return; // 空っぽなら無視
+
+        const itemData = ITEMS[slotItem.id];
+        // データがない、または価格設定がない(0)アイテムは売れない
+        if (!itemData || !itemData.price) return;
+
+        // 売値の計算（買値の半分、端数切り捨て）
+        const sellPrice = Math.floor(itemData.price / 2);
+        
+        if (sellPrice <= 0) return; // 0Gなら売れない
+
+        // お金を追加
+        player.gold += sellPrice;
+
+        // アイテムを減らす（1個ずつ）
+        if (slotItem.count > 1) {
+            slotItem.count--;
+        } else {
+            player.inventory[slotIndex] = null; // なくなったら消す
+        }
+
+        // 更新通知
+        io.to(socket.id).emit('inventoryUpdate', { 
+            inventory: player.inventory, 
+            gold: player.gold 
+        });
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
