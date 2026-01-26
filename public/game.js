@@ -1086,15 +1086,59 @@ function createInventoryUI(scene) {
     updateInventoryUI(scene);
 }
 
+// game.js の updateInventoryUI 関数をこれに置き換えてください
+
 function updateInventoryUI(scene) {
-    // 全ての枠をチェックして、選ばれているものだけ色を変える
-    for (let i = 0; i < 3; i++) {
-        if (i === scene.selectedSlot) {
-            scene.uiSlots[i].setStrokeStyle(4, 0xffff00); // 太い黄色い枠
-            scene.uiSlots[i].setFillStyle(0x666666, 0.8); // 少し明るく
+    // お金の表示更新
+    scene.goldText.setText(`Gold: ${scene.myGold}`);
+
+    // 全てのスロットをループして見た目を更新
+    for (let i = 0; i < 30; i++) {
+        const item = scene.myInventory[i];
+        const ui = scene.invSlots[i];
+
+        // --- ★ここから：色と枠線の決定ロジック ---
+        
+        let bgColor = 0x000000;    // デフォルト背景：黒
+        let bgAlpha = 0.5;         // デフォルト透明度
+        let strokeColor = 0xffffff;// デフォルト枠線：白
+        let strokeWidth = 2;       // デフォルト枠線の太さ
+
+        // パターンA：今まさに「掴んでいる（ドラッグ中）」アイテムの場合
+        if (i === scene.holdingIndex) {
+            bgColor = 0x0000ff;    // 青色
+            bgAlpha = 0.8;
+        }
+        // パターンB：ホットバーで「手に持っている（装備中）」武器の場合
+        else if (ui.isHotbar && i === scene.selectedSlot) {
+            strokeColor = 0xffff00;// 黄色の枠
+            strokeWidth = 4;       // 太く
+            bgColor = 0x666666;    // 少し明るいグレー
+            bgAlpha = 0.8;
+        }
+        
+        // 決定したスタイルを適用（ここで強制的に色が上書きされます）
+        ui.bg.setFillStyle(bgColor, bgAlpha);
+        ui.bg.setStrokeStyle(strokeWidth, strokeColor);
+
+        // --- ★ここまで：色のロジック終了 ---
+
+
+        // テキストの更新処理（以前と同じ）
+        if (item) {
+            // アイテムがある場合
+            let itemName = item.id;
+            // もしITEMS定義がgame.jsにあれば名前を日本語で表示
+            if (typeof ITEMS !== 'undefined' && ITEMS[item.id]) {
+                itemName = ITEMS[item.id].name; 
+            }
+            
+            ui.text.setText(itemName);
+            ui.countText.setText(item.count > 1 ? item.count : '');
         } else {
-            scene.uiSlots[i].setStrokeStyle(2, 0xffffff); // 普通の白い枠
-            scene.uiSlots[i].setFillStyle(0x000000, 0.5); // 暗く
+            // 空の場合
+            ui.text.setText('');
+            ui.countText.setText('');
         }
     }
 }
