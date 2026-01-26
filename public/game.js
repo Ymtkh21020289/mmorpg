@@ -631,7 +631,9 @@ function create() {
     });
     
     this.input.mouse.disableContextMenu();
-    this.input.enableDebug(this.invContainer);
+    this.invSlots.forEach(slot => {
+        this.input.enableDebug(slot.bg);
+    });
 }
 
 function update() {
