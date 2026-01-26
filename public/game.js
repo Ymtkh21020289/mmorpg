@@ -49,7 +49,7 @@ const ITEMS = {
     'slime_gel': { name: 'スライムゼリー', type: 'material', price: 20 },
     'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 50 },
     'magic_stone': { name: '魔石', type: 'material', price: 100 },
-    'potion': { name: 'ポーション', type: 'consumable', price: 50 }
+    'potion': { name: 'ポーション', type: 'consumable', price: 50, heal: 50 }
 };
 
 const RECIPES = [
