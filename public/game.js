@@ -1356,6 +1356,8 @@ function createShopUI(scene) {
 
         // ボタン背景
         const btn = scene.add.rectangle(370, y, 240, 50, 0x442200).setInteractive({ useHandCursor: true });
+
+        btn.setScrollFactor(0);
         
         // 商品名
         const nameText = scene.add.text(370, y - 10, `作る: ${resultItem.name}`, { fontSize: '14px', fill: '#ffaa00' }).setOrigin(0.5);
