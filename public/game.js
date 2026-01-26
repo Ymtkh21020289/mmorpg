@@ -1137,25 +1137,27 @@ function createSlot(scene, index, x, y, isHotbar) {
     const bg = scene.add.rectangle(x, y, slotSize, slotSize, 0x000000, 0.5);
     bg.setStrokeStyle(2, 0xffffff);
     
-    // アイテム名（簡易表示）
+    // ★修正A：カーソルを手の形にする（これで「押せる」かどうかが分かります）
+    bg.setInteractive({ useHandCursor: true });
+
+    // アイテム名
     const text = scene.add.text(x, y, '', { fontSize: '10px', fill: '#fff' }).setOrigin(0.5);
     
-    // 個数表示（右下）
+    // 個数表示
     const countText = scene.add.text(x + slotSize/2 - 5, y + slotSize/2 - 5, '', { fontSize: '10px', fill: '#ff0' }).setOrigin(1, 1);
 
-    // インタラクティブ設定（ドラッグ＆ドロップ用）
-    bg.setInteractive();
+    // ★修正B：コンテナに追加
+    // 重要：textがクリックを吸わないようにbgを明確にターゲットにする
+    scene.invContainer.add([bg, text, countText]);
+    
+    // スロット情報を保存
+    scene.invSlots[index] = { bg, text, countText, x, y, isHotbar };
 
-    // クリックイベント
+    // ★修正C：クリックイベントにログを仕込む
     bg.on('pointerdown', () => {
+        console.log(`Slot ${index} clicked!`); // これがコンソールに出るか確認
         handleSlotClick(scene, index);
     });
-    
-    // スロット情報を保存（後で更新するため）
-    scene.invSlots[index] = { bg, text, countText, x, y, isHotbar };
-    
-    // コンテナに追加
-    scene.invContainer.add([bg, text, countText]);
 }
 
 // Eキーでの開閉
