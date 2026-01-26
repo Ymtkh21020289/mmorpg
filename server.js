@@ -13,19 +13,22 @@ let projectiles = {}; // ★追加：発射された魔法弾リスト
 let projectileIdCounter = 0; // ID採番用
 
 const ITEMS = {
-    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc, price: 50 }, // 短い・弱い
-    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00, price: 200 }, // 普通・普通
+    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc, price: 20 }, // 短い・弱い
+    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00, price: 100 }, // 普通・普通
     'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000, price: 200 },
-    'great_sword': { name: 'スゴイ斧', type: 'weapon', damage: 40, range: 120, radius: 90, color: 0x00ffff, price: 500 },
-    'slime_gel': { name: 'スライムゼリー', type: 'material', price: 20 },
-    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 50 },
-    'magic_stone': { name: '魔石', type: 'material', price: 100 },
+    'great_axe': { name: 'スゴイ斧', type: 'weapon', damage: 40, range: 120, radius: 90, color: 0x00ffff, price: 500 },
+    'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', damage: 40, range: 10, radius: 150, color: 0x00ffff, price: 1000 },
+    'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2 },
+    'slime_heart': { name: 'スライムの心', type: 'material', price: 100 },
+    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 5 },
+    'wolf_heart':  { name: 'オオカミの心', type: 'material', price: 200 },
+    'magic_stone': { name: '魔石', type: 'material', price: 10 },
     'potion': { name: 'ポーション', type: 'consumable', price: 50, heal: 50 }
 };
 
 const RECIPES = [
     {
-        id: 'great_sword', 
+        id: 'great_axe', 
         materials: { 'wolf_fur': 5, 'magic_stone': 1 }, // 必要な素材と数
         cost: 100 // 手数料
     },
@@ -33,12 +36,17 @@ const RECIPES = [
         id: 'spear', 
         materials: { 'slime_gel': 10, 'wood': 2 }, // woodは未実装ですが例として
         cost: 50
+    },
+    {
+        id: 'wonder_spear', 
+        materials: { 'slime_heart': 1, 'wolf_heart': 1 }, // woodは未実装ですが例として
+        cost: 300
     }
 ];
 
 const DROP_TABLE = {
-    'slime': { money: 10, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.1 }, { id: 'magic_stone', rate: 0.1 }] },
-    'wolf':  { money: 30, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.05 }, { id: 'magic_stone', rate: 0.1 }] },
+    'slime': { money: 4, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.1 }, { id: 'magic_stone', rate: 0.1 }, { id: 'slime_heart', rate: 0.01}] },
+    'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.05 }, { id: 'magic_stone', rate: 0.1 }, { id: 'wolf_heart', rate: 0.01}] },
 };
 
 // 1. 敵の種類ごとのステータス定義
