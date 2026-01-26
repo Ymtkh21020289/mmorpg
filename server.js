@@ -158,8 +158,9 @@ io.on('connection', (socket) => {
         const player = players[socket.id];
 
         if (enemy && !enemy.isDead && player) {
-            enemy.hp -= player.attackPower + data.damage;
-            io.emit('enemyDamaged', { enemyId: enemyId, damage: player.attackPower + data.damage });
+            const sum = player.attackPower + data.damage
+            enemy.hp -= sum;
+            io.emit('enemyDamaged', { enemyId: enemyId, damage: sum });
 
             if (enemy.hp <= 0) {
                 // ★たったこれだけでOK！
