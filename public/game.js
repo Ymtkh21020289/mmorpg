@@ -1312,6 +1312,8 @@ function createShopUI(scene) {
     const bg = scene.add.rectangle(250, 200, 500, 400, 0x000000, 0.9);
     bg.setStrokeStyle(4, 0x884400); // 茶色の枠
     bg.setInteractive(); // クリックが後ろに抜けないように
+    // ★追加：背景の当たり判定を画面固定にする
+    bg.setScrollFactor(0);
     scene.shopContainer.add(bg);
 
     const title = scene.add.text(250, 30, '=== 鍛冶屋 (Bキーで閉じる) ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
