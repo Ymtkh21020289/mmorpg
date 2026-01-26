@@ -412,6 +412,15 @@ function create() {
     // UIを描画する関数を呼ぶ（後で作ります）
     createInventoryUI(this);
 
+    // 鍛冶屋UI作成
+    createShopUI(this);
+
+    // Bキーで鍛冶屋を開く
+    this.input.keyboard.on('keydown-B', () => {
+        this.isShopOpen = !this.isShopOpen;
+        this.shopContainer.setVisible(this.isShopOpen);
+    });
+
     // キーボード入力の設定（1, 2, 3キー）
     this.input.keyboard.on('keydown-ONE', () => selectWeapon(this, 0));
     this.input.keyboard.on('keydown-TWO', () => selectWeapon(this, 1));
@@ -1276,4 +1285,70 @@ function handleSlotClick(scene, index) {
         // レスポンスをよくするためにここで一旦色だけ戻します
         updateInventoryUI(scene);
     }
+}
+
+function createShopUI(scene) {
+    scene.isShopOpen = false;
+    
+    // 背景（画面中央）
+    scene.shopContainer = scene.add.container(150, 100).setScrollFactor(0).setDepth(200);
+    scene.shopContainer.setVisible(false);
+
+    const bg = scene.add.rectangle(250, 200, 500, 400, 0x000000, 0.9);
+    bg.setStrokeStyle(4, 0x884400); // 茶色の枠
+    bg.setInteractive(); // クリックが後ろに抜けないように
+    scene.shopContainer.add(bg);
+
+    const title = scene.add.text(250, 30, '=== 鍛冶屋 (Bキーで閉じる) ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
+    scene.shopContainer.add(title);
+
+    // --- 左側：ショップ（購入） ---
+    scene.shopContainer.add(scene.add.text(50, 70, '【購入】', { fill: '#00ff00' }));
+    
+    const shopItems = ['potion', 'sword']; // 売っているものリスト
+    
+    shopItems.forEach((id, index) => {
+        const item = ITEMS[id];
+        const y = 100 + index * 40;
+        
+        // ボタン背景
+        const btn = scene.add.rectangle(120, y, 140, 30, 0x333333).setInteractive({ useHandCursor: true });
+        const text = scene.add.text(120, y, `${item.name} (${item.price}G)`, { fontSize: '12px' }).setOrigin(0.5);
+        
+        btn.on('pointerdown', () => {
+            scene.socket.emit('buyItem', id);
+        });
+
+        scene.shopContainer.add([btn, text]);
+    });
+
+
+    // --- 右側：クラフト（作成） ---
+    scene.shopContainer.add(scene.add.text(300, 70, '【クラフト】', { fill: '#00ffff' }));
+
+    RECIPES.forEach((recipe, index) => {
+        const resultItem = ITEMS[recipe.id];
+        const y = 100 + index * 60; // 少し広めに
+
+        // レシピの説明文を作成
+        let reqText = '';
+        for (const [matId, count] of Object.entries(recipe.materials)) {
+            const matName = ITEMS[matId] ? ITEMS[matId].name : matId;
+            reqText += `${matName}x${count} `;
+        }
+
+        // ボタン背景
+        const btn = scene.add.rectangle(370, y, 240, 50, 0x442200).setInteractive({ useHandCursor: true });
+        
+        // 商品名
+        const nameText = scene.add.text(370, y - 10, `作る: ${resultItem.name}`, { fontSize: '14px', fill: '#ffaa00' }).setOrigin(0.5);
+        // 素材表示
+        const matText = scene.add.text(370, y + 10, `必要: ${reqText}\n費用: ${recipe.cost}G`, { fontSize: '10px', fill: '#ccc' }).setOrigin(0.5);
+
+        btn.on('pointerdown', () => {
+            scene.socket.emit('craftItem', index);
+        });
+
+        scene.shopContainer.add([btn, nameText, matText]);
+    });
 }
