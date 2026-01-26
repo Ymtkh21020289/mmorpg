@@ -1026,12 +1026,12 @@ function showDamagePopup(scene, x, y, damage) {
     });
 }
 
-function selectWeapon(index) {
+selectWeapon(index) {
     this.selectedSlot = index;
     this.updateInventoryUI(); // 見た目を更新
 }
 
-function createInventoryUI() {
+createInventoryUI() {
     this.uiContainer = this.add.container(400, 550); // 画面下中央あたり
     this.uiSlots = []; // 枠の画像を入れておく配列
     this.uiTexts = []; // 文字を入れておく配列
@@ -1061,7 +1061,7 @@ function createInventoryUI() {
     this.updateInventoryUI();
 }
 
-function updateInventoryUI() {
+updateInventoryUI() {
     // 全ての枠をチェックして、選ばれているものだけ色を変える
     for (let i = 0; i < 3; i++) {
         if (i === this.selectedSlot) {
