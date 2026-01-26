@@ -138,6 +138,11 @@ io.on('connection', (socket) => {
 
     socket.emit('currentEnemies', enemies);
 
+    socket.emit('inventoryUpdate', {
+        inventory: players[socket.id].inventory,
+        gold: players[socket.id].gold
+    });
+
     // メッセージを受け取る
     socket.on('chatMessage', function (message) {
         console.log(`チャット受信: ${socket.id} -> ${message}`);
