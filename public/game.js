@@ -379,11 +379,23 @@ function create() {
         }
     });
 
-    this.inventory = [
-        { name: 'ダガー',   damage: 0, range: 45, radius: 60, color: 0xcccccc }, // 短い・弱い
-        { name: 'ソード',   damage: 10, range: 75, radius: 80, color: 0xffff00 }, // 普通・普通
-        { name: 'スピア',   damage: 5, range: 15, radius: 120, color: 0xff0000 }  // 長い・そこそこ
-    ];
+    // 自分のインベントリデータ（初期状態）
+    this.myInventory = Array(30).fill(null);
+    this.myGold = 0;
+    this.isInventoryOpen = false; // 開いているかどうか
+
+    // インベントリUI作成
+    createInventoryUI(this);
+
+    // ★Eキーで開閉
+    this.input.keyboard.on('keydown-E', () => toggleInventory(this));
+
+    // サーバーからのインベントリ更新を受け取る
+    this.socket.on('inventoryUpdate', (data) => {
+        this.myInventory = data.inventory;
+        this.myGold = data.gold;
+        updateInventoryUI(this); // 見た目を更新
+    });
 
     // 現在選択されている武器の番号（0:ダガー, 1:ソード, 2:スピア）
     this.selectedSlot = 0;
@@ -724,7 +736,11 @@ function update() {
     }
 
     if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
-        const weapon = this.inventory[this.selectedSlot];
+        const slotItem = this.myInventory[this.selectedSlot];
+        let weapon = { damage: 0, range: 30, radius: 40, color: 0xffffff }; // 素手
+        if (slotItem && ITEMS[slotItem.id] && ITEMS[slotItem.id].type === 'weapon') {
+            weapon = ITEMS[slotItem.id];
+        }
         this.lastAttackTime = Date.now();
         
         // 1. 斬撃エフェクトを出す
@@ -1071,5 +1087,138 @@ function updateInventoryUI(scene) {
             scene.uiSlots[i].setStrokeStyle(2, 0xffffff); // 普通の白い枠
             scene.uiSlots[i].setFillStyle(0x000000, 0.5); // 暗く
         }
+    }
+}
+
+// ■ UI作成関数（game.jsの末尾に追加・修正）
+
+function createInventoryUI(scene) {
+    scene.invContainer = scene.add.container(0, 0).setScrollFactor(0).setDepth(100);
+    scene.invSlots = []; // 画像やテキストを管理する配列
+
+    // 1. ホットバー (画面下部, ID: 0, 1, 2)
+    for (let i = 0; i < 3; i++) {
+        createSlot(scene, i, 400 + (i - 1) * 60, 550, true);
+    }
+
+    // 2. メインインベントリ (画面中央, ID: 3 ~ 29)
+    // 9列 x 3行
+    const startX = 220;
+    const startY = 150;
+    for (let i = 0; i < 27; i++) {
+        const col = i % 9;
+        const row = Math.floor(i / 9);
+        // IDは 3 からスタート
+        createSlot(scene, 3 + i, startX + col * 50, startY + row * 50, false);
+    }
+
+    // 3. お金表示
+    scene.goldText = scene.add.text(20, 20, 'Gold: 0', { fontSize: '16px', fill: '#ffd700' })
+        .setScrollFactor(0).setDepth(100);
+
+    // 初期状態ではメインインベントリ（ID >= 3）を隠す
+    toggleInventory(scene, true); // 強制的に閉じる処理を呼ぶ
+}
+
+// 1つのスロットを作るヘルパー関数
+function createSlot(scene, index, x, y, isHotbar) {
+    const slotSize = isHotbar ? 50 : 40;
+    
+    // 背景
+    const bg = scene.add.rectangle(x, y, slotSize, slotSize, 0x000000, 0.5);
+    bg.setStrokeStyle(2, 0xffffff);
+    
+    // アイテム名（簡易表示）
+    const text = scene.add.text(x, y, '', { fontSize: '10px', fill: '#fff' }).setOrigin(0.5);
+    
+    // 個数表示（右下）
+    const countText = scene.add.text(x + slotSize/2 - 5, y + slotSize/2 - 5, '', { fontSize: '10px', fill: '#ff0' }).setOrigin(1, 1);
+
+    // インタラクティブ設定（ドラッグ＆ドロップ用）
+    bg.setInteractive();
+
+    // クリックイベント
+    bg.on('pointerdown', () => {
+        handleSlotClick(scene, index);
+    });
+    
+    // スロット情報を保存（後で更新するため）
+    scene.invSlots[index] = { bg, text, countText, x, y, isHotbar };
+    
+    // コンテナに追加
+    scene.invContainer.add([bg, text, countText]);
+}
+
+// Eキーでの開閉
+function toggleInventory(scene, forceClose = false) {
+    if (forceClose) {
+        scene.isInventoryOpen = false;
+    } else {
+        scene.isInventoryOpen = !scene.isInventoryOpen;
+    }
+
+    // Slot 3以上（メインインベントリ）の表示/非表示を切り替え
+    for (let i = 3; i < 30; i++) {
+        const slot = scene.invSlots[i];
+        slot.bg.visible = scene.isInventoryOpen;
+        slot.text.visible = scene.isInventoryOpen;
+        slot.countText.visible = scene.isInventoryOpen;
+    }
+}
+
+// データの見た目を更新
+function updateInventoryUI(scene) {
+    // お金更新
+    scene.goldText.setText(`Gold: ${scene.myGold}`);
+
+    // アイテム枠更新
+    for (let i = 0; i < 30; i++) {
+        const item = scene.myInventory[i];
+        const ui = scene.invSlots[i];
+
+        // 選択中のホットバーを光らせる
+        if (ui.isHotbar) {
+            if (i === scene.selectedSlot) ui.bg.setStrokeStyle(4, 0xffff00);
+            else ui.bg.setStrokeStyle(2, 0xffffff);
+        }
+
+        if (item) {
+            // アイテムがある場合
+            // 本来は ITEMS[item.id].name を参照したいが、クライアントにも定数が必要
+            // 簡易的にIDを表示するか、クライアントにもITEMS定義を持ってくる必要があります
+            ui.text.setText(item.id); 
+            ui.countText.setText(item.count > 1 ? item.count : '');
+        } else {
+            // 空の場合
+            ui.text.setText('');
+            ui.countText.setText('');
+        }
+    }
+}
+
+// ドラッグの代わりに「クリック＆クリック」で入れ替えるロジック
+// (holdingIndex: 今掴んでいるアイテムの元スロット番号)
+function handleSlotClick(scene, index) {
+    // インベントリが閉じていて、かつホットバーじゃない場所をクリックしたら無視
+    if (!scene.isInventoryOpen && index >= 3) return;
+
+    if (scene.holdingIndex === undefined || scene.holdingIndex === null) {
+        // 1. 何も持っていない時 -> アイテムがあれば掴む
+        if (scene.myInventory[index]) {
+            scene.holdingIndex = index;
+            // 視覚的に「掴んでいる」ことを表現（色を変えるなど）
+            scene.invSlots[index].bg.setFillStyle(0x5555ff, 0.8);
+        }
+    } else {
+        // 2. 何かを持っている時 -> 今の場所と入れ替える
+        const fromIndex = scene.holdingIndex;
+        const toIndex = index;
+
+        // サーバーに入れ替えを依頼
+        scene.socket.emit('swapInventory', { from: fromIndex, to: toIndex });
+
+        // 選択解除
+        scene.holdingIndex = null;
+        updateInventoryUI(scene); // 色を元に戻すために更新
     }
 }
