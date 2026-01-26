@@ -41,6 +41,18 @@ const mapData = {
     ]
 };
 
+const ITEMS = {
+    // 武器
+    'dagger': { name: 'ダガー', type: 'weapon', damage: 10, range: 30, color: 0xcccccc },
+    'sword':  { name: 'ソード', type: 'weapon', damage: 20, range: 50, color: 0xffff00 },
+    'spear':  { name: 'スピア', type: 'weapon', damage: 15, range: 90, color: 0xff0000 },
+    
+    // 素材
+    'slime_gel': { name: 'スライムゼリー', type: 'material' },
+    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material' },
+    'magic_stone': { name: '魔石', type: 'material' }
+};
+
 const config = {
     type: Phaser.AUTO,
     parent: 'game-container',
