@@ -12,6 +12,20 @@ let players = {};
 let projectiles = {}; // ★追加：発射された魔法弾リスト
 let projectileIdCounter = 0; // ID採番用
 
+const ITEMS = {
+    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc }, // 短い・弱い
+    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00 }, // 普通・普通
+    'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000 },
+    'slime_gel': { name: 'スライムゼリー', type: 'material' },
+    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material' },
+    'magic_stone': { name: '魔石', type: 'material' }
+};
+
+const DROP_TABLE = {
+    'slime_group': { money: 10, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.1 }] },
+    'wolf_group':  { money: 30, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.05 }] },
+};
+
 // 1. 敵の種類ごとのステータス定義
 const ENEMY_TYPES = {
     // 既存のカカシ（とりあえずボス扱い）
@@ -90,7 +104,14 @@ io.on('connection', (socket) => {
         maxExp: 100,   // 次のレベルまでに必要な経験値
         attackPower: 10, // 今の攻撃力
         mp: 50,
-        maxMp: 50
+        maxMp: 50,
+        inventory: [
+            { id: 'dagger', count: 1 }, // Slot 0
+            { id: 'sword', count: 1 },  // Slot 1
+            { id: 'spear', count: 1 },  // Slot 2
+            ...Array(27).fill(null)     // Slot 3~29 は空
+        ],
+        gold: 0 // お金
     };
 
     // ★Socket.ioの「town」という部屋に参加させる
@@ -371,6 +392,22 @@ function handleEnemyDeath(enemy, player) {
     // 1. 経験値とレベルアップ処理
     const expGain = enemy.exp;
     player.exp += expGain;
+    if (enemy.respawnType === 'group') {
+        const targetSpawnerIndex = enemy.spawnerIndex;
+        const spawner = spawners[targetSpawnerIndex];
+        const table = DROP_TABLE[spawner.type];
+        const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
+        player.gold += moneyEarned;
+        table.items.forEach(drop => {
+            if (Math.random() < drop.rate) { // 確率判定
+                addItemToInventory(player, drop.id, 1);
+            }
+        });
+        io.to(playerId).emit('inventoryUpdate', { 
+            inventory: player.inventory, 
+            gold: player.gold 
+        });
+    }
 
     if (player.exp >= player.maxExp) {
         player.level++;
@@ -406,9 +443,6 @@ function handleEnemyDeath(enemy, player) {
         // B. 群れタイプ
         io.emit('removeEnemy', enemy.id);
         
-        const targetSpawnerIndex = enemy.spawnerIndex;
-        const spawner = spawners[targetSpawnerIndex];
-        
         // 削除
         delete enemies[enemy.id];
 
@@ -422,6 +456,39 @@ function handleEnemyDeath(enemy, player) {
                     spawnGroup(spawners[targetSpawnerIndex]);
                 }
             }, 10000);
+        }
+    }
+}
+
+// アイテムをカバンに入れる関数（スタック処理含む）
+function addItemToInventory(player, itemId, amount) {
+    const itemData = ITEMS[itemId];
+    if (!itemData) return;
+
+    // 素材なら、まずスタックできる場所を探す
+    if (itemData.type === 'material') {
+        const stackSlot = player.inventory.find(slot => 
+            slot && slot.id === itemId && slot.count < 1000
+        );
+        
+        if (stackSlot) {
+            // スタック可能なら追加（1000個制限）
+            const addable = Math.min(amount, 1000 - stackSlot.count);
+            stackSlot.count += addable;
+            amount -= addable;
+        }
+    }
+
+    // まだ残っている、または武器なら空きスロットを探す
+    if (amount > 0) {
+        // 空いているスロットのインデックスを探す
+        const emptyIndex = player.inventory.findIndex(slot => slot === null);
+        
+        if (emptyIndex !== -1) {
+            player.inventory[emptyIndex] = { id: itemId, count: amount };
+        } else {
+            // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
+            console.log("Inventory full!");
         }
     }
 }
