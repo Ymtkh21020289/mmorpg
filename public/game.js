@@ -1182,6 +1182,8 @@ function createSlot(scene, index, x, y, isHotbar) {
     
     // 背景
     const bg = scene.add.rectangle(x, y, slotSize, slotSize, 0x000000, 0.5);
+    bg.setScrollFactor(0);
+
     bg.setStrokeStyle(2, 0xffffff);
     
     // ★修正A：カーソルを手の形にする（これで「押せる」かどうかが分かります）
