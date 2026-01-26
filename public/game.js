@@ -380,9 +380,9 @@ function create() {
     });
 
     this.inventory = [
-        { name: 'ダガー',   damage: 0, range: 45, radius: 40, color: 0xcccccc }, // 短い・弱い
-        { name: 'ソード',   damage: 10, range: 75, radius: 60, color: 0xffff00 }, // 普通・普通
-        { name: 'スピア',   damage: 5, range: 15, radius: 90, color: 0xff0000 }  // 長い・そこそこ
+        { name: 'ダガー',   damage: 0, range: 45, radius: 60, color: 0xcccccc }, // 短い・弱い
+        { name: 'ソード',   damage: 10, range: 75, radius: 80, color: 0xffff00 }, // 普通・普通
+        { name: 'スピア',   damage: 5, range: 15, radius: 120, color: 0xff0000 }  // 長い・そこそこ
     ];
 
     // 現在選択されている武器の番号（0:ダガー, 1:ソード, 2:スピア）
