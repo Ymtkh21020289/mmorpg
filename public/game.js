@@ -1209,27 +1209,54 @@ function updateInventoryUI(scene) {
 
 // ドラッグの代わりに「クリック＆クリック」で入れ替えるロジック
 // (holdingIndex: 今掴んでいるアイテムの元スロット番号)
+// game.js の handleSlotClick 関数を修正
+
 function handleSlotClick(scene, index) {
-    // インベントリが閉じていて、かつホットバーじゃない場所をクリックしたら無視
+    // 1. 変数が未定義なら初期化（安全策）
+    if (scene.holdingIndex === undefined) scene.holdingIndex = null;
+
+    // 2. インベントリが閉じていて、かつホットバー以外をクリックしたら無視
     if (!scene.isInventoryOpen && index >= 3) return;
 
-    if (scene.holdingIndex === undefined || scene.holdingIndex === null) {
-        // 1. 何も持っていない時 -> アイテムがあれば掴む
-        if (scene.myInventory[index]) {
+    // 現在のアイテムデータ
+    const item = scene.myInventory[index];
+    console.log(`Slot data:`, item); // デバッグ用
+
+    // ■ ケースA：まだ何も掴んでいない時
+    if (scene.holdingIndex === null) {
+        // アイテムがある場合のみ掴める
+        if (item) {
             scene.holdingIndex = index;
-            // 視覚的に「掴んでいる」ことを表現（色を変えるなど）
-            scene.invSlots[index].bg.setFillStyle(0x5555ff, 0.8);
+            console.log(`Grabbed item at ${index}`);
+            
+            // ★視覚効果：掴んだ場所を「青色」にする
+            scene.invSlots[index].bg.setFillStyle(0x0000ff, 1); 
+        } else {
+            console.log("Empty slot, cannot grab.");
         }
-    } else {
-        // 2. 何かを持っている時 -> 今の場所と入れ替える
+    } 
+    // ■ ケースB：すでに何かを掴んでいる時（入れ替え or キャンセル）
+    else {
         const fromIndex = scene.holdingIndex;
         const toIndex = index;
 
-        // サーバーに入れ替えを依頼
+        // 同じ場所をクリックしたらキャンセル（選択解除）
+        if (fromIndex === toIndex) {
+            console.log("Cancelled selection.");
+            scene.holdingIndex = null;
+            updateInventoryUI(scene); // 色を元に戻す
+            return;
+        }
+
+        // 違う場所ならサーバーに入れ替え依頼
+        console.log(`Swapping ${fromIndex} with ${toIndex}`);
         scene.socket.emit('swapInventory', { from: fromIndex, to: toIndex });
 
-        // 選択解除
+        // 選択状態を解除
         scene.holdingIndex = null;
-        updateInventoryUI(scene); // 色を元に戻すために更新
+        
+        // UI更新はサーバーからの返信(inventoryUpdate)を待っても良いですが、
+        // レスポンスをよくするためにここで一旦色だけ戻します
+        updateInventoryUI(scene);
     }
 }
