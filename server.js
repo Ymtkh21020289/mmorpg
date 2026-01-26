@@ -461,6 +461,8 @@ function handleEnemyDeath(enemy, player) {
         io.emit('updateEnemy', enemy); 
 
     } else {
+        const targetSpawnerIndex = enemy.spawnerIndex;
+        const spawner = spawners[targetSpawnerIndex];
         // B. 群れタイプ
         io.emit('removeEnemy', enemy.id);
         
