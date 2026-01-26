@@ -389,12 +389,12 @@ function create() {
     this.selectedSlot = 0;
 
     // UIを描画する関数を呼ぶ（後で作ります）
-    this.createInventoryUI();
+    createInventoryUI(this);
 
     // キーボード入力の設定（1, 2, 3キー）
-    this.input.keyboard.on('keydown-ONE', () => this.selectWeapon(0));
-    this.input.keyboard.on('keydown-TWO', () => this.selectWeapon(1));
-    this.input.keyboard.on('keydown-THREE', () => this.selectWeapon(2));
+    this.input.keyboard.on('keydown-ONE', () => selectWeapon(this, 0));
+    this.input.keyboard.on('keydown-TWO', () => selectWeapon(this, 1));
+    this.input.keyboard.on('keydown-THREE', () => selectWeapon(this, 2));
     
     // --- リスポーン（死亡→復活）処理 ---
     // create関数内：playerRespawn の受信
@@ -1026,50 +1026,50 @@ function showDamagePopup(scene, x, y, damage) {
     });
 }
 
-selectWeapon(index) {
-    this.selectedSlot = index;
-    this.updateInventoryUI(); // 見た目を更新
+function selectWeapon(scene, index) {
+    scene.selectedSlot = index;
+    updateInventoryUI(scene); // 見た目を更新
 }
 
-createInventoryUI() {
-    this.uiContainer = this.add.container(400, 550); // 画面下中央あたり
-    this.uiSlots = []; // 枠の画像を入れておく配列
-    this.uiTexts = []; // 文字を入れておく配列
+function createInventoryUI(scene) {
+    scene.uiContainer = scene.add.container(400, 550); // 画面下中央あたり
+    scene.uiSlots = []; // 枠の画像を入れておく配列
+    scene.uiTexts = []; // 文字を入れておく配列
 
     // 3つの枠を作るループ
     for (let i = 0; i < 3; i++) {
         // 枠の背景
-        const slot = this.add.rectangle(i * 60 - 60, 0, 50, 50, 0x000000, 0.5);
+        const slot = scene.add.rectangle(i * 60 - 60, 0, 50, 50, 0x000000, 0.5);
         slot.setStrokeStyle(2, 0xffffff);
-        this.uiContainer.add(slot);
-        this.uiSlots.push(slot);
+        scene.uiContainer.add(slot);
+        scene.uiSlots.push(slot);
 
         // 武器の名前（本来はアイコン画像がいいですが、今は文字で）
-        const text = this.add.text(i * 60 - 60, 0, this.inventory[i].name, {
+        const text = scene.add.text(i * 60 - 60, 0, scene.inventory[i].name, {
             fontSize: '10px',
             fill: '#fff'
         }).setOrigin(0.5);
-        this.uiContainer.add(text);
-        this.uiTexts.push(text);
+        scene.uiContainer.add(text);
+        scene.uiTexts.push(text);
     }
     
     // 画面に固定（カメラが動いてもついてくるようにする）
-    this.uiContainer.setScrollFactor(0);
-    this.uiContainer.setDepth(100); // 最前面に表示
+    scene.uiContainer.setScrollFactor(0);
+    scene.uiContainer.setDepth(100); // 最前面に表示
 
     // 最初の選択状態を反映
-    this.updateInventoryUI();
+    scene.updateInventoryUI(scene);
 }
 
-updateInventoryUI() {
+function updateInventoryUI(scene) {
     // 全ての枠をチェックして、選ばれているものだけ色を変える
     for (let i = 0; i < 3; i++) {
-        if (i === this.selectedSlot) {
-            this.uiSlots[i].setStrokeStyle(4, 0xffff00); // 太い黄色い枠
-            this.uiSlots[i].setFillStyle(0x666666, 0.8); // 少し明るく
+        if (i === scene.selectedSlot) {
+            scene.uiSlots[i].setStrokeStyle(4, 0xffff00); // 太い黄色い枠
+            scene.uiSlots[i].setFillStyle(0x666666, 0.8); // 少し明るく
         } else {
-            this.uiSlots[i].setStrokeStyle(2, 0xffffff); // 普通の白い枠
-            this.uiSlots[i].setFillStyle(0x000000, 0.5); // 暗く
+            scene.uiSlots[i].setStrokeStyle(2, 0xffffff); // 普通の白い枠
+            scene.uiSlots[i].setFillStyle(0x000000, 0.5); // 暗く
         }
     }
 }
