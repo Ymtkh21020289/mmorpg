@@ -235,6 +235,27 @@ io.on('connection', (socket) => {
         // クライアント側で「マップ切り替え処理」をするためのイベント
         socket.emit('mapChanged', { room: targetRoom, players: roomPlayers });
     });
+
+    // アイテムの入れ替え要求
+    socket.on('swapInventory', (data) => {
+        const player = players[socket.id];
+        const { from, to } = data;
+
+        // 安全確認（範囲外アクセス防止）
+        if (from < 0 || from >= 30 || to < 0 || to >= 30) return;
+
+        // 配列の中身を入れ替え
+        const temp = player.inventory[from];
+        player.inventory[from] = player.inventory[to];
+        player.inventory[to] = temp;
+
+        // 全員ではなく「自分だけ」に更新通知を送ればOK
+        socket.emit('inventoryUpdate', { 
+            inventory: player.inventory, 
+            gold: player.gold 
+        });
+    });
+    
     // 切断時の処理
     socket.on('disconnect', () => {
         console.log('ユーザーが切断しました: ' + socket.id);
