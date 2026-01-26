@@ -424,7 +424,7 @@ function handleEnemyDeath(enemy, player) {
                 addItemToInventory(player, drop.id, 1);
             }
         });
-        io.to(playerId).emit('inventoryUpdate', { 
+        io.to(player.playerId).emit('inventoryUpdate', { 
             inventory: player.inventory, 
             gold: player.gold 
         });
