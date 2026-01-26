@@ -153,12 +153,13 @@ io.on('connection', (socket) => {
         socket.emit('currentEnemies', enemies);
     });
 
-    socket.on('attackEnemy', (enemyId) => {
+    socket.on('attackEnemy', (data) => {
+        let enemyId, damage;
         const enemy = enemies[enemyId];
         const player = players[socket.id];
 
         if (enemy && !enemy.isDead && player) {
-            enemy.hp -= player.attackPower;
+            enemy.hp -= player.attackPower + weapon.damage;
             io.emit('enemyDamaged', { enemyId: enemyId, damage: player.attackPower });
 
             if (enemy.hp <= 0) {
