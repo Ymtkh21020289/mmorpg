@@ -735,7 +735,7 @@ function update() {
             // A. 距離のチェック (80px以内まで届くように延長)
             const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
             
-            if (distance < weapon.redius) { // 以前は60でした
+            if (distance < weapon.radius) { // 以前は60でした
                 
                 // B. 角度のチェック（ここが新機能！）
                 
