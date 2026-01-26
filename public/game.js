@@ -378,6 +378,23 @@ function create() {
             enemy.destroy();
         }
     });
+
+    this.inventory = [
+        { name: 'ダガー',   damage: 10, range: 30, color: 0xcccccc }, // 短い・弱い
+        { name: 'ソード',   damage: 20, range: 50, color: 0xffff00 }, // 普通・普通
+        { name: 'スピア',   damage: 15, range: 90, color: 0xff0000 }  // 長い・そこそこ
+    ];
+
+    // 現在選択されている武器の番号（0:ダガー, 1:ソード, 2:スピア）
+    this.selectedSlot = 0;
+
+    // UIを描画する関数を呼ぶ（後で作ります）
+    this.createInventoryUI();
+
+    // キーボード入力の設定（1, 2, 3キー）
+    this.input.keyboard.on('keydown-ONE', () => this.selectWeapon(0));
+    this.input.keyboard.on('keydown-TWO', () => this.selectWeapon(1));
+    this.input.keyboard.on('keydown-THREE', () => this.selectWeapon(2));
     
     // --- リスポーン（死亡→復活）処理 ---
     // create関数内：playerRespawn の受信
@@ -707,18 +724,18 @@ function update() {
     }
 
     if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
-        
+        const weapon = this.inventory[this.selectedSlot];
         this.lastAttackTime = Date.now();
         
         // 1. 斬撃エフェクトを出す
-        showSlashEffect(this, this.player, angle);
+        showSlashEffect(this, this.player, angle, weapon);
 
         // 2. 近くの敵を探す
         this.enemies.getChildren().forEach((enemy) => {
             // A. 距離のチェック (80px以内まで届くように延長)
             const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
             
-            if (distance < 80) { // 以前は60でした
+            if (distance < weapon.redius) { // 以前は60でした
                 
                 // B. 角度のチェック（ここが新機能！）
                 
@@ -731,10 +748,10 @@ function update() {
 
                 // 差が 90度(PI/2) 以内ならヒット
                 // (右90度 + 左90度 = 合計180度の半円範囲になります)
-                if (Math.abs(angleDiff) < Math.PI / 2) {
+                if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
                     
                     // ヒット確定！
-                    this.socket.emit('attackEnemy', enemy.id);
+                    this.socket.emit('attackEnemy', { enemyId: enemy.id, damage: weapon.damage });
                     
                     // ダメージ演出
                     enemy.setTint(0xff0000);
@@ -949,7 +966,7 @@ function createEnemy(scene, enemyInfo) {
     scene.enemies.add(enemy);
 }
 
-function showSlashEffect(scene, player, angle) {
+function showSlashEffect(scene, player, angle, weapon) {
     // 1. グラフィックスオブジェクトを作成
     const slash = scene.add.graphics();
     
@@ -959,7 +976,7 @@ function showSlashEffect(scene, player, angle) {
     // 3. 扇形（Slice）を描く
     // slice(x, y, 半径, 開始角度, 終了角度)
     // ここでは半径80px、中心から左右に90度ずつ（合計180度の半円）を描きます
-    slash.slice(0, 0, 80, -Math.PI / 2, Math.PI / 2);
+    slash.slice(0, 0, 80, weapon.range * -Math.PI / 180, weapon.range * Math.PI / 180);
     slash.fillPath();
 
     // 4. プレイヤーの位置に合わせる
@@ -1007,4 +1024,52 @@ function showDamagePopup(scene, x, y, damage) {
             damageText.destroy(); // 終わったら消す
         }
     });
+}
+
+function selectWeapon(index) {
+    this.selectedSlot = index;
+    this.updateInventoryUI(); // 見た目を更新
+}
+
+function createInventoryUI() {
+    this.uiContainer = this.add.container(400, 550); // 画面下中央あたり
+    this.uiSlots = []; // 枠の画像を入れておく配列
+    this.uiTexts = []; // 文字を入れておく配列
+
+    // 3つの枠を作るループ
+    for (let i = 0; i < 3; i++) {
+        // 枠の背景
+        const slot = this.add.rectangle(i * 60 - 60, 0, 50, 50, 0x000000, 0.5);
+        slot.setStrokeStyle(2, 0xffffff);
+        this.uiContainer.add(slot);
+        this.uiSlots.push(slot);
+
+        // 武器の名前（本来はアイコン画像がいいですが、今は文字で）
+        const text = this.add.text(i * 60 - 60, 0, this.inventory[i].name, {
+            fontSize: '10px',
+            fill: '#fff'
+        }).setOrigin(0.5);
+        this.uiContainer.add(text);
+        this.uiTexts.push(text);
+    }
+    
+    // 画面に固定（カメラが動いてもついてくるようにする）
+    this.uiContainer.setScrollFactor(0);
+    this.uiContainer.setDepth(100); // 最前面に表示
+
+    // 最初の選択状態を反映
+    this.updateInventoryUI();
+}
+
+function updateInventoryUI() {
+    // 全ての枠をチェックして、選ばれているものだけ色を変える
+    for (let i = 0; i < 3; i++) {
+        if (i === this.selectedSlot) {
+            this.uiSlots[i].setStrokeStyle(4, 0xffff00); // 太い黄色い枠
+            this.uiSlots[i].setFillStyle(0x666666, 0.8); // 少し明るく
+        } else {
+            this.uiSlots[i].setStrokeStyle(2, 0xffffff); // 普通の白い枠
+            this.uiSlots[i].setFillStyle(0x000000, 0.5); // 暗く
+        }
+    }
 }
