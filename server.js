@@ -390,6 +390,42 @@ io.on('connection', (socket) => {
             gold: player.gold 
         });
     });
+    socket.on('useItem', (slotIndex) => {
+        const player = players[socket.id];
+        if (!player) return;
+
+        const slotItem = player.inventory[slotIndex];
+        if (!slotItem) return;
+
+        const itemData = ITEMS[slotItem.id];
+        
+        // 消費アイテム(consumable)で、回復効果(heal)がある場合
+        if (itemData && itemData.type === 'consumable' && itemData.heal) {
+            
+            // HPを回復（最大値を超えないように）
+            const oldHP = player.hp;
+            player.hp = Math.min(player.hp + itemData.heal, player.maxHp);
+            
+            // もしHPが満タンなら使わない、という判定を入れたい場合はここで return
+
+            // アイテムを減らす
+            if (slotItem.count > 1) {
+                slotItem.count--;
+            } else {
+                player.inventory[slotIndex] = null;
+            }
+
+            // 更新通知
+            // 1. インベントリを更新（アイテムが減ったから）
+            io.to(socket.id).emit('inventoryUpdate', { 
+                inventory: player.inventory, 
+                gold: player.gold 
+            });
+
+            // 2. HPを更新（回復したから）
+            io.to(socket.id).emit('updateHP', player.hp);
+        }
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
