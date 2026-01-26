@@ -976,7 +976,7 @@ function showSlashEffect(scene, player, angle, weapon) {
     // 3. 扇形（Slice）を描く
     // slice(x, y, 半径, 開始角度, 終了角度)
     // ここでは半径80px、中心から左右に90度ずつ（合計180度の半円）を描きます
-    slash.slice(0, 0, 80, weapon.range * -Math.PI / 180, weapon.range * Math.PI / 180);
+    slash.slice(0, 0, weapon.radius, weapon.range * -Math.PI / 180, weapon.range * Math.PI / 180);
     slash.fillPath();
 
     // 4. プレイヤーの位置に合わせる
