@@ -277,6 +277,81 @@ io.on('connection', (socket) => {
         delete players[socket.id];
         io.emit('disconnectUser', socket.id);
     });
+    // server.js の io.on('connection') 内に追加
+
+    // ■ アイテムを買う
+    socket.on('buyItem', (itemId) => {
+        const player = players[socket.id];
+        const itemData = ITEMS[itemId];
+
+        if (!player || !itemData) return;
+
+        // お金が足りているか確認
+        if (player.gold >= itemData.price) {
+            player.gold -= itemData.price;
+            addItemToInventory(player, itemId, 1);
+            
+            // 更新通知
+            io.to(socket.id).emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
+        }
+    });
+
+    // ■ クラフト（素材から作る）
+    socket.on('craftItem', (recipeIndex) => {
+        const player = players[socket.id];
+        const recipe = RECIPES[recipeIndex];
+
+        if (!player || !recipe) return;
+
+        // 1. お金（手数料）チェック
+        if (player.gold < recipe.cost) return;
+
+        // 2. 素材が足りているかチェック
+        // 現在の所持数をカウント
+        const materialCounts = {};
+        player.inventory.forEach(slot => {
+            if (slot) {
+                materialCounts[slot.id] = (materialCounts[slot.id] || 0) + slot.count;
+            }
+        });
+
+        // 足りない素材があったら中止
+        for (const [matId, reqCount] of Object.entries(recipe.materials)) {
+            if (!materialCounts[matId] || materialCounts[matId] < reqCount) {
+                return; // 素材不足
+            }
+        }
+
+        // --- ここまで来たら作成可能 ---
+
+        // 3. 消費処理
+        player.gold -= recipe.cost;
+
+        // 素材を削除する
+        for (const [matId, reqCount] of Object.entries(recipe.materials)) {
+            let remaining = reqCount;
+            // インベントリを走査して減らす
+            for (let i = 0; i < player.inventory.length; i++) {
+                const slot = player.inventory[i];
+                if (slot && slot.id === matId) {
+                    if (slot.count > remaining) {
+                        slot.count -= remaining;
+                        remaining = 0;
+                        break;
+                    } else {
+                        remaining -= slot.count;
+                        player.inventory[i] = null; // 使い切ったら空にする
+                    }
+                }
+            }
+        }
+
+        // 4. 完成品を渡す
+        addItemToInventory(player, recipe.id, 1);
+
+        // 更新通知
+        io.to(socket.id).emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
