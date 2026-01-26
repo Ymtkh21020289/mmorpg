@@ -1165,6 +1165,11 @@ function createInventoryUI(scene) {
         createSlot(scene, 3 + i, startX + col * 50, startY + row * 50, false);
     }
 
+    // 3. お金表示
+    if(!scene.goldText)
+    scene.goldText = scene.add.text(20, 20, 'Gold: 0', { fontSize: '16px', fill: '#ffd700' })
+        .setScrollFactor(0).setDepth(100);
+    
     // 初期状態ではメインインベントリ（ID >= 3）を隠す
     toggleInventory(scene, true); // 強制的に閉じる処理を呼ぶ
 }
