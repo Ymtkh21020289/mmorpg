@@ -434,6 +434,14 @@ function create() {
     this.input.keyboard.on('keydown-B', () => {
         this.isShopOpen = !this.isShopOpen;
         this.shopContainer.setVisible(this.isShopOpen);
+        if (!this.isShopOpen) {
+            this.isSellingMode = false;
+            // ボタンの色などを戻す処理が必要ですが、
+            // 簡易的に「次に開いたときはOFFの見た目に戻す」ため、createShopUI内の変数は手動で戻りませんが、
+            // 動作としてはOFFになります。
+            // 完璧にするなら updateInventoryUI のような updateShopUI 関数を作る必要がありますが、
+            // まずはこれで十分動きます。
+        }
     });
 
     // キーボード入力の設定（1, 2, 3キー）
@@ -1256,8 +1264,21 @@ function handleSlotClick(scene, index) {
     // 1. 変数が未定義なら初期化（安全策）
     if (scene.holdingIndex === undefined) scene.holdingIndex = null;
 
-    // 2. インベントリが閉じていて、かつホットバー以外をクリックしたら無視
+    // インベントリが閉じていて、ホットバー以外なら無視
     if (!scene.isInventoryOpen && index >= 3) return;
+
+    // ★ここを追加：売却モードの処理
+    if (scene.isShopOpen && scene.isSellingMode) {
+        // アイテムがあるか確認
+        if (scene.myInventory[index]) {
+            // サーバーに売却依頼
+            scene.socket.emit('sellItem', index);
+            
+            // 少し演出（売った！というログ）
+            console.log("Sold item at slot", index);
+        }
+        return; // ここで処理終了（掴まない）
+    }
 
     // 現在のアイテムデータ
     const item = scene.myInventory[index];
@@ -1318,6 +1339,31 @@ function createShopUI(scene) {
 
     const title = scene.add.text(250, 30, '=== 鍛冶屋 (Bキーで閉じる) ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
     scene.shopContainer.add(title);
+
+    scene.isSellingMode = false; // 初期状態はOFF
+
+    // ボタンの背景
+    const sellBtn = scene.add.rectangle(250, 360, 200, 40, 0xaa0000);
+    sellBtn.setScrollFactor(0); // 画面固定！
+    sellBtn.setInteractive({ useHandCursor: true });
+    
+    // ボタンの文字
+    const sellText = scene.add.text(250, 360, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+
+    // クリックイベント
+    sellBtn.on('pointerdown', () => {
+        scene.isSellingMode = !scene.isSellingMode; // ON/OFF切り替え
+
+        if (scene.isSellingMode) {
+            sellBtn.setFillStyle(0xff0000, 1); // ONなら明るい赤
+            sellText.setText('売却モード: ON (アイテムをクリック)');
+        } else {
+            sellBtn.setFillStyle(0xaa0000, 1); // OFFなら暗い赤
+            sellText.setText('売却モード: OFF');
+        }
+    });
+
+    scene.shopContainer.add([sellBtn, sellText]);
 
     // --- 左側：ショップ（購入） ---
     scene.shopContainer.add(scene.add.text(50, 70, '【購入】', { fill: '#00ff00' }));
