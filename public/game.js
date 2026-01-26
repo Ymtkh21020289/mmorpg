@@ -42,12 +42,9 @@ const mapData = {
 };
 
 const ITEMS = {
-    // 武器
-    'dagger': { name: 'ダガー', type: 'weapon', damage: 10, range: 30, color: 0xcccccc },
-    'sword':  { name: 'ソード', type: 'weapon', damage: 20, range: 50, color: 0xffff00 },
-    'spear':  { name: 'スピア', type: 'weapon', damage: 15, range: 90, color: 0xff0000 },
-    
-    // 素材
+    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc }, // 短い・弱い
+    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00 }, // 普通・普通
+    'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000 },
     'slime_gel': { name: 'スライムゼリー', type: 'material' },
     'wolf_fur':  { name: 'オオカミの毛皮', type: 'material' },
     'magic_stone': { name: '魔石', type: 'material' }
