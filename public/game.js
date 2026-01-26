@@ -1058,7 +1058,7 @@ function createInventoryUI(scene) {
     scene.uiContainer.setDepth(100); // 最前面に表示
 
     // 最初の選択状態を反映
-    scene.updateInventoryUI(scene);
+    updateInventoryUI(scene);
 }
 
 function updateInventoryUI(scene) {
