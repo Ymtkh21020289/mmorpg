@@ -307,6 +307,15 @@ function create() {
 
     this.input.mouse.disableContextMenu();
 
+    // HP更新を受け取る
+    this.socket.on('updateHP', (newHP) => {
+        console.log("HPが回復しました！ 現在のHP:", newHP);
+        
+        // ★もしHPバーを作っているなら、ここでバーの長さを更新してください
+        // 例: this.hpBar.width = newHP; 
+        // まだHPバーがない場合は、一旦ログだけでOKです。
+    });
+    
     // ★追加：クリックイベント
     this.input.on('pointerdown', (pointer) => {
         if (!self.player) return;
@@ -1233,9 +1242,19 @@ function createSlot(scene, index, x, y, isHotbar) {
     scene.invSlots[index] = { bg, text, countText, x, y, isHotbar };
 
     // ★修正C：クリックイベントにログを仕込む
-    bg.on('pointerdown', () => {
-        console.log(`Slot ${index} clicked!`); // これがコンソールに出るか確認
-        handleSlotClick(scene, index);
+    bg.on('pointerdown', (pointer) => {
+        // ■ 右クリックの場合：アイテムを使用
+        if (pointer.rightButtonDown()) {
+            // ショップが開いているときは誤爆防止で使えないようにする（お好みで）
+            if (scene.isShopOpen) return;
+
+            console.log(`Right click on slot ${index}`);
+            scene.socket.emit('useItem', index);
+        }
+        // ■ 左クリックの場合：アイテムを掴む・移動（これまでの処理）
+        else {
+            handleSlotClick(scene, index);
+        }
     });
 }
 
