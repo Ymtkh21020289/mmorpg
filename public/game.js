@@ -697,6 +697,31 @@ function create() {
     });
     
     this.input.mouse.disableContextMenu();
+
+    // デバッグ用テキスト作成
+    const debugText = this.add.text(10, 10, '', { 
+        fontSize: '16px', 
+        fill: '#00ff00', 
+        backgroundColor: '#000000' 
+    }).setScrollFactor(0).setDepth(1000);
+
+    // マウスが動くたびに座標を更新して表示
+    this.input.on('pointermove', (pointer) => {
+        // ワールド座標（カメラのスクロール込みの位置）
+        const worldX = pointer.worldX;
+        const worldY = pointer.worldY;
+
+        // タイル座標に変換（40で割って切り捨て）
+        const tileX = Math.floor(worldX / 32);
+        const tileY = Math.floor(worldY / 32);
+
+        // テキスト更新
+        debugText.setText(
+            `Mouse: (${Math.floor(worldX)}, ${Math.floor(worldY)})\n` +
+            `Tile:  [${tileY}][${tileX}]\n` + 
+            `Center: (${tileX * 32 + 16}, ${tileY * 32 + 16})`
+        );
+    });
 }
 
 function update() {
