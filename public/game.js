@@ -797,7 +797,7 @@ function update() {
     // --- エリア移動判定 ---
     // mapReadyのチェックがあるため、ここで this.map.widthInPixels を呼んでも安全
 
-    const currentMapData = MAP_DATA[this.player.room];
+    const currentMapData = mapData[this.player.room];
 
     if (currentMapData && currentMapData.portals) {
         // ポータルを一つずつチェック
