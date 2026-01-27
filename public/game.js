@@ -237,6 +237,7 @@ function create() {
 
     // 初期マップ作成
     this.createMap('town');
+    if(!this.player.room) this.player.room = 'town' 
 
     // --- Socket イベント ---
     this.socket.on('currentPlayers', function (players) {
