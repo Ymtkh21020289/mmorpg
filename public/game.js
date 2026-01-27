@@ -228,8 +228,6 @@ function create() {
 
             // 完了
             
-            this.player.x = portal.targetX;
-            this.player.y = portal.targetY;
             mapReady = true;
             console.log("マップ作成＆当たり判定リセット完了: " + roomName);
 
@@ -840,6 +838,8 @@ function update() {
                 
                 // 1. プレイヤーの座標とマップIDを更新
                 this.isChangingMap = true;
+                this.player.x = portal.targetX;
+                this.player.y = portal.targetY;
                 this.currentRoomName = portal.targetMap;
                 
                 // 2. 本人に「マップ変わったよ」と通知
