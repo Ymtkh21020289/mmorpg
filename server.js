@@ -45,8 +45,8 @@ const RECIPES = [
 ];
 
 const DROP_TABLE = {
-    'slime': { money: 4, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.1 }, { id: 'magic_stone', rate: 0.1 }, { id: 'slime_heart', rate: 0.01}] },
-    'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.05 }, { id: 'magic_stone', rate: 0.1 }, { id: 'wolf_heart', rate: 0.01}] },
+    'slime': { money: 4, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.02 }, { id: 'magic_stone', rate: 0.1 }, { id: 'slime_heart', rate: 0.01}] },
+    'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.02 }, { id: 'magic_stone', rate: 0.1 }, { id: 'wolf_heart', rate: 0.01}] },
 };
 
 // 1. 敵の種類ごとのステータス定義
