@@ -1456,7 +1456,7 @@ function createShopUI(scene) {
 function createHPBar(scene) {
     // バーのサイズと位置
     const x = 20;
-    const y = 20;
+    const y = self.cameras.main.height - 50;
     const w = 200; // バーの最大幅
     const h = 20;
 
@@ -1466,7 +1466,7 @@ function createHPBar(scene) {
     scene.hpBarBg.setDepth(150); // インベントリより下、地面より上
 
     // 2. 中身（赤色）
-    scene.hpBar = scene.add.rectangle(x, y, w, h, 0xff0000).setOrigin(0, 0);
+    scene.hpBar = scene.add.rectangle(x, y, w, h, 0x00ff00).setOrigin(0, 0);
     scene.hpBar.setScrollFactor(0); // 画面固定
     scene.hpBar.setDepth(151);
 
