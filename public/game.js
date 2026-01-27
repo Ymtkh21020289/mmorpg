@@ -842,7 +842,7 @@ function update() {
                 this.player.y = portal.targetY;
                 
                 // 2. 本人に「マップ変わったよ」と通知
-                socket.emit('changeArea', {
+                this.socket.emit('changeArea', {
                     mapId: this.currentRoomName,
                     x: this.player.x,
                     y: this.player.y
