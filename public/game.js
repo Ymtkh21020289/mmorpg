@@ -249,8 +249,6 @@ function create() {
         });
     });
 
-    if(this.player && !this.player.room) this.player.room = 'town';
-
     this.socket.on('newPlayer', function (playerInfo) {
         addOtherPlayers(self, playerInfo);
     });
@@ -723,7 +721,7 @@ function create() {
             `Tile:  [${tileY}][${tileX}]\n` + 
             `Center: (${tileX * 32 + 16}, ${tileY * 32 + 16})\n` +
             `Player: (${Math.floor(this.player.x)}, ${Math.floor(this.player.y)})\n` +
-            `Room: (${Math.floor(this.player.room)})`
+            `Room: (${this.player.room})`
         );
     });
 }
