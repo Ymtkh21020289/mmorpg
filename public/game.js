@@ -1412,6 +1412,8 @@ function createShopUI(scene) {
         // ボタン背景
         const btn = scene.add.rectangle(120, y, 140, 30, 0x333333).setInteractive({ useHandCursor: true });
         const text = scene.add.text(120, y, `${item.name} (${item.price}G)`, { fontSize: '12px' }).setOrigin(0.5);
+
+        btn.setScrollFactor(0);
         
         btn.on('pointerdown', () => {
             scene.socket.emit('buyItem', id);
