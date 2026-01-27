@@ -225,8 +225,6 @@ function create() {
         Object.keys(players).forEach(function (id) {
             if (players[id].playerId === self.socket.id) {
                 addPlayer(self, players[id]);
-                this.myMaxHp = players[id].maxHp || 100; // maxHpがなければ100
-                updateHPBar(this, players[id].hp, this.myMaxHp);
             } else {
                 addOtherPlayers(self, players[id]);
             }
@@ -320,7 +318,6 @@ function create() {
     // HP更新を受け取る
     this.socket.on('updateHP', (newHP) => {
         console.log("HPが回復しました！ 現在のHP:", newHP);
-        updateHPBar(this, newHP, this.myMaxHp);
         // ★もしHPバーを作っているなら、ここでバーの長さを更新してください
         // 例: this.hpBar.width = newHP; 
         // まだHPバーがない場合は、一旦ログだけでOKです。
@@ -514,12 +511,6 @@ function create() {
             self.hpUI.setText(`HP: ${stats.hp}`);
         }
     });
-
-    // ★自分の最大HPを保存する変数
-    this.myMaxHp = 100; // 初期値（サーバーから受け取るまでの仮）
-
-    // ★HPバーを作成
-    createHPBar(this);
 
     // 2. 誰かがレベルアップした時の派手な演出
     this.socket.on('playerLevelUp', (data) => {
@@ -1453,51 +1444,4 @@ function createShopUI(scene) {
 
         scene.shopContainer.add([btn, nameText, matText]);
     });
-}
-
-function createHPBar(scene) {
-    // バーのサイズと位置
-    const x = 20;
-    const y = self.cameras.main.height - 50;
-    const w = 200; // バーの最大幅
-    const h = 20;
-
-    // 1. 背景（黒色・少し半透明）
-    scene.hpBarBg = scene.add.rectangle(x, y, w, h, 0x000000, 0.8).setOrigin(0, 0);
-    scene.hpBarBg.setScrollFactor(0); // 画面固定
-    scene.hpBarBg.setDepth(150); // インベントリより下、地面より上
-
-    // 2. 中身（赤色）
-    scene.hpBar = scene.add.rectangle(x, y, w, h, 0x00ff00).setOrigin(0, 0);
-    scene.hpBar.setScrollFactor(0); // 画面固定
-    scene.hpBar.setDepth(151);
-
-    // 3. 数値テキスト（バーの中央に表示）
-    // 既存のテキスト作成コードがあれば、それを削除してこちらを使ってください
-    scene.hpText = scene.add.text(x + w/2, y + h/2, '', { 
-        fontSize: '12px', 
-        fill: '#ffffff',
-        fontWeight: 'bold'
-    }).setOrigin(0.5);
-    scene.hpText.setScrollFactor(0);
-    scene.hpText.setDepth(152);
-
-    // 初期値をセット（最初は空っぽに見えないように仮表示）
-    updateHPBar(scene, 100, 100);
-}
-
-// バーの長さを更新する関数
-function updateHPBar(scene, current, max) {
-    // 0未満にならないように制限
-    if (current < 0) current = 0;
-    if (current > max) current = max;
-
-    // 幅の計算
-    // 現在HP ÷ 最大HP = 割合 (例: 50/100 = 0.5)
-    // 最大幅(200) × 割合 = 現在のバーの長さ (100)
-    const percentage = current / max;
-    scene.hpBar.width = 200 * percentage;
-
-    // テキスト更新
-    scene.hpText.setText(`HP: ${current} / ${max}`);
 }
