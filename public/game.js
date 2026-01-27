@@ -31,7 +31,7 @@ const mapData = {
         portals: [
             {
                 // エリア（判定範囲）
-                x: 750, y: 100, width: 50, height: 100, 
+                x: 1184, y: 96, width: 32, height: 32, 
                 // 行き先
                 targetMap: 'map_B', targetX: 100, targetY: 150 
             }
