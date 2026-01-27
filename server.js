@@ -233,7 +233,7 @@ io.on('connection', (socket) => {
     });
 
     // --- ★ エリア移動リクエスト（クライアントから送られてくる） ---
-    socket.on('changeArea', (targetRoom) => {
+    socket.on('changeArea', (data) => {
         const currentRoom = players[socket.id].room;
         
         // 1. 今の部屋から出る
@@ -242,26 +242,26 @@ io.on('connection', (socket) => {
         socket.to(currentRoom).emit('disconnectUser', socket.id);
 
         // 2. データ更新
-        players[socket.id].room = targetRoom;
+        players[socket.id].room = data.mapId;
         // 座標もリセット（例：入り口にワープ）
-        players[socket.id].x = 400; 
-        players[socket.id].y = 300;
+        players[socket.id].x = data.x; 
+        players[socket.id].y = data.y;
 
         // 3. 新しい部屋に入る
-        socket.join(targetRoom);
+        socket.join(data.mapId);
 
         // 4. 新しい部屋の人たちに「新入りが来たよ」と伝える
-        socket.to(targetRoom).emit('newPlayer', players[socket.id]);
+        socket.to(data.mapId).emit('newPlayer', players[socket.id]);
 
         // 5. 本人に「新しい部屋の現状」を伝える
         const roomPlayers = {};
         Object.keys(players).forEach(id => {
-            if (players[id].room === targetRoom) {
+            if (players[id].room === data.mapId) {
                 roomPlayers[id] = players[id];
             }
         });
         // クライアント側で「マップ切り替え処理」をするためのイベント
-        socket.emit('mapChanged', { room: targetRoom, players: roomPlayers });
+        socket.emit('mapChanged', { room: data.mapId, players: roomPlayers });
     });
 
     // アイテムの入れ替え要求
