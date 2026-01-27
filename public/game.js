@@ -719,7 +719,8 @@ function create() {
         debugText.setText(
             `Mouse: (${Math.floor(worldX)}, ${Math.floor(worldY)})\n` +
             `Tile:  [${tileY}][${tileX}]\n` + 
-            `Center: (${tileX * 32 + 16}, ${tileY * 32 + 16})`
+            `Center: (${tileX * 32 + 16}, ${tileY * 32 + 16})\n` +
+            `Player: (${Math.floor(this.player.x)}, ${Math.floor(this.player.y)})`
         );
     });
 }
