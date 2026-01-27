@@ -227,6 +227,9 @@ function create() {
             }
 
             // 完了
+            
+            this.player.x = portal.targetX;
+            this.player.y = portal.targetY;
             mapReady = true;
             console.log("マップ作成＆当たり判定リセット完了: " + roomName);
 
@@ -838,14 +841,12 @@ function update() {
                 // 1. プレイヤーの座標とマップIDを更新
                 this.isChangingMap = true;
                 this.currentRoomName = portal.targetMap;
-                this.player.x = portal.targetX;
-                this.player.y = portal.targetY;
                 
                 // 2. 本人に「マップ変わったよ」と通知
                 this.socket.emit('changeArea', {
                     mapId: this.currentRoomName,
-                    x: this.player.x,
-                    y: this.player.y
+                    x: portal.targetX,
+                    y: portal.targetY
                 });
 
                 // ループを抜ける（同時に2つのポータルは踏めないので）
