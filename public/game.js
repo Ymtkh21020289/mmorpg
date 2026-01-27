@@ -721,7 +721,7 @@ function create() {
             `Tile:  [${tileY}][${tileX}]\n` + 
             `Center: (${tileX * 32 + 16}, ${tileY * 32 + 16})\n` +
             `Player: (${Math.floor(this.player.x)}, ${Math.floor(this.player.y)})\n` +
-            `Room: (${this.player.room})`
+            `Room: (${this.currentRoomName})`
         );
     });
 }
