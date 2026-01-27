@@ -824,7 +824,7 @@ function update() {
     // --- エリア移動判定 ---
     // mapReadyのチェックがあるため、ここで this.map.widthInPixels を呼んでも安全
 
-    const currentMapData = mapData[this.player.room];
+    const currentMapData = mapData[this.currentRoomName];
 
     if (currentMapData && currentMapData.portals) {
         // ポータルを一つずつチェック
@@ -833,17 +833,17 @@ function update() {
             if (this.player.x >= portal.x && this.player.x <= portal.x + portal.width &&
                 this.player.y >= portal.y && this.player.y <= portal.y + portal.height) {
                 
-                console.log(`Player warped from ${this.player.room} to ${portal.targetMap}`);
+                console.log(`Player warped from ${this.currentRoomName} to ${portal.targetMap}`);
                 
                 // 1. プレイヤーの座標とマップIDを更新
                 this.isChangingMap = true;
-                this.player.room = portal.targetMap;
+                this.currentRoomName = portal.targetMap;
                 this.player.x = portal.targetX;
                 this.player.y = portal.targetY;
                 
                 // 2. 本人に「マップ変わったよ」と通知
                 socket.emit('changeArea', {
-                    mapId: this.player.room,
+                    mapId: this.currentRoomName,
                     x: this.player.x,
                     y: this.player.y
                 });
