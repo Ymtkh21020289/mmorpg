@@ -696,7 +696,7 @@ function create() {
     this.input.mouse.disableContextMenu();
 
     // デバッグ用テキスト作成
-    const debugText = this.add.text(10, 10, '', { 
+    const debugText = this.add.text(180, 10, '', { 
         fontSize: '16px', 
         fill: '#00ff00', 
         backgroundColor: '#000000' 
