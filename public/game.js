@@ -578,11 +578,8 @@ function create() {
         self.createMap(data.room);
 
         // 位置リセット
-        if (data.room === 'town') {
-            self.player.setPosition(500, 200);
-        } else {
-            self.player.setPosition(50, 200);
-        }
+        this.player.x = data.x;
+        this.player.y = data.y;
 
         // カメラ再設定
         self.cameras.main.setBounds(0, 0, self.map.widthInPixels, self.map.heightInPixels);
@@ -838,8 +835,6 @@ function update() {
                 
                 // 1. プレイヤーの座標とマップIDを更新
                 this.isChangingMap = true;
-                this.player.x = portal.targetX;
-                this.player.y = portal.targetY;
                 this.currentRoomName = portal.targetMap;
                 
                 // 2. 本人に「マップ変わったよ」と通知
