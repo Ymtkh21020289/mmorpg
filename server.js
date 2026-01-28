@@ -469,7 +469,7 @@ setInterval(() => {
         if (nearestPlayer) {
             
             // A. 移動処理（距離が30より離れていたら追いかける）
-            if (minDistance > 30) {
+            if ( 300 > minDistance && minDistance > 30) {
                 const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
                 enemy.x += Math.cos(angle) * enemy.speed;
                 enemy.y += Math.sin(angle) * enemy.speed;
