@@ -578,8 +578,7 @@ function create() {
         self.createMap(data.room);
 
         // 位置リセット
-        this.player.x = data.x;
-        this.player.y = data.y;
+        self.player.setPosition(data.x;, data.y);
 
         // カメラ再設定
         self.cameras.main.setBounds(0, 0, self.map.widthInPixels, self.map.heightInPixels);
