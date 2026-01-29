@@ -73,3 +73,12 @@ const mapData = {
         ]
     }
 };
+
+// もしNode.js環境なら module.exports する
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = mapData;
+} 
+// もしブラウザ環境なら windowオブジェクトに登録する
+else {
+    window.mapData = mapData;
+}
