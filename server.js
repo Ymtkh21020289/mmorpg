@@ -129,6 +129,7 @@ function spawnGroup(spawner) {
             maxHp: template.maxHp,
             speed: template.speed,
             exp: template.exp,      // ★種類ごとの経験値
+            type: spawner.type,
             spriteKey: spawner.spriteKey,
             room: spawner.room,
             isDead: false,
