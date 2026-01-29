@@ -52,11 +52,47 @@ const DROP_TABLE = {
 // 1. 敵の種類ごとのステータス定義
 const ENEMY_TYPES = {
     // 既存のカカシ（とりあえずボス扱い）
-    kakashi: { hp: 100, maxHp: 100, exp: 0, speed: 0, respawnType: 'static' },
+    kakashi: { 
+        hp: 100,  
+        maxHp: 100, 
+        exp: 0,
+        speed: 0, 
+        attackRange: 0,      // 攻撃を開始する距離
+        attackRadius: 10,     // 攻撃が届く距離（射程）
+        attackAngle: Math.PI, // 攻撃角度（90度）
+        damage: 5,
+        chargeTime: 2000,     // 予兆時間（ミリ秒）
+        cooldown: 4000,        // 攻撃後の休み時間 
+        respawnType: 'static' 
+    },
     // 新しい敵：スライム（弱い、群れる、青い）
-    slime:   { hp: 30,  maxHp: 30,  exp: 10, speed: 1, respawnType: 'group' },
+    slime:   { 
+        hp: 30,  
+        maxHp: 30,  
+        exp: 10, 
+        speed: 1, 
+        attackRange: 60,
+        attackRadius: 80,
+        attackAngle: Math.PI / 6, // 狭いけど長い（45度）
+        damage: 5,
+        chargeTime: 2000,
+        cooldown: 4000,
+        respawnType: 'group' 
+    },
     // 新しい敵：ウルフ（強い、速い、赤い）
-    wolf:    { hp: 60,  maxHp: 60,  exp: 30, speed: 3, respawnType: 'group' }
+    wolf:    { 
+        hp: 60,  
+        maxHp: 60,  
+        exp: 30, 
+        speed: 3, 
+        attackRange: 80,
+        attackRadius: 100,
+        attackAngle: Math.PI / 4, // 狭いけど長い（45度）
+        damage: 20,
+        chargeTime: 2000,
+        cooldown: 3000,
+        respawnType: 'group' 
+    }
 };
 
 // 2. 現在の敵リスト（初期状態は空にして、関数で生み出します）
@@ -447,63 +483,85 @@ http.listen(PORT, () => {
 setInterval(() => {
     Object.keys(enemies).forEach((enemyId) => {
         const enemy = enemies[enemyId];
+        const stats = ENEMY_TYPES[enemy.type] || ENEMY_TYPES['slime']; // デフォルトはスライム
         if (enemy.isDead) return;
-
+        // 初期化（もしstateがなければ）
+        if (!enemy.state) {
+            enemy.state = 'moving';
+            enemy.timer = 0;
+        }
+        const now = Date.now();
         // 1. 一番近くにいるプレイヤーを探す
-        let nearestPlayer = null;
-        let minDistance = 999999;
+        if (enemy.state === 'moving') {
+            let target = null;
+            let nearestPlayer = null;
+            let minDistance = 999999;
 
-        Object.keys(players).forEach((id) => {
-            const player = players[id];
-            // 同じ部屋のプレイヤーのみ対象
-            if (player.room === enemy.room) {
-                const dist = Math.sqrt((player.x - enemy.x) ** 2 + (player.y - enemy.y) ** 2);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    nearestPlayer = player;
+            Object.keys(players).forEach((id) => {
+                const player = players[id];
+                // 同じ部屋のプレイヤーのみ対象
+                if (player.room === enemy.room) {
+                    const dx = player.x - enemy.x;
+                    const dy = player.y - enemy.y;
+                    const dist = Math.sqrt( dx ** 2 + dy ** 2);
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        nearestPlayer = player;
+                        target = { player, dist, dx, dy };
+                    }
                 }
-            }
-        });
+            });
 
-        // ★修正：プレイヤーが見つかった場合のみ処理を実行（これでエラーが消えます）
-        if (nearestPlayer) {
+            // ★修正：プレイヤーが見つかった場合のみ処理を実行（これでエラーが消えます）
+            if (nearestPlayer) {
             
-            // A. 移動処理（距離が30より離れていたら追いかける）
-            if ( 300 > minDistance && minDistance > 30) {
-                const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
-                enemy.x += Math.cos(angle) * enemy.speed;
-                enemy.y += Math.sin(angle) * enemy.speed;
-            }
+                // A. 移動処理（距離が300より近いなら追いかける）
+                if ( 300 > minDistance ) {
+                    if ( minDistance <= enemy.attackRange) {
+                        // ★詠唱開始（足を止める）
+                        enemy.state = 'charging';
+                        enemy.timer = now + stats.chargeTime; // 攻撃発動時刻
+                    
+                        // 攻撃方向（角度）を決定
+                        enemy.targetAngle = Math.atan2(target.dy, target.dx);
 
-            // B. 攻撃判定処理（常にチェックする）
-            // 移動後の位置で再計算
-            const distCurrent = Math.sqrt((nearestPlayer.x - enemy.x) ** 2 + (nearestPlayer.y - enemy.y) ** 2);
-            
-            // 距離40以内なら攻撃
-            if (distCurrent < 30) {
-                const now = Date.now();
-                if (now - nearestPlayer.lastDamageTime > 1000) {
-                    nearestPlayer.hp -= 10;
-                    nearestPlayer.lastDamageTime = now;
-
-                    // 死亡判定
-                    if (nearestPlayer.hp <= 0) {
-                        nearestPlayer.hp = nearestPlayer.maxHp;
-                        nearestPlayer.x = 400; 
-                        nearestPlayer.y = 300;
-                        io.emit('playerRespawn', nearestPlayer);
-                    } else {
-                        io.emit('playerDamaged', { 
-                            playerId: nearestPlayer.playerId, 
-                            hp: nearestPlayer.hp 
+                        // クライアントに「予兆を出せ」と命令
+                        io.emit('enemyCharge', {
+                            id: enemyId,
+                            x: enemy.x,
+                            y: enemy.y,
+                            angle: enemy.targetAngle,
+                            radius: stats.attackRadius,
+                            width: stats.attackAngle,
+                            duration: stats.chargeTime
                         });
+                    } else {
+                        const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
+                        enemy.x += Math.cos(angle) * enemy.speed;
+                        enemy.y += Math.sin(angle) * enemy.speed;
                     }
                 }
             }
-
-            // 位置情報を全員に送信
-            io.emit('updateEnemy', enemy);
+        } else if (enemy.state === 'charging') {
+            if (now >= enemy.timer) {
+                // 時間経過で攻撃発動！
+                performEnemyAttack(enemy, stats);
+                
+                // クールダウンへ移行
+                enemy.state = 'cooldown';
+                enemy.timer = now + stats.cooldown;
+            }
         }
+
+        // ■ 状態3: クールダウン（疲れて休んでいる）
+        else if (enemy.state === 'cooldown') {
+            if (now >= enemy.timer) {
+                // 休み終わり、また追いかける
+                enemy.state = 'moving';
+            }
+        }   
+        // 位置情報を全員に送信
+        io.emit('updateEnemy', enemy);
     });
 }, 100);
 
@@ -684,6 +742,49 @@ function addItemToInventory(player, itemId, amount) {
         } else {
             // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
             console.log("Inventory full!");
+        }
+    }
+}
+
+function performEnemyAttack(enemy, stats) {
+    // 範囲内にいるプレイヤー全員にダメージ
+    for (const pid in players) {
+        const p = players[pid];
+        // マップチェック（マップ実装済みなら）
+        // if (p.mapId !== enemy.mapId) continue;
+
+        const dx = p.x - enemy.x;
+        const dy = p.y - enemy.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        // 1. 距離チェック
+        if (dist <= stats.attackRadius) {
+            // 2. 角度チェック（扇形の中にいるか）
+            const angleToPlayer = Math.atan2(dy, dx);
+            let angleDiff = angleToPlayer - enemy.targetAngle;
+
+            // 角度の差を -PI ~ PI に正規化（計算上の補正）
+            while (angleDiff <= -Math.PI) angleDiff += Math.PI * 2;
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+            // 指定した角度の幅（半分）以内ならヒット
+            if (Math.abs(angleDiff) <= stats.attackAngle / 2) {
+                // ★命中！
+                p.hp -= stats.damage;
+                nearestPlayer.lastDamageTime = now;
+                // 死亡判定などはここに記述
+                if (p.hp <= 0) {
+                    // リスポーン処理など
+                    p.hp = p.maxHp;
+                    p.x = 48; p.y = 80; // 仮のリスポーン
+                    io.emit('playerRespawn', p);
+                } else {
+                    io.emit('playerDamaged', { 
+                        playerId: p.playerId, 
+                        hp: p.hp 
+                    });
+                }
+            }
         }
     }
 }
