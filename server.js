@@ -747,6 +747,7 @@ function addItemToInventory(player, itemId, amount) {
 }
 
 function performEnemyAttack(enemy, stats) {
+    const now = Date.now();
     // 範囲内にいるプレイヤー全員にダメージ
     for (const pid in players) {
         const p = players[pid];
