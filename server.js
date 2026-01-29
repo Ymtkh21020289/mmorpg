@@ -771,7 +771,7 @@ function performEnemyAttack(enemy, stats) {
             if (Math.abs(angleDiff) <= stats.attackAngle / 2) {
                 // ★命中！
                 p.hp -= stats.damage;
-                nearestPlayer.lastDamageTime = now;
+                p.lastDamageTime = now;
                 // 死亡判定などはここに記述
                 if (p.hp <= 0) {
                     // リスポーン処理など
