@@ -741,16 +741,13 @@ function create() {
     this.aoeGraphics = this.add.group();
 
     this.socket.on('enemyCharge', (data) => {
-        // グラフィックオブジェクトを作成
         const graphics = this.add.graphics();
         this.aoeGraphics.add(graphics);
 
-        // 赤色、半透明
-        graphics.fillStyle(0xff0000, 0.3);
+        // 初期設定：薄い赤色
+        graphics.fillStyle(0xff0000, 0.2);
 
-        // 扇形（Pie chartの形）を描画
-        // slice(x, y, radius, startAngle, endAngle)
-        // Phaserの角度はラジアン指定
+        // 扇形を描画
         const startAngle = data.angle - (data.width / 2);
         const endAngle = data.angle + (data.width / 2);
         
@@ -759,27 +756,25 @@ function create() {
             data.radius, 
             startAngle, 
             endAngle, 
-            false // anticlockwise?
+            false
         );
         graphics.fillPath();
 
-        // 時間経過で消すアニメーション
+        // ★変更点1：フェードアウトではなく、チャージ時間に合わせて「濃く」する
+        // （これで「溜まっている感」が出ます。不要ならこのtweenごと削除してもOKです）
         this.tweens.add({
             targets: graphics,
-            alpha: 0,       // 徐々に透明に
-            duration: 200,  // 消えるアニメの時間
-            delay: data.duration, // 攻撃発動まで待つ
-            onComplete: () => {
-                graphics.destroy(); // 完全に消去
-            }
+            alpha: 1,           // 透明度 1.0 (くっきり) に向かって変化
+            duration: data.duration, // 攻撃までの時間かけて濃くなる
+            ease: 'Linear'
         });
-        
-        // （オプション）さらに分かりやすく、色が濃くなるアニメーションを入れても良い
-        this.tweens.add({
-            targets: graphics,
-            alpha: 0.6, // 濃くする
-            duration: data.duration,
-            yoyo: false
+
+        // ★変更点2：時間が来たら「即座に」消す
+        this.time.delayedCall(data.duration, () => {
+            graphics.destroy(); // 一瞬で消滅
+            
+            // （お好みで）攻撃発生の瞬間に「バチッ」と白いフラッシュを入れると打撃感が出ます
+            // createExplosionEffect(this, data.x, data.y); // 別途関数が必要ですが
         });
     });
 }
