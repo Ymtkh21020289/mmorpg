@@ -75,8 +75,8 @@ const ENEMY_TYPES = {
         attackRadius: 80,
         attackAngle: Math.PI / 6, // 狭いけど長い（45度）
         damage: 5,
-        chargeTime: 2000,
-        cooldown: 4000,
+        chargeTime: 1000,
+        cooldown: 2000,
         respawnType: 'group' 
     },
     // 新しい敵：ウルフ（強い、速い、赤い）
@@ -89,8 +89,8 @@ const ENEMY_TYPES = {
         attackRadius: 100,
         attackAngle: Math.PI / 4, // 狭いけど長い（45度）
         damage: 20,
-        chargeTime: 2000,
-        cooldown: 3000,
+        chargeTime: 1000,
+        cooldown: 2000,
         respawnType: 'group' 
     }
 };
