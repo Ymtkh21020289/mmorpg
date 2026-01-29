@@ -517,7 +517,7 @@ setInterval(() => {
             
                 // A. 移動処理（距離が300より近いなら追いかける）
                 if ( 300 > minDistance ) {
-                    if ( minDistance <= enemy.attackRange) {
+                    if ( minDistance <= stats.attackRange) {
                         // ★詠唱開始（足を止める）
                         enemy.state = 'charging';
                         enemy.timer = now + stats.chargeTime; // 攻撃発動時刻
