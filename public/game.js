@@ -721,6 +721,51 @@ function create() {
             `Room: (${this.currentRoomName})`
         );
     });
+    // 敵の予兆エフェクト管理用グループ
+    this.aoeGraphics = this.add.group();
+
+    this.socket.on('enemyCharge', (data) => {
+        // グラフィックオブジェクトを作成
+        const graphics = this.add.graphics();
+        this.aoeGraphics.add(graphics);
+
+        // 赤色、半透明
+        graphics.fillStyle(0xff0000, 0.3);
+
+        // 扇形（Pie chartの形）を描画
+        // slice(x, y, radius, startAngle, endAngle)
+        // Phaserの角度はラジアン指定
+        const startAngle = data.angle - (data.width / 2);
+        const endAngle = data.angle + (data.width / 2);
+        
+        graphics.slice(
+            data.x, data.y, 
+            data.radius, 
+            startAngle, 
+            endAngle, 
+            false // anticlockwise?
+        );
+        graphics.fillPath();
+
+        // 時間経過で消すアニメーション
+        this.tweens.add({
+            targets: graphics,
+            alpha: 0,       // 徐々に透明に
+            duration: 200,  // 消えるアニメの時間
+            delay: data.duration, // 攻撃発動まで待つ
+            onComplete: () => {
+                graphics.destroy(); // 完全に消去
+            }
+        });
+        
+        // （オプション）さらに分かりやすく、色が濃くなるアニメーションを入れても良い
+        this.tweens.add({
+            targets: graphics,
+            alpha: 0.6, // 濃くする
+            duration: data.duration,
+            yoyo: false
+        });
+    });
 }
 
 function update() {
