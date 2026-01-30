@@ -541,9 +541,27 @@ setInterval(() => {
                         });
                     } else {
                         const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
-                        enemy.x += Math.cos(angle) * enemy.speed;
-                        enemy.y += Math.sin(angle) * enemy.speed;
-                    }
+                        // 移動予定の距離
+                        const moveStep = enemy.speed;
+
+                        // ■ X方向の移動チェック
+                        // 進行方向の少し先（+15px）をチェックすることで、壁にめり込むのを防ぐ
+                        const nextX = enemy.x + Math.cos(angle) * moveStep;
+                        // 右に行くなら右側(+15)、左に行くなら左側(-15)の点を調べる
+                        const checkX = nextX + (Math.cos(angle) > 0 ? 15 : -15);
+                    
+                        if (!isMapWall(enemy.mapId, checkX, enemy.y)) {
+                            enemy.x = nextX; // 壁じゃないなら進む
+                        }
+
+                        // ■ Y方向の移動チェック（Xとは独立して行う＝壁沿いを滑る）
+                        const nextY = enemy.y + Math.sin(angle) * moveStep;
+                        const checkY = nextY + (Math.sin(angle) > 0 ? 15 : -15);
+
+                        if (!isMapWall(enemy.mapId, enemy.x, checkY)) {
+                            enemy.y = nextY; // 壁じゃないなら進む
+                        }
+                    } 
                 }
             }
         } else if (enemy.state === 'charging') {
