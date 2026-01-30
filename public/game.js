@@ -1347,7 +1347,7 @@ function toggleInventory(scene, forceClose = false) {
         slot.bg.visible = scene.isInventoryOpen;
         slot.text.visible = scene.isInventoryOpen;
         slot.countText.visible = scene.isInventoryOpen;
-        scene.tooltip.visible = scene.isInventoryOpen;
+        scene.tooltip.setVisible(scene.isInventoryOpen);
     }
 }
 
