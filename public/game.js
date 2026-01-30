@@ -372,12 +372,37 @@ function create() {
     // 鍛冶屋UI作成
     createShopUI(this);
 
+    this.tooltip = this.add.container(0, 0);
+    this.tooltip.setScrollFactor(0); // 画面に固定
+    this.tooltip.setDepth(2000); // 最前面に表示
+    this.tooltip.setVisible(false); // 最初は隠す
+
+    // 背景（黒い四角）
+    const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
+    tooltipBg.setOrigin(0, 0); // 左上基準
+    tooltipBg.setStrokeStyle(2, 0xffffff); // 白い枠線
+
+    // 文字
+    const tooltipText = this.add.text(10, 10, '', {
+        fontSize: '14px',
+        fill: '#ffffff',
+        wordWrap: { width: 180 } // 長い文章は折り返す
+    });
+
+    // コンテナにまとめる
+    this.tooltip.add([tooltipBg, tooltipText]);
+    
+    // あとでアクセスしやすいように参照を保存
+    this.tooltipBg = tooltipBg;
+    this.tooltipText = tooltipText;
+    
     // Bキーで鍛冶屋を開く
     this.input.keyboard.on('keydown-B', () => {
         this.isShopOpen = !this.isShopOpen;
         this.shopContainer.setVisible(this.isShopOpen);
         if (!this.isShopOpen) {
             this.isSellingMode = false;
+            this.tooltip.setVisible(false);
             // ボタンの色などを戻す処理が必要ですが、
             // 簡易的に「次に開いたときはOFFの見た目に戻す」ため、createShopUI内の変数は手動で戻りませんが、
             // 動作としてはOFFになります。
@@ -1266,6 +1291,41 @@ function createSlot(scene, index, x, y, isHotbar) {
             handleSlotClick(scene, index);
         }
     });
+    // ■ カーソルが乗ったとき（表示）
+    bg.on('pointerover', () => {
+        // そのスロットに入っているアイテムデータを取得
+        const item = scene.myInventory[index];
+        if (!item) return; // 空なら何もしない
+
+        const itemData = ITEMS[item.id];
+        if (!itemData) return;
+
+        // 1. 売値の計算
+        const sellPrice = Math.floor(itemData.price / 2);
+
+        // 2. 表示するテキストを作成
+        const text = `■ ${itemData.name}\n\n${itemData.desc || ''}\n\n売値: ${sellPrice} G`;
+
+        // 3. テキストをセット
+        scene.tooltipText.setText(text);
+
+        // 4. 背景のサイズを文字量に合わせて自動調整
+        const bounds = scene.tooltipText.getBounds();
+        scene.tooltipBg.setSize(bounds.width + 20, bounds.height + 20);
+
+        // 5. 表示位置をスロットの右下あたりにする
+        // （pointer.x, pointer.y を使ってマウスに追従させることも可能ですが、今回はスロット基準で）
+        const worldPos = bg.getBounds();
+        scene.tooltip.setPosition(worldPos.x + 20, worldPos.y + 20);
+
+        // 6. 表示ON
+        scene.tooltip.setVisible(true);
+    });
+
+    // ■ カーソルが外れたとき（非表示）
+    bg.on('pointerout', () => {
+        scene.tooltip.setVisible(false);
+    });
 }
 
 // Eキーでの開閉
@@ -1308,11 +1368,11 @@ function handleSlotClick(scene, index) {
         }
         return; // ここで処理終了（掴まない）
     }
-
+    
     // 現在のアイテムデータ
     const item = scene.myInventory[index];
     console.log(`Slot data:`, item); // デバッグ用
-
+    scene.tooltip.setVisible(false);
     // ■ ケースA：まだ何も掴んでいない時
     if (scene.holdingIndex === null) {
         // アイテムがある場合のみ掴める
