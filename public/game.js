@@ -36,8 +36,6 @@ function create() {
     const self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
-    this.isInventoryOpen = false; // 最初は閉じている
-    this.isShopOpen = false;      // ショップも最初は閉じている
 
     this.anims.create({
         key: 'down',
