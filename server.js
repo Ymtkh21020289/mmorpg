@@ -811,3 +811,23 @@ function performEnemyAttack(enemy, stats) {
         }
     }
 }
+
+const TILE_SIZE = 32; // ゲーム内のタイルサイズ
+
+function isMapWall(mapId, x, y) {
+    const mapData = MAP_DATA[mapId];
+    if (!mapData) return true; // マップがないなら壁扱い（安全策）
+
+    // ピクセル座標をタイル座標に変換
+    const tileX = Math.floor(x / TILE_SIZE);
+    const tileY = Math.floor(y / TILE_SIZE);
+
+    // 配列の範囲外チェック（マップの外に出ないように）
+    if (tileY < 0 || tileY >= mapData.tiles.length || 
+        tileX < 0 || tileX >= mapData.tiles[0].length) {
+        return true; // 画面外は壁
+    }
+
+    // 1なら壁、0なら通れる
+    return mapData.tiles[tileY][tileX] === 1;
+}
