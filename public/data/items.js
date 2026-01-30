@@ -1,15 +1,15 @@
 const ITEMS = {
-    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc, price: 20 }, // 短い・弱い
-    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00, price: 100 }, // 普通・普通
-    'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000, price: 200 },
-    'great_axe': { name: 'スゴイ斧', type: 'weapon', damage: 40, range: 120, radius: 90, color: 0x00ffff, price: 500 },
-    'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', damage: 40, range: 10, radius: 150, color: 0x00ffff, price: 1000 },
-    'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2 },
-    'slime_heart': { name: 'スライムの心', type: 'material', price: 100 },
-    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 5 },
-    'wolf_heart':  { name: 'オオカミの心', type: 'material', price: 200 },
-    'magic_stone': { name: '魔石', type: 'material', price: 10 },
-    'potion': { name: 'ポーション', type: 'consumable', price: 50, heal: 50 }
+    'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc, price: 20, desc: '初心者のための短剣。\n素早い攻撃が可能。（嘘）' }, // 短い・弱い
+    'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00, price: 100, desc: '初心者のための剣。\n広範囲に攻撃が可能。' }, // 普通・普通
+    'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000, price: 200, desc: '初心者のための槍。\n遠くに攻撃が可能。' },
+    'great_axe': { name: 'スゴイ斧', type: 'weapon', damage: 40, range: 120, radius: 90, color: 0x00ffff, price: 500, desc: 'スゴイ斧。\n高い攻撃力で一掃が可能。' },
+    'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', damage: 40, range: 10, radius: 150, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
+    'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2, desc: 'プルプルした謎の物体。\nクラフト素材として使える。' },
+    'slime_heart': { name: 'スライムの心', type: 'material', price: 100, desc: '極稀にスライムが落とすアイテム。\nクラフト素材として使える。' },
+    'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 5, desc: 'なんかゴワゴワしてる…\nクラフト素材として使える。' },
+    'wolf_heart':  { name: 'オオカミの心', type: 'material', price: 200, desc: '極稀にオオカミが落とすアイテム。\nクラフト素材として使える。' },
+    'magic_stone': { name: '魔石', type: 'material', price: 10, desc: '光り輝く綺麗な石。\nクラフト素材や強化素材として使える。' },
+    'potion': { name: 'ポーション', type: 'consumable', price: 50, heal: 50, desc: 'HPを50回復する。\n冒険の必需品。' }
 };
 
 const RECIPES = [
