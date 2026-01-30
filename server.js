@@ -550,7 +550,7 @@ setInterval(() => {
                         // 右に行くなら右側(+15)、左に行くなら左側(-15)の点を調べる
                         const checkX = nextX + (Math.cos(angle) > 0 ? 15 : -15);
                     
-                        if (!isMapWall(enemy.mapId, checkX, enemy.y)) {
+                        if (!isMapWall(enemy.room, checkX, enemy.y)) {
                             enemy.x = nextX; // 壁じゃないなら進む
                         }
 
@@ -558,7 +558,7 @@ setInterval(() => {
                         const nextY = enemy.y + Math.sin(angle) * moveStep;
                         const checkY = nextY + (Math.sin(angle) > 0 ? 15 : -15);
 
-                        if (!isMapWall(enemy.mapId, enemy.x, checkY)) {
+                        if (!isMapWall(enemy.room, enemy.x, checkY)) {
                             enemy.y = nextY; // 壁じゃないなら進む
                         }
                     } 
