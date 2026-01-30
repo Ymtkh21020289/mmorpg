@@ -1338,9 +1338,6 @@ function toggleInventory(scene, forceClose = false) {
     } else {
         scene.isInventoryOpen = !scene.isInventoryOpen;
     }
-    if (!scene.isInventoryOpen) {
-        scene.tooltip.setVisible(scene.isInventoryOpen);
-    }
     // Slot 3以上（メインインベントリ）の表示/非表示を切り替え
     for (let i = 3; i < 30; i++) {
         const slot = scene.invSlots[i];
