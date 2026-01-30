@@ -7,9 +7,12 @@ const path = require('path');
 // 静的ファイル（publicフォルダの中身）を配信
 app.use(express.static(path.join(__dirname, 'public')));
 
+// パスは server.js から見た相対パス
+const MAP_DATA = require('./public/data/maps.js');
+
 // プレイヤーデータを格納するオブジェクト
 let players = {};
-let projectiles = {}; // ★追加：発射された魔法弾リスト
+let projectiles = {}; // 発射された魔法弾リスト
 let projectileIdCounter = 0; // ID採番用
 
 const ITEMS = {
