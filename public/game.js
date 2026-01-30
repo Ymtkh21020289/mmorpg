@@ -36,6 +36,8 @@ function create() {
     const self = this;
     this.socket = io();
     this.otherPlayers = this.physics.add.group();
+    this.isInventoryOpen = false; // 最初は閉じている
+    this.isShopOpen = false;      // ショップも最初は閉じている
 
     this.anims.create({
         key: 'down',
@@ -1293,6 +1295,9 @@ function createSlot(scene, index, x, y, isHotbar) {
     });
     // ■ カーソルが乗ったとき（表示）
     bg.on('pointerover', () => {
+        if (!scene.isInventoryOpen && !scene.isShopOpen) {
+            return;
+        }
         // そのスロットに入っているアイテムデータを取得
         const item = scene.myInventory[index];
         if (!item) return; // 空なら何もしない
@@ -1342,6 +1347,7 @@ function toggleInventory(scene, forceClose = false) {
         slot.bg.visible = scene.isInventoryOpen;
         slot.text.visible = scene.isInventoryOpen;
         slot.countText.visible = scene.isInventoryOpen;
+        scene.tooltip.visible = scene.isInventoryOpen;
     }
 }
 
