@@ -404,6 +404,8 @@ function create() {
             this.isSellingMode = false;
             this.tooltip.setVisible(false);
             this.shopContent.setVisible(true);
+            this.sellBtn.setFillStyle(0xaa0000, 1); // OFFなら暗い赤
+            this.sellText.setText('売却モード: OFF');
             // ボタンの色などを戻す処理が必要ですが、
             // 簡易的に「次に開いたときはOFFの見た目に戻す」ため、createShopUI内の変数は手動で戻りませんが、
             // 動作としてはOFFになります。
