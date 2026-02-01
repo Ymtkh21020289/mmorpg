@@ -1445,6 +1445,7 @@ function createShopUI(scene) {
     
     // ボタンの文字
     const sellText = scene.add.text(250, 360, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+    sellText.setText('売却モード: OFF');
 
     // クリックイベント
     sellBtn.on('pointerdown', () => {
