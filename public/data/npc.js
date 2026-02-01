@@ -8,3 +8,12 @@ const NPCs = {
         radius: 30             // 当たり判定の大きさ
     }
 };
+
+// もしNode.js環境なら module.exports する
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = NPCs;
+} 
+// もしブラウザ環境なら windowオブジェクトに登録する
+else {
+    window.NPCs = NPCs;
+}
