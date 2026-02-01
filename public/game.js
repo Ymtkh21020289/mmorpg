@@ -650,6 +650,7 @@ function create() {
             `Mouse: (${Math.floor(worldX)}, ${Math.floor(worldY)})\n` +
             `Tile:  [${tileY}][${tileX}]\n` + 
             `Center: (${tileX * 32 + 16}, ${tileY * 32 + 16})\n` +
+            `Edge: (${tileX * 32}, ${tileY * 32})\n` +
             `Player: (${Math.floor(this.player.x)}, ${Math.floor(this.player.y)})\n` +
             `Room: (${this.currentRoomName})`
         );
