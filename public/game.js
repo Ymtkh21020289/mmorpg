@@ -404,8 +404,6 @@ function create() {
             this.isSellingMode = false;
             this.tooltip.setVisible(false);
             this.shopContent.setVisible(true);
-            this.sellBtn.setFillStyle(0xaa0000, 1); // OFFなら暗い赤
-            this.sellText.setText('売却モード: OFF');
             // ボタンの色などを戻す処理が必要ですが、
             // 簡易的に「次に開いたときはOFFの見た目に戻す」ため、createShopUI内の変数は手動で戻りませんが、
             // 動作としてはOFFになります。
@@ -1447,7 +1445,6 @@ function createShopUI(scene) {
     
     // ボタンの文字
     const sellText = scene.add.text(250, 360, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
-    sellText.setText('売却モード: OFF');
 
     // クリックイベント
     sellBtn.on('pointerdown', () => {
@@ -1467,7 +1464,7 @@ function createShopUI(scene) {
     scene.shopContainer.add([sellBtn, sellText]);
 
     // --- 左側：ショップ（購入） ---
-    scene.shopContainer.add(scene.add.text(50, 70, '【購入】', { fill: '#00ff00' }));
+    scene.shopContainer.add(scene.add.text(50, 60, '【購入】', { fill: '#00ff00' }));
     
     const shopItems = ['potion', 'sword']; // 売っているものリスト
     
@@ -1490,7 +1487,7 @@ function createShopUI(scene) {
 
 
     // --- 右側：クラフト（作成） ---
-    scene.shopContainer.add(scene.add.text(300, 70, '【クラフト】', { fill: '#00ffff' }));
+    scene.shopContainer.add(scene.add.text(300, 60, '【クラフト】', { fill: '#00ffff' }));
 
     RECIPES.forEach((recipe, index) => {
         const resultItem = ITEMS[recipe.id];
