@@ -726,7 +726,7 @@ function create() {
 
 function update() {
     // 既存のチェックに追加： isTyping が true なら動かない
-    if (!this.player || !mapReady || this.isTyping || !this.isShopOpen) return;
+    if (!this.player || !mapReady || this.isTyping || this.isShopOpen) return;
 
     const speed = 200;
     this.player.body.setVelocity(0);
