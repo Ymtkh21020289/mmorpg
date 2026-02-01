@@ -310,14 +310,14 @@ function create() {
             const npc = npcs[id];
             
             // 現在のマップにいないNPCは描画しない（マップ切り替え実装済みの場合）
-            // if (npc.mapId !== this.currentMapId) continue; 
+            if (npc.mapId !== this.currentRoomName) continue; 
 
             const npcSprite = this.add.circle(npc.x, npc.y, 20, npc.color);
             npcSprite.setStrokeStyle(2, 0xffffff);
-            
+            npcSprite.setDepth(10);
             // 名前表示
             const nameText = this.add.text(npc.x, npc.y - 30, npc.name, { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
-            
+            npcText.setDepth(11);
             this.npcGroup.add(npcSprite);
         }
     });
