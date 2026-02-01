@@ -884,7 +884,7 @@ function update() {
                 }
             }
         });
-        this.NPCs.getChildren().forEach((enemy) => {
+        this.npcGroup.getChildren().forEach((enemy) => {
             // A. 距離のチェック (80px以内まで届くように延長)
             const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
             
