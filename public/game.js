@@ -403,6 +403,7 @@ function create() {
         if (!this.isShopOpen) {
             this.isSellingMode = false;
             this.tooltip.setVisible(false);
+            this.shopContent.setVisible(true);
             // ボタンの色などを戻す処理が必要ですが、
             // 簡易的に「次に開いたときはOFFの見た目に戻す」ため、createShopUI内の変数は手動で戻りませんが、
             // 動作としてはOFFになります。
@@ -1421,15 +1422,19 @@ function createShopUI(scene) {
     scene.shopContainer = scene.add.container(150, 100).setScrollFactor(0).setDepth(200);
     scene.shopContainer.setVisible(false);
 
+    // 2. 「売却モードのときに消したいもの」をまとめるコンテナを作る
+    scene.shopContent = scene.add.container(0, 0);
+    scene.shopContainer.add(scene.shopContent);
+
     const bg = scene.add.rectangle(250, 200, 500, 400, 0x000000, 0.9);
     bg.setStrokeStyle(4, 0x884400); // 茶色の枠
     bg.setInteractive(); // クリックが後ろに抜けないように
     // ★追加：背景の当たり判定を画面固定にする
     bg.setScrollFactor(0);
-    scene.shopContainer.add(bg);
+    scene.shopContent.add(bg);
 
     const title = scene.add.text(250, 30, '=== 鍛冶屋 (Bキーで閉じる) ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
-    scene.shopContainer.add(title);
+    scene.shopContent.add(title);
 
     scene.isSellingMode = false; // 初期状態はOFF
 
@@ -1448,9 +1453,11 @@ function createShopUI(scene) {
         if (scene.isSellingMode) {
             sellBtn.setFillStyle(0xff0000, 1); // ONなら明るい赤
             sellText.setText('売却モード: ON (アイテムをクリック)');
+            scene.shopContent.setVisible(false)
         } else {
             sellBtn.setFillStyle(0xaa0000, 1); // OFFなら暗い赤
             sellText.setText('売却モード: OFF');
+            scene.shopContent.setVisible(true);
         }
     });
 
@@ -1475,7 +1482,7 @@ function createShopUI(scene) {
             scene.socket.emit('buyItem', id);
         });
 
-        scene.shopContainer.add([btn, text]);
+        scene.shopContent.add([btn, text]);
     });
 
 
@@ -1507,6 +1514,6 @@ function createShopUI(scene) {
             scene.socket.emit('craftItem', index);
         });
 
-        scene.shopContainer.add([btn, nameText, matText]);
+        scene.shopContent.add([btn, nameText, matText]);
     });
 }
