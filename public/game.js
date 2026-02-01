@@ -304,9 +304,15 @@ function create() {
     this.npcGroup = this.add.group();
 
     this.socket.on('currentNPCs', (npcs) => {
-        this.npcGroup.clear(true, true); // 更新時は一度消す
+        // ★確認ログA：そもそもサーバーから通知が来ているか？
+        console.log("【確認A】サーバーからNPCデータが届きました:", npcs);
 
+        this.npcGroup.clear(true, true);
+
+        // ★確認ログB：ループが回っているか？
         for (const id in npcs) {
+            console.log("【確認B】NPCを作成中:", id);
+            
             const npc = npcs[id];
             
             // 現在のマップにいないNPCは描画しない（マップ切り替え実装済みの場合）
@@ -320,6 +326,7 @@ function create() {
             npcText.setDepth(11);
             this.npcGroup.add(npcSprite);
         }
+        console.log("【確認C】作成完了。現在のグループ数:", this.npcGroup.getLength());
     });
 
     // --- ダメージを受けた時の処理 ---
