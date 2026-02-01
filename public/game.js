@@ -427,6 +427,7 @@ function create() {
     // Bキーで鍛冶屋を開く(死に機能)
     this.input.keyboard.on('keydown-B', () => {
         if (this.isShopOpen) {
+            this.isShopOpen = false;
             this.isSellingMode = false;
             this.tooltip.setVisible(false);
             this.shopContainer.setVisible(false);
