@@ -321,6 +321,7 @@ function create() {
             const npcSprite = this.add.circle(npc.x, npc.y, 20, npc.color);
             npcSprite.setStrokeStyle(2, 0xffffff);
             npcSprite.setDepth(10);
+            npcSprite.setData('type', npc.type);
             // 名前表示
             const nameText = this.add.text(npc.x, npc.y - 30, npc.name, { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
             this.npcGroup.add(npcSprite);
