@@ -301,6 +301,28 @@ function create() {
         });
     });
 
+    this.npcGroup = this.add.group();
+
+    this.socket.on('currentNPCs', (npcs) => {
+        this.npcGroup.clear(true, true); // 更新時は一度消す
+
+        for (const id in npcs) {
+            const npc = npcs[id];
+            
+            // 現在のマップにいないNPCは描画しない（マップ切り替え実装済みの場合）
+            // if (npc.mapId !== this.currentMapId) continue; 
+
+            const npcSprite = this.add.circle(npc.x, npc.y, 20, npc.color);
+            npcSprite.setStrokeStyle(2, 0xffffff);
+            
+            // 名前表示
+            const nameText = this.add.text(npc.x, npc.y - 30, npc.name, { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
+            
+            this.npcGroup.add(npcSprite);
+            this.npcGroup.add(nameText);
+        }
+    });
+
     // --- ダメージを受けた時の処理 ---
     // create関数内：playerDamaged の受信
 
@@ -396,21 +418,19 @@ function create() {
     this.tooltipBg = tooltipBg;
     this.tooltipText = tooltipText;
     
-    // Bキーで鍛冶屋を開く
+    // Bキーで鍛冶屋を開く(死に機能)
     this.input.keyboard.on('keydown-B', () => {
-        this.isShopOpen = !this.isShopOpen;
-        this.shopContainer.setVisible(this.isShopOpen);
-        if (!this.isShopOpen) {
+        if (this.isShopOpen) {
             this.isSellingMode = false;
             this.tooltip.setVisible(false);
-            this.shopContent.setVisible(true);
+            this.shopContainer.setVisible(false);
             // ボタンの色などを戻す処理が必要ですが、
             // 簡易的に「次に開いたときはOFFの見た目に戻す」ため、createShopUI内の変数は手動で戻りませんが、
             // 動作としてはOFFになります。
             // 完璧にするなら updateInventoryUI のような updateShopUI 関数を作る必要がありますが、
             // まずはこれで十分動きます。
-        }
-    });
+        //}
+    //});
 
     // キーボード入力の設定（1, 2, 3キー）
     this.input.keyboard.on('keydown-ONE', () => selectWeapon(this, 0));
@@ -861,6 +881,33 @@ function update() {
                     this.time.delayedCall(200, () => {
                         enemy.clearTint();
                     });
+                }
+            }
+        });
+        this.NPCs.getChildren().forEach((enemy) => {
+            // A. 距離のチェック (80px以内まで届くように延長)
+            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+            
+            if (distance < weapon.radius) { // 以前は60でした
+                
+                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+                
+                // Phaser.Math.Angle.Wrap は、角度のズレを -PI ～ +PI の範囲に綺麗に整えてくれる
+                const angleDiff = Phaser.Math.Angle.Wrap(angle - angleToEnemy);
+
+                // 差が 90度(PI/2) 以内ならヒット
+                // (右90度 + 左90度 = 合計180度の半円範囲になる)
+                if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
+                    // ヒット確定！
+                    if (enemy.type === 'merchant' && !this.isShopOpen) {
+                        this.isShopOpen = true;
+                        this.shopContainer.setVisible(true);
+                        this.shopContent.setVisible(true); // コンテンツも確実に表示
+                        this.tooltip.setVisible(false);    // ツールチップは消す
+                        // 売却モードはリセットしておく
+                        this.isSellingMode = false;
+                        // ボタンの色などを戻す処理があればここに記述
+                    }
                 }
             }
         });
