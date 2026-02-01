@@ -1,4 +1,4 @@
-const NPCs = {
+const npcs = {
     'merchant_1': { 
         x: 144, y: 48,        // 配置座標
         mapId: 'shop',        // 配置マップ
@@ -11,9 +11,9 @@ const NPCs = {
 
 // もしNode.js環境なら module.exports する
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = NPCs;
+    module.exports = npcs;
 } 
 // もしブラウザ環境なら windowオブジェクトに登録する
 else {
-    window.NPCs = NPCs;
+    window.npcs = npcs;
 }
