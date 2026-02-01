@@ -228,6 +228,7 @@ io.on('connection', (socket) => {
         });
         // クライアント側で「マップ切り替え処理」をするためのイベント
         socket.emit('mapChanged', { room: data.mapId, players: roomPlayers, x: data.x, y: data.y });
+        socket.emit('currentNPCs', npcs);
     });
 
     // アイテムの入れ替え要求
