@@ -429,8 +429,8 @@ function create() {
             // 動作としてはOFFになります。
             // 完璧にするなら updateInventoryUI のような updateShopUI 関数を作る必要がありますが、
             // まずはこれで十分動きます。
-        //}
-    //});
+        }
+    });
 
     // キーボード入力の設定（1, 2, 3キー）
     this.input.keyboard.on('keydown-ONE', () => selectWeapon(this, 0));
