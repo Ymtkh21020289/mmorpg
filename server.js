@@ -11,6 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const MAP_DATA = require('./public/data/maps.js');
 const { ITEMS, RECIPES } = require('./public/data/items.js');
 const ENEMY_TYPES = require('./public/data/enemies.js');
+const NPCs = require('./public/data/npc.js');
 
 // プレイヤーデータを格納するオブジェクト
 let players = {};
@@ -109,6 +110,7 @@ io.on('connection', (socket) => {
     socket.to('town').emit('newPlayer', players[socket.id]);
 
     socket.emit('currentEnemies', enemies);
+    socket.emit('currentNPCs', NPCs);
 
     socket.emit('inventoryUpdate', {
         inventory: players[socket.id].inventory,
