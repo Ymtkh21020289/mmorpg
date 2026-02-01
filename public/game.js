@@ -319,7 +319,6 @@ function create() {
             const nameText = this.add.text(npc.x, npc.y - 30, npc.name, { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
             
             this.npcGroup.add(npcSprite);
-            this.npcGroup.add(nameText);
         }
     });
 
