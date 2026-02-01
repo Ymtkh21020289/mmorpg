@@ -842,6 +842,7 @@ function update() {
         }
     }
     if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
+        console.log(this.npcGroup.getChildren());
         const slotItem = this.myInventory[this.selectedSlot];
         let weapon = { damage: 0, range: 30, radius: 40, color: 0xffffff }; // 素手
         if (slotItem && ITEMS[slotItem.id] && ITEMS[slotItem.id].type === 'weapon') {
