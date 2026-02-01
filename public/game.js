@@ -905,7 +905,7 @@ function update() {
                 // (右90度 + 左90度 = 合計180度の半円範囲になる)
                 if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
                     // ヒット確定！
-                    if (enemy.type === 'merchant' && !this.isShopOpen) {
+                    if (enemy.getData('type') === 'merchant' && !this.isShopOpen) {
                         this.isShopOpen = true;
                         this.shopContainer.setVisible(true);
                         this.shopContent.setVisible(true); // コンテンツも確実に表示
