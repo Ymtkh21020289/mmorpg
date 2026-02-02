@@ -1374,13 +1374,13 @@ function toggleInventory(scene, forceClose = false) {
     } else {
         scene.isInventoryOpen = !scene.isInventoryOpen;
     }
-    if (this.isInventoryOpen) {
+    if (scene.isInventoryOpen) {
         // インベントリと一緒に装備画面も出す
-        this.equipContainer.setVisible(true);
+        scene.equipContainer.setVisible(true);
     } else {
         // 隠す
-        this.equipContainer.setVisible(false);
-        this.tooltip.setVisible(false);
+        scene.equipContainer.setVisible(false);
+        scene.tooltip.setVisible(false);
     }
     // Slot 3以上（メインインベントリ）の表示/非表示を切り替え
     for (let i = 3; i < 30; i++) {
