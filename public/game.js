@@ -397,6 +397,14 @@ function create() {
     // UIを描画する関数を呼ぶ（後で作ります）
     createInventoryUI(this);
 
+    // 1. UIを作る
+    createEquipmentUI(this);
+
+    // 2. サーバーから装備更新通知が来たら反映
+    this.socket.on('equipmentUpdate', (equipmentData) => {
+        updateEquipmentDisplay(this, equipmentData);
+    });
+
     // 鍛冶屋UI作成
     createShopUI(this);
 
@@ -1189,36 +1197,6 @@ function selectWeapon(scene, index) {
     updateInventoryUI(scene); // 見た目を更新
 }
 
-function createInventoryUI(scene) {
-    scene.uiContainer = scene.add.container(400, 550); // 画面下中央あたり
-    scene.uiSlots = []; // 枠の画像を入れておく配列
-    scene.uiTexts = []; // 文字を入れておく配列
-
-    // 3つの枠を作るループ
-    for (let i = 0; i < 3; i++) {
-        // 枠の背景
-        const slot = scene.add.rectangle(i * 60 - 60, 0, 50, 50, 0x000000, 0.5);
-        slot.setStrokeStyle(2, 0xffffff);
-        scene.uiContainer.add(slot);
-        scene.uiSlots.push(slot);
-
-        // 武器の名前（本来はアイコン画像がいいですが、今は文字で）
-        const text = scene.add.text(i * 60 - 60, 0, scene.inventory[i].name, {
-            fontSize: '10px',
-            fill: '#fff'
-        }).setOrigin(0.5);
-        scene.uiContainer.add(text);
-        scene.uiTexts.push(text);
-    }
-    
-    // 画面に固定（カメラが動いてもついてくるようにする）
-    scene.uiContainer.setScrollFactor(0);
-    scene.uiContainer.setDepth(100); // 最前面に表示
-
-    // 最初の選択状態を反映
-    updateInventoryUI(scene);
-}
-
 // game.js の updateInventoryUI 関数をこれに置き換えてください
 
 function updateInventoryUI(scene) {
@@ -1297,6 +1275,7 @@ function createInventoryUI(scene) {
         // IDは 3 からスタート
         createSlot(scene, 3 + i, startX + col * 50, startY + row * 50, false);
     }
+    
 
     // 3. お金表示
     if(!scene.goldText)
@@ -1394,6 +1373,14 @@ function toggleInventory(scene, forceClose = false) {
         scene.isInventoryOpen = false;
     } else {
         scene.isInventoryOpen = !scene.isInventoryOpen;
+    }
+    if (this.isInventoryOpen) {
+        // インベントリと一緒に装備画面も出す
+        this.equipContainer.setVisible(true);
+    } else {
+        // 隠す
+        this.equipContainer.setVisible(false);
+        this.tooltip.setVisible(false);
     }
     // Slot 3以上（メインインベントリ）の表示/非表示を切り替え
     for (let i = 3; i < 30; i++) {
@@ -1572,4 +1559,123 @@ function createShopUI(scene) {
 
         scene.shopContent.add([btn, nameText, matText]);
     });
+}
+
+// game.js
+
+function createEquipmentUI(scene) {
+    // 1. 装備画面全体のコンテナ
+    scene.equipContainer = scene.add.container(200, 300); // インベントリの左隣などを想定
+    scene.equipContainer.setScrollFactor(0);
+    scene.equipContainer.setDepth(1500);
+    scene.equipContainer.setVisible(false); // 最初は隠す
+
+    // 背景（オプション）
+    const bg = scene.add.rectangle(0, 0, 180, 200, 0x000000, 0.5);
+    bg.setStrokeStyle(2, 0xaaaaaa);
+    scene.equipContainer.add(bg);
+
+    // タイトル
+    const title = scene.add.text(0, -90, 'EQUIPMENT', { fontSize: '16px', fill: '#aaa' }).setOrigin(0.5);
+    scene.equipContainer.add(title);
+
+    // 2. スロットの配置定義（相対座標）
+    // 人型になるように配置します
+    const slotLayout = {
+        'head':      { x: 0,   y: -50, label: '頭' },
+        'weapon':    { x: -50, y: 10,  label: '武器' },
+        'body':      { x: 0,   y: 10,  label: '体' },
+        'accessory': { x: 50,  y: 10,  label: '装飾' }
+    };
+
+    // スロット管理用のオブジェクト
+    scene.equipSlots = {};
+
+    // 3. スロット生成ループ
+    for (const [slotName, config] of Object.entries(slotLayout)) {
+        
+        // スロットの枠
+        const slotBg = scene.add.rectangle(config.x, config.y, 40, 40, 0x333333);
+        slotBg.setStrokeStyle(1, 0x888888);
+        slotBg.setInteractive(); // クリック可能に
+        
+        // ラベル（薄く表示）
+        const slotLabel = scene.add.text(config.x, config.y, config.label, { 
+            fontSize: '10px', fill: '#666' 
+        }).setOrigin(0.5);
+
+        // アイテム画像（最初は空なので非表示かダミー）
+        const itemIcon = scene.add.sprite(config.x, config.y, null);
+        itemIcon.setVisible(false);
+
+        // コンテナに追加
+        scene.equipContainer.add([slotBg, slotLabel, itemIcon]);
+
+        // 参照を保存（あとで更新するため）
+        scene.equipSlots[slotName] = {
+            bg: slotBg,
+            icon: itemIcon,
+            itemData: null // 今何が入っているか
+        };
+
+        // --- イベント設定（外す処理） ---
+        slotBg.on('pointerdown', () => {
+            // 何か装備していれば「外す」命令を送る
+            if (scene.equipSlots[slotName].itemData) {
+                scene.socket.emit('unequipItem', slotName);
+            }
+        });
+
+        // --- ツールチップ（既存の仕組みを流用） ---
+        slotBg.on('pointerover', () => {
+            const data = scene.equipSlots[slotName].itemData;
+            if (data && scene.isInventoryOpen) { // インベントリが開いている時のみ
+                 const itemInfo = ITEMS[data.id];
+                 if (itemInfo) {
+                     // 既存のツールチップ更新処理をここでも使う
+                     // ※長いので関数化しておくと便利ですが、ここでは直書きイメージ
+                     const text = `■ ${itemInfo.name}\n${itemInfo.desc || ''}\n効果: 攻+${itemInfo.atk || 0} 防+${itemInfo.def || 0}`;
+                     scene.tooltipText.setText(text);
+                     const bounds = scene.tooltipText.getBounds();
+                     scene.tooltipBg.setSize(bounds.width + 20, bounds.height + 20);
+                     
+                     // ツールチップの位置調整（スロットの少し横など）
+                     // ワールド座標を取得する必要があるため getBounds を利用
+                     const worldPos = slotBg.getBounds();
+                     scene.tooltip.setPosition(worldPos.x + 40, worldPos.y);
+                     scene.tooltip.setVisible(true);
+                 }
+            }
+        });
+
+        slotBg.on('pointerout', () => {
+            scene.tooltip.setVisible(false);
+        });
+    }
+}
+
+// game.js
+
+function updateEquipmentDisplay(scene, equipmentData) {
+    // equipmentData は { head: {id: 'leather_helm'}, body: null, ... } のような形
+
+    for (const [slotName, item] of Object.entries(equipmentData)) {
+        const uiSlot = scene.equipSlots[slotName];
+        if (!uiSlot) continue;
+
+        if (item) {
+            // ■ 装備がある場合
+            // アイコンを表示（atlasを使っている場合は setFrame、画像の直接読み込みなら setTexture）
+            uiSlot.icon.setTexture(item.id); // アイテムID = 画像キー の場合
+            uiSlot.icon.setDisplaySize(32, 32);
+            uiSlot.icon.setVisible(true);
+            
+            // データを保存（ツールチップや外す処理用）
+            uiSlot.itemData = item;
+        } else {
+            // ■ 装備がない場合
+            uiSlot.icon.setVisible(false);
+            uiSlot.itemData = null;
+        }
+    }
 }
