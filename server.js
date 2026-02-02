@@ -303,7 +303,7 @@ io.on('connection', (socket) => {
 
         // インベントリに空きがあるか確認（簡易的に制限なしならpushでOK）
         // 実際はMAX個数チェックなどを入れる
-        player.inventory.push(item);
+        addItemToInventory(player, item.id, 1);
 
         // 装備スロットを空にする
         player.equipment[slotName] = null;
