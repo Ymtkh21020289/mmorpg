@@ -381,9 +381,6 @@ function create() {
     // インベントリUI作成
     createInventoryUI(this);
 
-    // ★Eキーで開閉
-    this.input.keyboard.on('keydown-E', () => toggleInventory(this));
-
     // サーバーからのインベントリ更新を受け取る
     this.socket.on('inventoryUpdate', (data) => {
         this.myInventory = data.inventory;
@@ -431,8 +428,11 @@ function create() {
     this.socket.on('equipmentUpdate', (equipmentData) => {
         updateEquipmentDisplay(this, equipmentData);
     });
+
+    // ★Eキーで開閉
+    this.input.keyboard.on('keydown-E', () => toggleInventory(this));
     
-    // Bキーで鍛冶屋を開く(死に機能)
+    // Bキーで鍛冶屋を開く(閉じるときだけ機能する)
     this.input.keyboard.on('keydown-B', () => {
         if (this.isShopOpen) {
             this.isShopOpen = false;
