@@ -1321,8 +1321,8 @@ function createSlot(scene, index, x, y, isHotbar) {
             const item = scene.myInventory[index];
 
             console.log(`Right click on slot ${index}`);
-            if (item. === "consumable") scene.socket.emit('useItem', index);
-            if (item. === "equipment") scene.socket.emit('equipItem', index);
+            if (item.type === "consumable") scene.socket.emit('useItem', index);
+            if (item.type === "equipment") scene.socket.emit('equipItem', index);
         }
         // ■ 左クリックの場合：アイテムを掴む・移動（これまでの処理）
         else {
