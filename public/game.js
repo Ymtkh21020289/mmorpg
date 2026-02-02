@@ -397,14 +397,6 @@ function create() {
     // UIを描画する関数を呼ぶ（後で作ります）
     createInventoryUI(this);
 
-    // 1. UIを作る
-    createEquipmentUI(this);
-
-    // 2. サーバーから装備更新通知が来たら反映
-    this.socket.on('equipmentUpdate', (equipmentData) => {
-        updateEquipmentDisplay(this, equipmentData);
-    });
-
     // 鍛冶屋UI作成
     createShopUI(this);
 
@@ -431,6 +423,14 @@ function create() {
     // あとでアクセスしやすいように参照を保存
     this.tooltipBg = tooltipBg;
     this.tooltipText = tooltipText;
+
+    // 1. UIを作る
+    createEquipmentUI(this);
+
+    // 2. サーバーから装備更新通知が来たら反映
+    this.socket.on('equipmentUpdate', (equipmentData) => {
+        updateEquipmentDisplay(this, equipmentData);
+    });
     
     // Bキーで鍛冶屋を開く(死に機能)
     this.input.keyboard.on('keydown-B', () => {
