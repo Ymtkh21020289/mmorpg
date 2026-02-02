@@ -260,6 +260,39 @@ io.on('connection', (socket) => {
         });
     });
 
+    socket.on('equipItem', (inventoryIndex) => {
+        const player = players[socket.id];
+        if (!player) return;
+
+        // 1. インベントリからアイテムを取得
+        const item = player.inventory[inventoryIndex];
+        if (!item) return;
+
+        const itemData = ITEMS[item.id];
+        if (!itemData || itemData.type !== 'equipment') return; // 装備品じゃなければ終了
+
+        // 2. 装備部位（slot）を確認
+        const slot = itemData.slot; // 'head', 'body' 等
+        
+        // 3. 今その部位に装備しているものがあるか？
+        const currentEquipped = player.equipment[slot];
+
+        // 4. トレード処理
+        // 新しい装備をスロットに入れる
+        player.equipment[slot] = item;
+        
+        // インベントリの元の場所には、
+        // 「これまで装備していたもの」を戻す（交換）。なければ null（空）にする。
+        player.inventory[inventoryIndex] = currentEquipped;
+
+        // 5. ステータスを再計算
+        updatePlayerStats(player);
+
+        // 6. クライアントにインベントリと装備の更新を通知
+        socket.emit('inventoryUpdate', player.inventory);
+        socket.emit('equipmentUpdate', player.equipment);
+    });
+
     socket.on('unequipItem', (slotName) => {
         const player = players[socket.id];
         if (!player) return;
