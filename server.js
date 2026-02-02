@@ -90,7 +90,10 @@ io.on('connection', (socket) => {
         level: 1,
         exp: 0,
         maxExp: 100,   // 次のレベルまでに必要な経験値
-        attackPower: 10, // 今の攻撃力
+        baseAtk: 10, // プレイヤーの初期攻撃力
+        baseDef:0, //プレイヤーの初期防御力
+        totalAtk: 10,
+        totalDef: 0,
         mp: 50,
         maxMp: 50,
         inventory: [
@@ -148,7 +151,7 @@ io.on('connection', (socket) => {
             // MPが減ったことを本人に通知
             socket.emit('updateStats', {
                 level: player.level, exp: player.exp, maxExp: player.maxExp,
-                attackPower: player.attackPower, hp: player.hp, 
+                baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
                 mp: player.mp // ★MPも含める
             });
         }
@@ -173,7 +176,7 @@ io.on('connection', (socket) => {
         const player = players[socket.id];
 
         if (enemy && !enemy.isDead && player) {
-            const sum = player.attackPower + data.damage
+            const sum = player.baseAtk + data.damage
             enemy.hp -= sum;
             io.emit('enemyDamaged', { enemyId: data.enemyId, damage: sum });
 
@@ -582,7 +585,7 @@ setInterval(() => {
             // 本人に通知
             io.to(id).emit('updateStats', {
                 level: player.level, exp: player.exp, maxExp: player.maxExp,
-                attackPower: player.attackPower, hp: player.hp, mp: player.mp
+                baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp
             });
         }
     });
@@ -612,8 +615,8 @@ function handleEnemyDeath(enemy, player) {
     if (player.exp >= player.maxExp) {
         player.level++;
         player.exp = 0;
-        player.maxExp = Math.floor(player.maxExp * 1.2);
-        player.attackPower += 5;
+        player.maxExp = Math.floor(player.level ** 2 + (player.level * 10) + 100);
+        player.baseAtk += 2;
         player.hp = player.maxHp;
         player.mp = player.maxMp;
         io.emit('playerLevelUp', { playerId: player.playerId, level: player.level });
@@ -623,7 +626,7 @@ function handleEnemyDeath(enemy, player) {
     // (socket経由ではなくio.toを使うことで、どこから呼ばれても動くようにする)
     io.to(player.playerId).emit('updateStats', {
         level: player.level, exp: player.exp, maxExp: player.maxExp,
-        attackPower: player.attackPower, hp: player.hp, mp: player.mp
+        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp
     });
 
     // 2. 死亡・復活処理
