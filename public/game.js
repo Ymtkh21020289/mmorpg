@@ -378,6 +378,11 @@ function create() {
     this.myGold = 0;
     this.isInventoryOpen = false; // 開いているかどうか
 
+    this.tooltip = this.add.container(0, 0);
+    this.tooltip.setScrollFactor(0); // 画面に固定
+    this.tooltip.setDepth(2000); // 最前面に表示
+    this.tooltip.setVisible(false); // 最初は隠す
+
     // 1. UIを作る
     createEquipmentUI(this);
 
@@ -399,11 +404,6 @@ function create() {
 
     // 鍛冶屋UI作成
     createShopUI(this);
-
-    this.tooltip = this.add.container(0, 0);
-    this.tooltip.setScrollFactor(0); // 画面に固定
-    this.tooltip.setDepth(2000); // 最前面に表示
-    this.tooltip.setVisible(false); // 最初は隠す
 
     // 背景（黒い四角）
     const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
