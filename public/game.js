@@ -1319,10 +1319,11 @@ function createSlot(scene, index, x, y, isHotbar) {
             // ショップが開いているときは誤爆防止で使えないようにする（お好みで）
             if (scene.isShopOpen) return;
             const item = scene.myInventory[index];
+            const type = ITEMS[item.id].type
 
             console.log(`Right click on slot ${index}`);
-            if (item.type === "consumable") scene.socket.emit('useItem', index);
-            if (item.type === "equipment") scene.socket.emit('equipItem', index);
+            if (type === "consumable") scene.socket.emit('useItem', index);
+            if (type === "equipment") scene.socket.emit('equipItem', index);
         }
         // ■ 左クリックの場合：アイテムを掴む・移動（これまでの処理）
         else {
