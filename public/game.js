@@ -378,6 +378,9 @@ function create() {
     this.myGold = 0;
     this.isInventoryOpen = false; // 開いているかどうか
 
+    // 1. UIを作る
+    createEquipmentUI(this);
+
     // インベントリUI作成
     createInventoryUI(this);
 
@@ -420,9 +423,6 @@ function create() {
     // あとでアクセスしやすいように参照を保存
     this.tooltipBg = tooltipBg;
     this.tooltipText = tooltipText;
-
-    // 1. UIを作る
-    createEquipmentUI(this);
 
     // 2. サーバーから装備更新通知が来たら反映
     this.socket.on('equipmentUpdate', (equipmentData) => {
