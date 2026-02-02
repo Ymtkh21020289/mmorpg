@@ -2,6 +2,28 @@ const ITEMS = {
     'dagger': { name: 'ダガー', type: 'weapon', damage: 0, range: 45, radius: 60, color: 0xcccccc, price: 20, desc: '初心者のための短剣。\n素早い攻撃が可能。（嘘）' }, // 短い・弱い
     'sword': { name: 'ソード', type: 'weapon',   damage: 10, range: 75, radius: 80, color: 0xffff00, price: 100, desc: '初心者のための剣。\n広範囲に攻撃が可能。' }, // 普通・普通
     'spear': { name: 'スピア', type: 'weapon', damage: 5, range: 15, radius: 120, color: 0xff0000, price: 200, desc: '初心者のための槍。\n遠くに攻撃が可能。' },
+    'leather_helm': { 
+        name: '革の帽子', 
+        type: 'equipment', 
+        slot: 'head',   // 頭装備
+        def: 3,         // 防御力プラス
+        price: 50 
+    },
+    'chain_mail': { 
+        name: '鎖帷子', 
+        type: 'equipment', 
+        slot: 'body',   // 体装備
+        def: 10,
+        price: 200 
+    },
+    // --- アクセサリー ---
+    'power_ring': {
+        name: '力の指輪',
+        type: 'equipment',
+        slot: 'accessory',
+        atk: 5,        // アクセで攻撃UP
+        price: 500
+    },
     'great_axe': { name: 'スゴイ斧', type: 'weapon', damage: 40, range: 120, radius: 90, color: 0x00ffff, price: 500, desc: 'スゴイ斧。\n高い攻撃力で一掃が可能。' },
     'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', damage: 40, range: 10, radius: 150, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
     'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2, desc: 'プルプルした謎の物体。\nクラフト素材として使える。' },
