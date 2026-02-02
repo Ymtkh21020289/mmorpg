@@ -96,6 +96,12 @@ io.on('connection', (socket) => {
         totalDef: 0,
         mp: 50,
         maxMp: 50,
+        equipment: {
+            weapon: null,
+            head: null,
+            body: null,
+            accessory: null
+        },
         inventory: [
             { id: 'dagger', count: 1 }, // Slot 0
             { id: 'sword', count: 1 },  // Slot 1
@@ -252,6 +258,29 @@ io.on('connection', (socket) => {
             inventory: player.inventory, 
             gold: player.gold 
         });
+    });
+
+    socket.on('unequipItem', (slotName) => {
+        const player = players[socket.id];
+        if (!player) return;
+
+        // 指定されたスロットに装備があるか？
+        const item = player.equipment[slotName];
+        if (!item) return;
+
+        // インベントリに空きがあるか確認（簡易的に制限なしならpushでOK）
+        // 実際はMAX個数チェックなどを入れる
+        player.inventory.push(item);
+
+        // 装備スロットを空にする
+        player.equipment[slotName] = null;
+
+        // ステータス再計算
+        updatePlayerStats(player);
+
+        // クライアントに通知
+        socket.emit('inventoryUpdate', player.inventory);
+        socket.emit('equipmentUpdate', player.equipment);
     });
     
     // 切断時の処理
@@ -760,4 +789,62 @@ function isMapWall(mapId, x, y) {
 
     // 1なら壁、0なら通れる
     return mapData.tiles[tileY][tileX] === 1;
+}
+
+function updatePlayerStats(player) {
+    // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
+    player.totalAtk = player.baseAtk; // + (player.level * 2) など
+    player.totalDef = player.baseDef; // + (player.level * 1) など
+
+    // 2. 装備スロットを全部見て回る
+    for (const slot in player.equipment) {
+        const item = player.equipment[slot];
+        
+        // 装備していれば加算
+        if (item) {
+            // ITEMSデータから性能を参照（itemにはIDが入っている想定）
+            // ※ items.js を require している前提です
+            const itemData = ITEMS[item.id]; 
+            
+            if (itemData) {
+                if (itemData.atk) player.totalAtk += itemData.atk;
+                if (itemData.def) player.totalDef += itemData.def;
+            }
+        }
+    }
+    
+    // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
+    io.to(player.id).emit('updateStats', { 
+        atk: player.totalAtk, 
+        def: player.totalDef 
+    });
+}
+
+function updatePlayerStats(player) {
+    // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
+    player.totalAtk = player.baseAtk; // + (player.level * 2) など
+    player.totalDef = player.baseDef; // + (player.level * 1) など
+
+    // 2. 装備スロットを全部見て回る
+    for (const slot in player.equipment) {
+        const item = player.equipment[slot];
+        
+        // 装備していれば加算
+        if (item) {
+            // ITEMSデータから性能を参照（itemにはIDが入っている想定）
+            // ※ items.js を require している前提です
+            const itemData = ITEMS[item.id]; 
+            
+            if (itemData) {
+                if (itemData.atk) player.totalAtk += itemData.atk;
+                if (itemData.def) player.totalDef += itemData.def;
+            }
+        }
+    }
+    
+    // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
+    io.to(player.id).emit('updateStats', { 
+        atk: player.totalAtk, 
+        def: player.totalDef 
+    });
 }
