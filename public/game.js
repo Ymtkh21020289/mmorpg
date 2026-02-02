@@ -1565,7 +1565,7 @@ function createShopUI(scene) {
 
 function createEquipmentUI(scene) {
     // 1. 装備画面全体のコンテナ
-    scene.equipContainer = scene.add.container(200, 300); // インベントリの左隣などを想定
+    scene.equipContainer = scene.add.container(300, 400); // インベントリの左隣などを想定
     scene.equipContainer.setScrollFactor(0);
     scene.equipContainer.setDepth(1500);
     scene.equipContainer.setVisible(false); // 最初は隠す
