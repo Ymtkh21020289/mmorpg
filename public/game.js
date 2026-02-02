@@ -1601,6 +1601,7 @@ function createEquipmentUI(scene) {
         const slotBg = scene.add.rectangle(config.x, config.y, 40, 40, 0x333333);
         slotBg.setStrokeStyle(1, 0x888888);
         slotBg.setInteractive(); // クリック可能に
+        slotBg.setScrollFactor(0);
         
         // ラベル（薄く表示）
         const slotLabel = scene.add.text(config.x, config.y, config.label, { 
