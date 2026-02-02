@@ -312,7 +312,7 @@ io.on('connection', (socket) => {
         updatePlayerStats(player);
 
         // クライアントに通知
-        socket.emit('inventoryUpdate', player.inventory);
+        socket.emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
         socket.emit('equipmentUpdate', player.equipment);
     });
     
