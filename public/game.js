@@ -1507,9 +1507,9 @@ function createShopUI(scene) {
     scene.shopContainer.add([sellBtn, sellText]);
 
     // --- 左側：ショップ（購入） ---
-    scene.shopContainer.add(scene.add.text(50, 60, '【購入】', { fill: '#00ff00' }));
+    scene.shopContent.add(scene.add.text(50, 60, '【購入】', { fill: '#00ff00' }));
     
-    const shopItems = ['potion', 'sword']; // 売っているものリスト
+    const shopItems = ['potion', 'sword', 'leather_helm', 'chain_mail', 'power_ring']; // 売っているものリスト
     
     shopItems.forEach((id, index) => {
         const item = ITEMS[id];
@@ -1530,7 +1530,7 @@ function createShopUI(scene) {
 
 
     // --- 右側：クラフト（作成） ---
-    scene.shopContainer.add(scene.add.text(300, 60, '【クラフト】', { fill: '#00ffff' }));
+    scene.shopContent.add(scene.add.text(300, 60, '【クラフト】', { fill: '#00ffff' }));
 
     RECIPES.forEach((recipe, index) => {
         const resultItem = ITEMS[recipe.id];
