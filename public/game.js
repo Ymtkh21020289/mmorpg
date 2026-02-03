@@ -325,7 +325,7 @@ function create() {
             // 名前表示
             const nameText = this.add.text(npc.x, npc.y - 30, npc.name, { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
             this.npcGroup.add(npcSprite);
-            this.npcGroup.add(nametext);
+            this.npcGroup.add(nameText);
         }
         console.log("【確認C】作成完了。現在のグループ数:", this.npcGroup.getLength());
     });
