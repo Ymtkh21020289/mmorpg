@@ -325,6 +325,7 @@ function create() {
             // 名前表示
             const nameText = this.add.text(npc.x, npc.y - 30, npc.name, { fontSize: '14px', fill: '#fff' }).setOrigin(0.5);
             this.npcGroup.add(npcSprite);
+            this.npcGroup.add(nametext);
         }
         console.log("【確認C】作成完了。現在のグループ数:", this.npcGroup.getLength());
     });
@@ -858,7 +859,6 @@ function update() {
         }
     }
     if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
-        console.log(this.npcGroup.getChildren());
         const slotItem = this.myInventory[this.selectedSlot];
         let weapon = { damage: 0, range: 30, radius: 40, color: 0xffffff }; // 素手
         if (slotItem && ITEMS[slotItem.id] && ITEMS[slotItem.id].type === 'weapon') {
