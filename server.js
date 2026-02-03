@@ -785,7 +785,7 @@ function performEnemyAttack(enemy, stats) {
             // 指定した角度の幅（半分）以内ならヒット
             if (Math.abs(angleDiff) <= stats.attackAngle / 2) {
                 // ★命中！
-                p.hp -= stats.damage + p.totalDef;
+                p.hp -= Math.min(stats.damage - p.totalDef, 0);
                 p.lastDamageTime = now;
                 // 死亡判定などはここに記述
                 if (p.hp <= 0) {
@@ -826,8 +826,8 @@ function isMapWall(mapId, x, y) {
 
 function updatePlayerStats(player) {
     // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
-    player.totalAtk = player.baseAtk; // + (player.level * 2) など
-    player.totalDef = player.baseDef; // + (player.level * 1) など
+    player.totalAtk = player.baseAtk + (player.level * 2);
+    player.totalDef = player.baseDef + (player.level * 1);
 
     // 2. 装備スロットを全部見て回る
     for (const slot in player.equipment) {
