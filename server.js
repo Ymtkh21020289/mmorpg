@@ -785,7 +785,7 @@ function performEnemyAttack(enemy, stats) {
             // 指定した角度の幅（半分）以内ならヒット
             if (Math.abs(angleDiff) <= stats.attackAngle / 2) {
                 // ★命中！
-                p.hp -= stats.damage;
+                p.hp -= stats.damage + p.totalDef;
                 p.lastDamageTime = now;
                 // 死亡判定などはここに記述
                 if (p.hp <= 0) {
