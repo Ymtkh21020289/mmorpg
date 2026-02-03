@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
             { id: 'spear', count: 1 },  // Slot 2
             ...Array(27).fill(null)     // Slot 3~29 は空
         ],
-        gold: 0 // お金
+        gold: 1000 // お金
     };
 
     // ★Socket.ioの「town」という部屋に参加させる
