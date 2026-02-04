@@ -920,11 +920,9 @@ function update() {
                         this.merchantContainer.setVisible(true);
                         this.tooltip.setVisible(false);
                         this.isSellingMode = false;
-                        break;
                     }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
                         this.isCraftingOpen = true;
                         this.craftContainer.setVisible(true);
-                        break;
                     }
                 }
             }
