@@ -36,6 +36,8 @@ const spawners = [
     { type: 'wolf',    x: 400, y: 400, count: 3, radius: 150, room: 'adventure', spriteKey: 'wolfSprite'}
 ];
 
+const mitigation = 300;
+
 // --- 関数：群れをスポーンさせる ---
 function spawnGroup(spawner) {
     for (let i = 0; i < spawner.count; i++) {
@@ -800,7 +802,8 @@ function performEnemyAttack(enemy, stats) {
             // 指定した角度の幅（半分）以内ならヒット
             if (Math.abs(angleDiff) <= stats.attackAngle / 2) {
                 // ★命中！
-                p.hp -= Math.max(stats.damage - p.totalDef, 0);
+                const damage1 = mitigation / (mitigation + p.totalDef)
+                p.hp -= Math.floor(Math.max(stats.damage * (1 - damage1), 0));
                 p.lastDamageTime = now;
                 // 死亡判定などはここに記述
                 if (p.hp <= 0) {
