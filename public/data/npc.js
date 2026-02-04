@@ -6,6 +6,14 @@ const npcs = {
         type: 'merchant',
         color: 0x00ff00,       // 緑色（味方っぽい色）
         radius: 30             // 当たり判定の大きさ
+    },
+    'blacksmith_1': { 
+        x: 304, y: 48,        // 配置座標
+        mapId: 'shop',        // 配置マップ
+        name: '道具屋',
+        type: 'blacksmith',
+        color: 0x00ff00,       // 緑色（味方っぽい色）
+        radius: 30             // 当たり判定の大きさ
     }
 };
 
