@@ -274,7 +274,7 @@ io.on('connection', (socket) => {
         if (!itemData || itemData.type !== 'equipment') return; // 装備品じゃなければ終了
 
         // 2. 装備部位（slot）を確認
-        const slot = itemData.slot; // 'head', 'body' 等
+        let slot = itemData.slot; // 'head', 'body' 等
 
         if (slot === 'accessory') {
             if (!player.equipment['accessory1']) {
