@@ -435,17 +435,16 @@ function create() {
     
     // Bキーで鍛冶屋を開く(閉じるときだけ機能する)
     this.input.keyboard.on('keydown-B', () => {
-        if (this.isShopOpen) {
-            this.isShopOpen = false;
+        if (this.isMerchantOpen) {
+            this.isMerchantOpen = false;
             this.isSellingMode = false;
             this.tooltip.setVisible(false);
-            this.shopContainer.setVisible(false);
-            // ボタンの色などを戻す処理が必要ですが、
-            // 簡易的に「次に開いたときはOFFの見た目に戻す」ため、createShopUI内の変数は手動で戻りませんが、
-            // 動作としてはOFFになります。
-            // 完璧にするなら updateInventoryUI のような updateShopUI 関数を作る必要がありますが、
-            // まずはこれで十分動きます。
-        }
+            this.merchantContainer.setVisible(false);
+        }else if (this.isCraftingOpen) {
+            this.isCraftingOpen = false;
+            this.tooltip.setVisible(false);
+            this.craftContainer.setVisible(false);;
+        } 
     });
 
     // キーボード入力の設定（1, 2, 3キー）
