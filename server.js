@@ -96,11 +96,13 @@ io.on('connection', (socket) => {
         totalDef: 0,
         mp: 50,
         maxMp: 50,
-        equipment: {
-            weapon: null,
-            head: null,
-            body: null,
-            accessory: null
+        equipment: { 
+            weapon: null, 
+            head: null, 
+            body: null, 
+            accessory1: null, 
+            accessory2: null, 
+            accessory3: null 
         },
         inventory: [
             { id: 'dagger', count: 1 }, // Slot 0
@@ -273,6 +275,19 @@ io.on('connection', (socket) => {
 
         // 2. 装備部位（slot）を確認
         const slot = itemData.slot; // 'head', 'body' 等
+
+        if (slot === 'accessory') {
+            if (!player.equipment['accessory1']) {
+                slot = 'accessory1';
+            } else if (!player.equipment['accessory2']) {
+                slot = 'accessory2';
+            } else if (!player.equipment['accessory3']) {
+                slot = 'accessory3';
+            } else {
+                // 全部埋まっている場合は、とりあえず1番目と交換（またはエラーにする）
+                slot = 'accessory1';
+            }
+        }
         
         // 3. 今その部位に装備しているものがあるか？
         const currentEquipped = player.equipment[slot];
