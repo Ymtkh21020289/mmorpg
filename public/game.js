@@ -1574,7 +1574,7 @@ function createEquipmentUI(scene) {
     scene.equipContainer.setVisible(false); // 最初は隠す
 
     // 背景（オプション）
-    const bg = scene.add.rectangle(0, 0, 180, 200, 0x000000, 0.5);
+    const bg = scene.add.rectangle(0, 0, 180, 260, 0x000000, 0.5);
     bg.setStrokeStyle(2, 0xaaaaaa);
     scene.equipContainer.add(bg);
 
@@ -1588,7 +1588,9 @@ function createEquipmentUI(scene) {
         'head':      { x: 0,   y: -50, label: '頭' },
         'weapon':    { x: -50, y: 10,  label: '武器' },
         'body':      { x: 0,   y: 10,  label: '体' },
-        'accessory': { x: 50,  y: 10,  label: '装飾' }
+        'accessory1': { x: 50,  y: -50, label: '装飾1' },
+        'accessory2': { x: 50,  y: 10,  label: '装飾2' },
+        'accessory3': { x: 50,  y: 70,  label: '装飾3' }
     };
 
     // スロット管理用のオブジェクト
