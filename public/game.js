@@ -403,8 +403,8 @@ function create() {
     // UIを描画する関数を呼ぶ（後で作ります）
     createInventoryUI(this);
 
-    // 鍛冶屋UI作成
-    createShopUI(this);
+    createMerchantUI(this); // 武器商人のUI作成
+    createCraftingUI(this); // 鍛冶屋のUI作成
 
     // 背景（黒い四角）
     const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
@@ -915,14 +915,16 @@ function update() {
                 // (右90度 + 左90度 = 合計180度の半円範囲になる)
                 if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
                     // ヒット確定！
-                    if (enemy.getData('type') === 'merchant' && !this.isShopOpen) {
-                        this.isShopOpen = true;
-                        this.shopContainer.setVisible(true);
-                        this.shopContent.setVisible(true); // コンテンツも確実に表示
-                        this.tooltip.setVisible(false);    // ツールチップは消す
-                        // 売却モードはリセットしておく
+                    if (enemy.getData('type') === 'merchant' && !this.isMerchantOpen) {
+                        this.isMerchantOpen = true;
+                        this.merchantContainer.setVisible(true);
+                        this.tooltip.setVisible(false);
                         this.isSellingMode = false;
-                        // ボタンの色などを戻す処理があればここに記述
+                        break;
+                    }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
+                        this.isCraftingOpen = true;
+                        this.craftContainer.setVisible(true);
+                        break;
                     }
                 }
             }
@@ -1565,6 +1567,157 @@ function createShopUI(scene) {
 }
 
 // game.js
+
+function createMerchantUI(scene) {
+    // 状態管理フラグ（必要に応じて初期化）
+    scene.isMerchantOpen = false;
+    scene.isSellingMode = false;
+
+    // --- コンテナ作成 ---
+    // 画面中央あたりに配置
+    scene.merchantContainer = scene.add.container(200, 100).setScrollFactor(0).setDepth(200);
+    scene.merchantContainer.setVisible(false);
+
+    // --- 1. 売却モード時に非表示にするグループ ---
+    scene.merchantBuyContent = scene.add.container(0, 0);
+    scene.merchantContainer.add(scene.merchantBuyContent);
+
+    // --- 背景 ---
+    const bg = scene.add.rectangle(150, 200, 300, 400, 0x000000, 0.9); // 幅を少し調整
+    bg.setStrokeStyle(4, 0x00ff00); // 商人は緑枠
+    bg.setInteractive(); 
+    bg.setScrollFactor(0);
+    scene.merchantContainer.addAt(bg, 0); // コンテナの一番奥に追加
+
+    // --- タイトル ---
+    const title = scene.add.text(150, 30, '=== 武器商人 ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
+    scene.merchantContainer.add(title);
+    
+    // --- 閉じる説明 ---
+    const closeHint = scene.add.text(150, 380, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    scene.merchantContainer.add(closeHint);
+
+
+    // --- 売却モード切替ボタン ---
+    const sellBtn = scene.add.rectangle(150, 340, 200, 40, 0xaa0000);
+    sellBtn.setScrollFactor(0);
+    sellBtn.setInteractive({ useHandCursor: true });
+    
+    const sellText = scene.add.text(150, 340, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+
+    sellBtn.on('pointerdown', () => {
+        scene.isSellingMode = !scene.isSellingMode;
+
+        if (scene.isSellingMode) {
+            sellBtn.setFillStyle(0xff0000, 1);
+            sellText.setText('売却モード: ON');
+            // 購入リストを隠す
+            scene.merchantBuyContent.setVisible(false);
+        } else {
+            sellBtn.setFillStyle(0xaa0000, 1);
+            sellText.setText('売却モード: OFF');
+            // 購入リストを表示
+            scene.merchantBuyContent.setVisible(true);
+        }
+    });
+
+    scene.merchantContainer.add([sellBtn, sellText]);
+
+
+    // --- 【購入リスト】の生成 ---
+    scene.merchantBuyContent.add(scene.add.text(150, 70, '【商品一覧】', { fill: '#00ff00', fontSize: '16px' }).setOrigin(0.5));
+    
+    // 定義済みの商品リスト
+    const shopItems = ['potion', 'iron_sword', 'leather_helm', 'chain_mail', 'power_ring']; 
+    
+    shopItems.forEach((id, index) => {
+        // アイテムデータ取得（ITEMSはグローバルまたはsceneから参照）
+        const item = ITEMS[id]; 
+        if (!item) return;
+
+        const y = 110 + index * 40;
+        
+        // ボタン背景
+        const btn = scene.add.rectangle(150, y, 240, 30, 0x333333).setInteractive({ useHandCursor: true });
+        btn.setScrollFactor(0); // 重要
+
+        // テキスト
+        const text = scene.add.text(150, y, `${item.name} (${item.price}G)`, { fontSize: '14px', fill: '#ffffff' }).setOrigin(0.5);
+        
+        // 購入イベント
+        btn.on('pointerdown', () => {
+            console.log(`${item.name} を購入リクエスト`);
+            scene.socket.emit('buyItem', id);
+        });
+
+        // リスト用コンテナに追加
+        scene.merchantBuyContent.add([btn, text]);
+    });
+}
+
+function createCraftingUI(scene) {
+    scene.isCraftingOpen = false;
+
+    // --- コンテナ作成 ---
+    // 商人とは少し位置を変えても良いかもしれません
+    scene.craftContainer = scene.add.container(200, 100).setScrollFactor(0).setDepth(200);
+    scene.craftContainer.setVisible(false);
+
+    // --- 背景 ---
+    const bg = scene.add.rectangle(200, 250, 400, 500, 0x000000, 0.9); // レシピは見やすいよう少し広めに
+    bg.setStrokeStyle(4, 0xff4400); // 鍛冶屋は赤っぽい枠
+    bg.setInteractive();
+    bg.setScrollFactor(0);
+    scene.craftContainer.add(bg);
+
+    // --- タイトル ---
+    const title = scene.add.text(200, 30, '=== 鍛冶職人 ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
+    scene.craftContainer.add(title);
+    
+    // --- 閉じる説明 ---
+    const closeHint = scene.add.text(200, 480, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    scene.craftContainer.add(closeHint);
+
+
+    // --- 【クラフトリスト】の生成 ---
+    scene.craftContainer.add(scene.add.text(200, 70, '【作成リスト】', { fill: '#ffaa00', fontSize: '16px' }).setOrigin(0.5));
+
+    // RECIPESはグローバル定義されている前提
+    RECIPES.forEach((recipe, index) => {
+        const resultItem = ITEMS[recipe.id];
+        if (!resultItem) return;
+
+        const y = 120 + index * 60; // 情報量が多いので間隔を広めに
+
+        // 素材テキストの生成
+        let reqText = '';
+        if (recipe.materials) {
+            for (const [matId, count] of Object.entries(recipe.materials)) {
+                const matName = ITEMS[matId] ? ITEMS[matId].name : matId;
+                reqText += `${matName}x${count}  `;
+            }
+        }
+
+        // ボタン背景
+        const btn = scene.add.rectangle(200, y, 350, 50, 0x442200).setInteractive({ useHandCursor: true });
+        btn.setStrokeStyle(1, 0x884400);
+        btn.setScrollFactor(0);
+        
+        // アイテム名
+        const nameText = scene.add.text(200, y - 12, `作る: ${resultItem.name}`, { fontSize: '16px', fill: '#ffdd00' }).setOrigin(0.5);
+        
+        // 必要素材と費用
+        const infoText = scene.add.text(200, y + 12, `必要: ${reqText}\n費用: ${recipe.cost}G`, { fontSize: '11px', fill: '#cccccc', align: 'center' }).setOrigin(0.5);
+
+        // 作成イベント
+        btn.on('pointerdown', () => {
+            console.log(`${resultItem.name} の作成リクエスト`);
+            scene.socket.emit('craftItem', index);
+        });
+
+        scene.craftContainer.add([btn, nameText, infoText]);
+    });
+}
 
 function createEquipmentUI(scene) {
     // 1. 装備画面全体のコンテナ
