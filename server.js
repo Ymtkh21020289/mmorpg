@@ -345,7 +345,7 @@ io.on('connection', (socket) => {
         const player = players[socket.id];
         if (!player) return;
         player.hp = player.maxHp;
-        p.x = 48; p.y = 80;
+        player.x = 48; player.y = 80;
         socket.emit('playerRespawn', player);
     });
 
