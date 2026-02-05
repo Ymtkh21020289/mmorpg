@@ -447,6 +447,26 @@ function create() {
         } 
     });
 
+    createMenuUI(this);
+
+    this.input.keyboard.on('keydown-Q', () => {
+        this.isMenuOpen = !this.isMenuOpen;
+
+        if (this.isMenuOpen && !this.isCraftingOpen &&!this.isMerchantOpen) {
+            this.menuContainer.setVisible(true);
+            
+            // 最初はメインメニューを表示し、ステータス画面は隠すリセット処理
+            this.menuMain.setVisible(true);
+            this.menuStatus.setVisible(false);
+            
+            // 他のウィンドウ（インベントリやショップ）を閉じる処理をここに入れても親切です
+            // this.inventoryContainer.setVisible(false); 
+        } else {
+            // メニューを閉じる
+            this.menuContainer.setVisible(false);
+        }
+    });
+
     // キーボード入力の設定（1, 2, 3キー）
     this.input.keyboard.on('keydown-ONE', () => selectWeapon(this, 0));
     this.input.keyboard.on('keydown-TWO', () => selectWeapon(this, 1));
@@ -1827,3 +1847,128 @@ function updateEquipmentDisplay(scene, equipmentData) {
         }
     }
 }
+
+function createMenuUI(scene) {
+    scene.isMenuOpen = false;
+
+    // --- 1. メニュー全体の親コンテナ ---
+    // 画面中央に配置
+    scene.menuContainer = scene.add.container(400, 300).setScrollFactor(0).setDepth(2000);
+    scene.menuContainer.setVisible(false);
+
+    // 背景（共通）
+    const bg = scene.add.rectangle(0, 0, 300, 400, 0x000000, 0.9);
+    bg.setStrokeStyle(4, 0xffffff); // 白い枠
+    bg.setInteractive(); // クリック透過防止
+    scene.menuContainer.add(bg);
+
+    // タイトル（共通）
+    const title = scene.add.text(0, -170, 'MAIN MENU', { fontSize: '24px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    scene.menuContainer.add(title);
+
+
+    // --- 2. メインメニュー（ボタン一覧）のコンテナ ---
+    scene.menuMain = scene.add.container(0, 0);
+    scene.menuContainer.add(scene.menuMain);
+
+    // ボタンを作るヘルパー関数（今後ボタンが増えるので関数化）
+    const createMenuButton = (y, text, callback) => {
+        const btnBg = scene.add.rectangle(0, y, 200, 40, 0x333333).setInteractive({ useHandCursor: true });
+        const btnText = scene.add.text(0, y, text, { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+        
+        btnBg.on('pointerdown', callback);
+        
+        // ホバー効果
+        btnBg.on('pointerover', () => btnBg.setFillStyle(0x555555));
+        btnBg.on('pointerout', () => btnBg.setFillStyle(0x333333));
+
+        return [btnBg, btnText];
+    };
+
+    // --- ボタン配置 ---
+    // [ステータス]
+    const btnStatus = createMenuButton(-50, 'ステータス', () => {
+        scene.menuMain.setVisible(false);   // メインを隠す
+        scene.menuStatus.setVisible(true);  // ステータスを出す
+        updateMenuStats(scene);             // 数値を更新
+    });
+
+    // [閉じる]
+    const btnClose = createMenuButton(150, '閉じる', () => {
+        scene.menuContainer.setVisible(false);
+        scene.isMenuOpen = false;
+    });
+
+    // 将来ここに「スキル」「クエスト」などを追加できます
+    // createMenuButton(0, 'スキル', ...); 
+
+    scene.menuMain.add([...btnStatus, ...btnClose]);
+
+
+    // --- 3. ステータス画面のコンテナ ---
+    scene.menuStatus = scene.add.container(0, 0);
+    scene.menuStatus.setVisible(false); // 最初は隠す
+    scene.menuContainer.add(scene.menuStatus);
+
+    // ステータス表示用テキスト（更新するために参照を持っておく）
+    scene.statusText = scene.add.text(0, -20, '', { 
+        fontSize: '16px', fill: '#fff', align: 'left', lineSpacing: 10 
+    }).setOrigin(0.5);
+    scene.menuStatus.add(scene.statusText);
+
+    // [戻る] ボタン
+    const btnBack = createMenuButton(150, '戻る', () => {
+        scene.menuStatus.setVisible(false); // ステータスを隠す
+        scene.menuMain.setVisible(true);    // メインメニューに戻る
+    });
+    scene.menuStatus.add(btnBack);
+}
+
+function updateMenuStats(scene) {
+    // プレイヤーデータの取得（IDや変数は環境に合わせて調整してください）
+    // 例: this.socket.id で自分のプレイヤーを探す
+    const myId = scene.socket.id;
+    const player = scene.otherPlayers[myId]; // ※createPlayerで自分もここに保存している想定
+
+    if (!player) return;
+
+    let baseAtk = p.baseAtk;
+    let baseDef = p.baseDef;
+    let maxHp = 100;
+    let equipAtk = 0;
+    let equipDef = 0;
+    let equipHp = 0;
+
+    // 装備スロットを全部チェック
+    // accessory1~3 も含めるため、equipmentオブジェクト全体を回すのが楽です
+    if (player.equipment) {
+        Object.values(player.equipment).forEach(item => {
+            if (item) {
+                const itemData = ITEMS[item.id];
+                if (itemData) {
+                    equipAtk += itemData.atk || 0;
+                    equipDef += itemData.def || 0;
+                    // equipHp += itemData.hp || 0; // HP補正があれば
+                }
+            }
+        });
+    }
+
+    const totalAtk = baseAtk + equipAtk;
+    const totalDef = baseDef + equipDef;
+    const totalHp = maxHp + equipHp;
+
+    // --- 表示テキストの作成 ---
+    const text = 
+        `【 プレイヤー詳細 】\n\n` +
+        `HP  : ${totalHp} / ${totalHp}\n` +
+        `攻撃力: ${totalAtk} (素${baseAtk} + 装${equipAtk})\n` +
+        `防御力: ${totalDef} (素${baseDef} + 装${equipDef})\n` +
+        `\n` +
+        `現在の装備:\n` +
+        `武器 : ${player.equipment.weapon ? ITEMS[player.equipment.weapon.id].name : '(なし)'}\n` +
+        `防具 : ${player.equipment.body ? ITEMS[player.equipment.body.id].name : '(なし)'}`;
+
+    scene.statusText.setText(text);
+}
+
