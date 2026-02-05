@@ -1903,8 +1903,13 @@ function createMenuUI(scene) {
         updateMenuStats(scene);             // 数値を更新
     });
 
-    // [閉じる]
-    const btnClose = createMenuButton(150, '閉じる', () => {
+    const btnUnstuck = createMenuButton(20, 'スタック脱出 (自殺)', () => {
+        scene.menuMain.setVisible(false);
+        scene.menuSuicide.setVisible(true); // 確認画面へ
+    });
+
+    // [閉じる] (位置: 150 -> 90 に少し詰めました)
+    const btnClose = createMenuButton(90, '閉じる', () => {
         scene.menuContainer.setVisible(false);
         scene.isMenuOpen = false;
     });
@@ -1925,6 +1930,33 @@ function createMenuUI(scene) {
         fontSize: '16px', fill: '#fff', align: 'left', lineSpacing: 10 
     }).setOrigin(0.5);
     scene.menuStatus.add(scene.statusText);
+
+    scene.menuSuicide = scene.add.container(0, 0);
+    scene.menuSuicide.setVisible(false);
+    scene.menuContainer.add(scene.menuSuicide);
+
+    const suicideWarnText = scene.add.text(0, -60, '【 警 告 】\n\n強制的に死亡して\nリスポーン地点に戻ります。\nよろしいですか？', { 
+        fontSize: '18px', fill: '#ff0000', align: 'center', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    scene.menuSuicide.add(suicideWarnText);
+
+    const btnDieYes = createMenuButton(20, '実行する', () => {
+        console.log("さようなら...");
+        scene.socket.emit('forceRespawn'); // サーバーに死亡通知
+        
+        scene.menuContainer.setVisible(false);
+        scene.isMenuOpen = false;
+    });
+    // 少し色を赤くして危険な感じにする
+    btnDieYes[0].setFillStyle(0xaa0000); 
+
+    // [いいえ、戻ります] ボタン
+    const btnDieNo = createMenuButton(90, 'やめる', () => {
+        scene.menuSuicide.setVisible(false);
+        scene.menuMain.setVisible(true); // メインに戻る
+    });
+
+    scene.menuSuicide.add([...btnDieYes, ...btnDieNo]);
 
     // [戻る] ボタン
     const btnBack = createMenuButton(150, '戻る', () => {
