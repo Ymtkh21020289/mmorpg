@@ -517,6 +517,16 @@ function create() {
         if (self.hpUI) {
             self.hpUI.setText(`HP: ${stats.hp}`);
         }
+        if (self.totalAtk) {
+            const equipAtk = self.totalAtk - self.baseAtk;
+            const equipDef = self.totalDef - self.baseDef;
+            const text = 
+                `【 プレイヤー詳細 】\n\n` +
+                `攻撃力: ${self.totalAtk} (素${self.baseAtk} + 装${equipAtk})\n` +
+                `防御力: ${self.totalDef} (素${self.baseDef} + 装${equipDef})\n`;
+
+            scene.statusText.setText(text);
+        }
     });
 
     // 2. 誰かがレベルアップした時の派手な演出
