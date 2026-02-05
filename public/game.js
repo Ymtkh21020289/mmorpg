@@ -1563,93 +1563,87 @@ function createShopUI(scene) {
     });
 }
 
-// game.js
-
 function createMerchantUI(scene) {
-    // 状態管理フラグ（必要に応じて初期化）
     scene.isMerchantOpen = false;
     scene.isSellingMode = false;
 
-    // --- コンテナ作成 ---
-    // 画面中央あたりに配置
+    // 1. 全体を入れる大枠のコンテナ
     scene.merchantContainer = scene.add.container(200, 100).setScrollFactor(0).setDepth(200);
     scene.merchantContainer.setVisible(false);
 
-    // --- 1. 売却モード時に非表示にするグループ ---
-    scene.merchantBuyContent = scene.add.container(0, 0);
-    scene.merchantContainer.add(scene.merchantBuyContent);
+    // 2. 「通常時（購入モード）に表示する要素」をまとめるコンテナ
+    //    ※ここに入れたものが、売却モード時に一括で消えます
+    scene.merchantNormalElements = scene.add.container(0, 0);
+    scene.merchantContainer.add(scene.merchantNormalElements);
 
-    // --- 背景 ---
-    const bg = scene.add.rectangle(150, 200, 300, 400, 0x000000, 0.9); // 幅を少し調整
-    bg.setStrokeStyle(4, 0x00ff00); // 商人は緑枠
-    bg.setInteractive(); 
+    // --- 背景（NormalElementsに追加） ---
+    const bg = scene.add.rectangle(150, 200, 300, 400, 0x000000, 0.9);
+    bg.setStrokeStyle(4, 0x00ff00);
+    bg.setInteractive(); // クリック透過防止
     bg.setScrollFactor(0);
-    scene.merchantContainer.addAt(bg, 0); // コンテナの一番奥に追加
+    scene.merchantNormalElements.add(bg);
 
-    // --- タイトル ---
+    // --- タイトルなどのテキスト（NormalElementsに追加） ---
     const title = scene.add.text(150, 30, '=== 武器商人 ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
-    scene.merchantContainer.add(title);
-    
-    // --- 閉じる説明 ---
     const closeHint = scene.add.text(150, 380, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
-    scene.merchantContainer.add(closeHint);
+    const listTitle = scene.add.text(150, 70, '【商品一覧】', { fill: '#00ff00', fontSize: '16px' }).setOrigin(0.5);
+    
+    scene.merchantNormalElements.add([title, closeHint, listTitle]);
 
 
-    // --- 売却モード切替ボタン ---
+    // --- 商品リストの生成（NormalElementsに追加） ---
+    const shopItems = ['potion', 'iron_sword', 'leather_helm', 'chain_mail', 'power_ring']; 
+    
+    shopItems.forEach((id, index) => {
+        const item = ITEMS[id]; 
+        if (!item) return;
+
+        const y = 110 + index * 40;
+        
+        const btn = scene.add.rectangle(150, y, 240, 30, 0x333333).setInteractive({ useHandCursor: true });
+        btn.setScrollFactor(0);
+
+        const text = scene.add.text(150, y, `${item.name} (${item.price}G)`, { fontSize: '14px', fill: '#ffffff' }).setOrigin(0.5);
+        
+        btn.on('pointerdown', () => {
+            scene.socket.emit('buyItem', id);
+        });
+
+        scene.merchantNormalElements.add([btn, text]);
+    });
+
+
+    // --- 3. 売却モード切替ボタン（ここは親コンテナに直接置く） ---
+    //    ※これだけは常に表示させたいので、merchantNormalElementsには入れません
     const sellBtn = scene.add.rectangle(150, 340, 200, 40, 0xaa0000);
     sellBtn.setScrollFactor(0);
     sellBtn.setInteractive({ useHandCursor: true });
     
     const sellText = scene.add.text(150, 340, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
 
+    // ボタンのクリックイベント
     sellBtn.on('pointerdown', () => {
         scene.isSellingMode = !scene.isSellingMode;
 
         if (scene.isSellingMode) {
+            // ■ ONの場合
             sellBtn.setFillStyle(0xff0000, 1);
-            sellText.setText('売却モード: ON');
-            // 購入リストを隠す
-            scene.merchantBuyContent.setVisible(false);
+            sellText.setText('売却モード: ON (アイテムを選択)');
+            
+            // 背景やリストをすべて隠す！
+            scene.merchantNormalElements.setVisible(false);
+            
         } else {
+            // ■ OFFの場合
             sellBtn.setFillStyle(0xaa0000, 1);
             sellText.setText('売却モード: OFF');
-            // 購入リストを表示
-            scene.merchantBuyContent.setVisible(true);
+            
+            // 背景やリストを再表示
+            scene.merchantNormalElements.setVisible(true);
         }
     });
 
     scene.merchantContainer.add([sellBtn, sellText]);
-
-
-    // --- 【購入リスト】の生成 ---
-    scene.merchantBuyContent.add(scene.add.text(150, 70, '【商品一覧】', { fill: '#00ff00', fontSize: '16px' }).setOrigin(0.5));
-    
-    // 定義済みの商品リスト
-    const shopItems = ['potion', 'iron_sword', 'leather_helm', 'chain_mail', 'power_ring']; 
-    
-    shopItems.forEach((id, index) => {
-        // アイテムデータ取得（ITEMSはグローバルまたはsceneから参照）
-        const item = ITEMS[id]; 
-        if (!item) return;
-
-        const y = 110 + index * 40;
-        
-        // ボタン背景
-        const btn = scene.add.rectangle(150, y, 240, 30, 0x333333).setInteractive({ useHandCursor: true });
-        btn.setScrollFactor(0); // 重要
-
-        // テキスト
-        const text = scene.add.text(150, y, `${item.name} (${item.price}G)`, { fontSize: '14px', fill: '#ffffff' }).setOrigin(0.5);
-        
-        // 購入イベント
-        btn.on('pointerdown', () => {
-            console.log(`${item.name} を購入リクエスト`);
-            scene.socket.emit('buyItem', id);
-        });
-
-        // リスト用コンテナに追加
-        scene.merchantBuyContent.add([btn, text]);
-    });
 }
 
 function createCraftingUI(scene) {
@@ -1809,8 +1803,6 @@ function createEquipmentUI(scene) {
         });
     }
 }
-
-// game.js
 
 function updateEquipmentDisplay(scene, equipmentData) {
     // equipmentData は { head: {id: 'leather_helm'}, body: null, ... } のような形
