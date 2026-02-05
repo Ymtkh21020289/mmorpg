@@ -517,15 +517,15 @@ function create() {
         if (self.hpUI) {
             self.hpUI.setText(`HP: ${stats.hp}`);
         }
-        if (self.totalAtk) {
-            const equipAtk = self.totalAtk - self.baseAtk;
-            const equipDef = self.totalDef - self.baseDef;
+        if (self.statusText) {
+            const equipAtk = stats.totalAtk - stats.baseAtk;
+            const equipDef = stats.totalDef - stats.baseDef;
             const text = 
                 `【 プレイヤー詳細 】\n\n` +
-                `攻撃力: ${self.totalAtk} (素${self.baseAtk} + 装${equipAtk})\n` +
-                `防御力: ${self.totalDef} (素${self.baseDef} + 装${equipDef})\n`;
+                `攻撃力: ${stats.totalAtk} (素${stats.baseAtk} + 装${equipAtk})\n` +
+                `防御力: ${stats.totalDef} (素${stats.baseDef} + 装${equipDef})\n`;
 
-            scene.statusText.setText(text);
+            self.statusText.setText(text);
         }
     });
 
