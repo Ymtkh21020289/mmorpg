@@ -1963,11 +1963,7 @@ function updateMenuStats(scene) {
         `【 プレイヤー詳細 】\n\n` +
         `HP  : ${totalHp} / ${totalHp}\n` +
         `攻撃力: ${totalAtk} (素${baseAtk} + 装${equipAtk})\n` +
-        `防御力: ${totalDef} (素${baseDef} + 装${equipDef})\n` +
-        `\n` +
-        `現在の装備:\n` +
-        `武器 : ${player.equipment.weapon ? ITEMS[player.equipment.weapon.id].name : '(なし)'}\n` +
-        `防具 : ${player.equipment.body ? ITEMS[player.equipment.body.id].name : '(なし)'}`;
+        `防御力: ${totalDef} (素${baseDef} + 装${equipDef})\n`;
 
     scene.statusText.setText(text);
 }
