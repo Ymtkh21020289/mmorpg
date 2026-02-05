@@ -896,7 +896,7 @@ function updatePlayerStats(player) {
     
     // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
     io.to(player.id).emit('updateStats', { 
-        atk: player.totalAtk, 
-        def: player.totalDef 
+        level: player.level, exp: player.exp, maxExp: player.maxExp,
+        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp
     });
 }
