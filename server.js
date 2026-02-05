@@ -698,6 +698,7 @@ function handleEnemyDeath(enemy, player) {
         player.baseAtk += 2;
         player.hp = player.maxHp;
         player.mp = player.maxMp;
+        updatePlayerStats(player);
         io.emit('playerLevelUp', { playerId: player.playerId, level: player.level });
     }
 
