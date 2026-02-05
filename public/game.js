@@ -1932,8 +1932,8 @@ function updateMenuStats(scene) {
 
     if (!player) return;
 
-    let baseAtk = p.baseAtk;
-    let baseDef = p.baseDef;
+    let baseAtk = player.baseAtk;
+    let baseDef = player.baseDef;
     let maxHp = 100;
     let equipAtk = 0;
     let equipDef = 0;
