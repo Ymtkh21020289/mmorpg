@@ -1712,7 +1712,7 @@ function createCraftingUI(scene) {
 
 function createEquipmentUI(scene) {
     // 1. 装備画面全体のコンテナ
-    scene.equipContainer = scene.add.container(10, 200); // インベントリの左隣などを想定
+    scene.equipContainer = scene.add.container(200, 200); // インベントリの左隣などを想定
     scene.equipContainer.setScrollFactor(0);
     scene.equipContainer.setDepth(100);
     scene.equipContainer.setVisible(false); // 最初は隠す
