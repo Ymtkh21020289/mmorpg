@@ -341,6 +341,13 @@ io.on('connection', (socket) => {
     });
     // server.js の io.on('connection') 内に追加
 
+    socket.on('forceRespawn', () => {
+        const player = players[socket.id];
+        if (!player) return;
+        player.hp = player.maxHp;
+        p.x = 48; p.y = 80;
+        socket.emit('playerRespawn', player);
+
     // ■ アイテムを買う
     socket.on('buyItem', (itemId) => {
         const player = players[socket.id];
