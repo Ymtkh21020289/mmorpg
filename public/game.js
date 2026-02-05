@@ -1973,9 +1973,8 @@ function updateMenuStats(scene) {
     if(!scene.statusText ) {
         const text = 
             `【 プレイヤー詳細 】\n\n` +
-            `HP  : ${totalHp} / ${totalHp}\n` +
-            `攻撃力: ${totalAtk} (素${baseAtk} + 装${equipAtk})\n` +
-            `防御力: ${totalDef} (素${baseDef} + 装${equipDef})\n`;
+            `攻撃力: 10 (素10 + 装0)\n` +
+            `防御力: 0 (素0 + 装0\n`;
 
         scene.statusText.setText(text);
     }
