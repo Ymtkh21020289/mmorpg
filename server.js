@@ -347,6 +347,7 @@ io.on('connection', (socket) => {
         player.hp = player.maxHp;
         p.x = 48; p.y = 80;
         socket.emit('playerRespawn', player);
+    }
 
     // ■ アイテムを買う
     socket.on('buyItem', (itemId) => {
