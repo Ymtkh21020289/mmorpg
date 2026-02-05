@@ -1883,7 +1883,7 @@ function createMenuUI(scene) {
 
     // ボタンを作るヘルパー関数（今後ボタンが増えるので関数化）
     const createMenuButton = (y, text, callback) => {
-        const btnBg = scene.add.rectangle(0, y, 200, 40, 0x333333).setInteractive({ useHandCursor: true });
+        const btnBg = scene.add.rectangle(0, y, 200, 40, 0x333333).setInteractive({ useHandCursor: true }).setScrollFactor(0);
         const btnText = scene.add.text(0, y, text, { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
         
         btnBg.on('pointerdown', callback);
@@ -1912,7 +1912,7 @@ function createMenuUI(scene) {
     // 将来ここに「スキル」「クエスト」などを追加できます
     // createMenuButton(0, 'スキル', ...); 
 
-    scene.menuMain.add([...btnStatus, ...btnClose]);
+    scene.menuMain.add([...btnStatus, ...btnClose]);setscroll
 
 
     // --- 3. ステータス画面のコンテナ ---
@@ -1931,6 +1931,7 @@ function createMenuUI(scene) {
         scene.menuStatus.setVisible(false); // ステータスを隠す
         scene.menuMain.setVisible(true);    // メインメニューに戻る
     });
+    scene.menuStatus.setScrollFactor(0);
     scene.menuStatus.add(btnBack);
 }
 
