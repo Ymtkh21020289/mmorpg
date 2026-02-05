@@ -1969,12 +1969,14 @@ function updateMenuStats(scene) {
     const totalHp = maxHp + equipHp;
 
     // --- 表示テキストの作成 ---
-    const text = 
-        `【 プレイヤー詳細 】\n\n` +
-        `HP  : ${totalHp} / ${totalHp}\n` +
-        `攻撃力: ${totalAtk} (素${baseAtk} + 装${equipAtk})\n` +
-        `防御力: ${totalDef} (素${baseDef} + 装${equipDef})\n`;
+    if(!scene.statusText ) {
+        const text = 
+            `【 プレイヤー詳細 】\n\n` +
+            `HP  : ${totalHp} / ${totalHp}\n` +
+            `攻撃力: ${totalAtk} (素${baseAtk} + 装${equipAtk})\n` +
+            `防御力: ${totalDef} (素${baseDef} + 装${equipDef})\n`;
 
-    scene.statusText.setText(text);
+        scene.statusText.setText(text);
+    }
 }
 
