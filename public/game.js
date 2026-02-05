@@ -1912,7 +1912,7 @@ function createMenuUI(scene) {
     // 将来ここに「スキル」「クエスト」などを追加できます
     // createMenuButton(0, 'スキル', ...); 
 
-    scene.menuMain.add([...btnStatus, ...btnClose]);setscroll
+    scene.menuMain.add([...btnStatus, ...btnClose]);
 
 
     // --- 3. ステータス画面のコンテナ ---
