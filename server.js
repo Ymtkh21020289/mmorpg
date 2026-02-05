@@ -803,7 +803,7 @@ function performEnemyAttack(enemy, stats) {
             // 指定した角度の幅（半分）以内ならヒット
             if (Math.abs(angleDiff) <= stats.attackAngle / 2) {
                 // ★命中！
-                const damage1 = mitigation / (mitigation + p.totalDef);
+                const damage1 = p.totalDef / (mitigation + p.totalDef);
                 p.hp -= Math.floor(Math.max(stats.damage * (1 - damage1), 0));
                 p.lastDamageTime = now;
                 // 死亡判定などはここに記述
