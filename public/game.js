@@ -1916,7 +1916,7 @@ function createMenuUI(scene) {
 
 
     // --- 3. ステータス画面のコンテナ ---
-    scene.menuStatus = scene.add.container(0, 0);
+    scene.menuStatus = scene.add.container(0, 0).setScrollFactor(0);
     scene.menuStatus.setVisible(false); // 最初は隠す
     scene.menuContainer.add(scene.menuStatus);
 
