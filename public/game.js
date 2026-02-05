@@ -1928,7 +1928,7 @@ function updateMenuStats(scene) {
     // プレイヤーデータの取得（IDや変数は環境に合わせて調整してください）
     // 例: this.socket.id で自分のプレイヤーを探す
     const myId = scene.socket.id;
-    const player = scene.otherPlayers[myId]; // ※createPlayerで自分もここに保存している想定
+    const player = scene.player; // ※createPlayerで自分もここに保存している想定
 
     if (!player) return;
 
