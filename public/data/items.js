@@ -6,14 +6,19 @@ const ITEMS = {
         name: '革の帽子', 
         type: 'equipment', 
         slot: 'head',   // 頭装備
-        def: 3,         // 防御力プラス
+        statsRange: {
+            def: { min: 2, max: 5 },
+            hp:  { min: 0, max: 10 }
+        },
         price: 50 
     },
     'chain_mail': { 
         name: '鎖帷子', 
         type: 'equipment', 
         slot: 'body',   // 体装備
-        def: 10,
+        statsRange: {
+            def: { min: 7, max: 12 }
+        },
         price: 200 
     },
     // --- アクセサリー ---
@@ -21,7 +26,10 @@ const ITEMS = {
         name: '力の指輪',
         type: 'equipment',
         slot: 'accessory',
-        atk: 5,        // アクセで攻撃UP
+        statsRange: {
+            atk: { min: 6, max: 12 },
+            def: { min: 1, max: 5 },
+        },
         price: 500
     },
     'great_axe': { name: 'スゴイ斧', type: 'weapon', damage: 40, range: 120, radius: 90, color: 0x00ffff, price: 500, desc: 'スゴイ斧。\n高い攻撃力で一掃が可能。' },
