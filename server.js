@@ -778,7 +778,8 @@ function addItemToInventory(player, itemId, amount) {
         const emptyIndex = player.inventory.findIndex(slot => slot === null);
         
         if (emptyIndex !== -1) {
-            player.inventory[emptyIndex] = { id: itemId, count: amount };
+            const newItem = createItemInstance(itemId);
+            player.inventory[emptyIndex] = { id: newItem, count: amount };
         } else {
             // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
             console.log("Inventory full!");
@@ -907,4 +908,41 @@ function updatePlayerStats(player) {
         level: player.level, exp: player.exp, maxExp: player.maxExp,
         baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp
     });
+}
+
+function createItemInstance(itemId) {
+    const data = ITEMS[itemId];
+    if (!data) return null;
+
+    // ベースとなるアイテムオブジェクト
+    // IDだけでなく、個体ごとの性能(stats)を持たせます
+    const itemInstance = {
+        id: itemId,
+        uniqueId: Math.random().toString(36).substr(2, 9), // 個体識別用ID（売却時などに便利）
+        stats: {} // ここに確定した数値を入れます
+    };
+
+    // 変動ステータスの計算
+    if (data.statsRange) {
+        for (const [statName, range] of Object.entries(data.statsRange)) {
+            // R: 0 ～ 1 のランダムな値
+            const R = Math.random();
+            
+            // T: 差分 (Max - Min)
+            const T = range.max - range.min;
+
+            // 計算式: 最小値 + (R * T)
+            // ※ステータスは整数が扱いやすいため、Math.round または Math.floor します
+            const val = range.min + (R * T);
+            
+            itemInstance.stats[statName] = Math.round(val);
+        }
+    } else {
+        // 変動設定がないアイテム（ポーションや既存武器など）は
+        // 既存の固定値をそのままコピーしておくと計算が楽です
+        if (data.atk) itemInstance.stats.atk = data.atk;
+        if (data.def) itemInstance.stats.def = data.def;
+    }
+
+    return itemInstance;
 }
