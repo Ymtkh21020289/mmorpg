@@ -779,7 +779,7 @@ function addItemToInventory(player, itemId, amount) {
         
         if (emptyIndex !== -1) {
             const newItem = createItemInstance(itemId);
-            player.inventory[emptyIndex] = { id: newItem, count: amount };
+            player.inventory[emptyIndex] = { id: newItem.id, stats: newitem.stats, count: amount };
         } else {
             // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
             console.log("Inventory full!");
