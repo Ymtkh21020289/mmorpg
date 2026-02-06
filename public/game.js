@@ -458,7 +458,7 @@ function create() {
             // 最初はメインメニューを表示し、ステータス画面は隠すリセット処理
             this.menuMain.setVisible(true);
             this.menuStatus.setVisible(false);
-            
+            this.menuSuicide.setVisible(false);
             // 他のウィンドウ（インベントリやショップ）を閉じる処理をここに入れても親切です
             // this.inventoryContainer.setVisible(false); 
         } else {
