@@ -1389,9 +1389,30 @@ function createSlot(scene, index, x, y, isHotbar) {
             text = `■${itemData.name}\n\n${itemData.desc || ''}\n`;
         }
         if (item.stats) {
-            if (item.stats.atk) text += `攻撃力: ${item.stats.atk} (${Math.round(itemData.statsRange.atk.min * rankData.mult)}～${Math.round(itemData.statsRange.atk.max * rankData.mult)})\n`;
-            if (item.stats.def) text += `防御力: ${item.stats.def} (${Math.round(itemData.statsRange.def.min * rankData.mult)}～${Math.round(itemData.statsRange.def.max * rankData.mult)})\n`;
-            if (item.stats.hp)  text += `HP  : +${item.stats.hp} (${Math.round(itemData.statsRange.hp.min * rankData.mult)}～${Math.round(itemData.statsRange.hp.max * rankData.mult)})\n`;
+            Object.entries(item.stats).forEach(([statName, val]) => {
+                // 表示名マッピング（atk -> 攻撃力）
+                const labelMap = { atk: '攻撃力', def: '防御力', hp: 'HP' };
+                const label = labelMap[statName] || statName;
+
+                // --- ★ここがポイント：範囲の計算 ---
+                let rangeInfo = '';
+            
+                // 元データに min/max の定義があるか確認
+                if (baseData.statsRange && baseData.statsRange[statName]) {
+                    const baseMin = baseData.statsRange[statName].min;
+                    const baseMax = baseData.statsRange[statName].max;
+                
+                    // ランク倍率を適用して計算（サーバーと同じ計算式）
+                    const currentMin = Math.round(baseMin * rankData.mult);
+                    const currentMax = Math.round(baseMax * rankData.mult);
+                
+                    // 表示用文字列を作成
+                    rangeInfo = ` (${currentMin} ~ ${currentMax})`;
+                }
+
+                // 最終的なテキスト: "攻撃力: 15 (範囲: 12 ~ 18)"
+                text += `${label}: ${val}${rangeInfo}\n`;
+            });
         }
 
         text += `\n売値: ${sellPrice} G`;
