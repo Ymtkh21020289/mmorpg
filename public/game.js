@@ -1848,7 +1848,7 @@ function createEquipmentUI(scene) {
             const data = scene.equipSlots[slotName].itemData;
             if (data && scene.isInventoryOpen) { // インベントリが開いている時のみ
                  const itemInfo = ITEMS[data.id];
-                 const rankId = item.rank || 'C';
+                 const rankId = data.rank || 'C';
                  const rankData = RANKS[rankId];
                  if (itemInfo) {
                      // 既存のツールチップ更新処理をここでも使う
