@@ -1382,7 +1382,7 @@ function createSlot(scene, index, x, y, isHotbar) {
         let text = "";
 
         // 2. 表示するテキストを作成
-        if(itemData.rank) {
+        if(item.rank) {
             text = `■[${rankData.name}] ${itemData.name}\n\n${itemData.desc || ''}\n`;
         }else {
             text = `■${itemData.name}\n\n${itemData.desc || ''}\n`;
