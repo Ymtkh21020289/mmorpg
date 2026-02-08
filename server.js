@@ -915,7 +915,7 @@ function createItemInstance(itemId, fixedRankId = null) {
     if (!data) return null;
 
     // 1. ランクの決定
-    let rankId = 'common'; // デフォルト
+    let rankId = 'C'; // デフォルト
 
     if (fixedRankId && RANKS[fixedRankId]) {
         // A. ランク指定がある場合（ボスドロップや特別報酬など）
