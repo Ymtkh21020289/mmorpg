@@ -60,16 +60,31 @@ const RECIPES = [
     }
 ];
 
+const RANKS = {
+    'common':    { id: 'common',    name: 'コモン',     rate: 60,  mult: 1.0, color: '#ffffff' }, // 白
+    'uncommon':  { id: 'uncommon',  name: 'アンコモン', rate: 30,  mult: 1.2, color: '#00ff00' }, // 緑
+    'rare':      { id: 'rare',      name: 'レア',       rate: 8,   mult: 1.5, color: '#0000ff' }, // 青
+    'epic':      { id: 'epic',      name: 'エピック',   rate: 1.9, mult: 2.5, color: '#800080' }, // 紫
+    'legendary': { id: 'legendary', name: 'レジェンド', rate: 0.1, mult: 5.0, color: '#ff8800' }  // 橙
+};
+
+// 確率計算用の重み合計（100になるように調整してありますが、動的に計算します）
+const TOTAL_RATE = Object.values(RANKS).reduce((sum, r) => sum + r.rate, 0);
+
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     // ■ Node.js (サーバー) 用
     // 複数の変数をひとつのオブジェクトにまとめて渡す
     module.exports = {
         ITEMS: ITEMS,
-        RECIPES: RECIPES
+        RECIPES: RECIPES,
+        RANKS: RANKS,
+        TOTAL_RATE: TOTAL_RATE
     };
 } else {
     // ■ ブラウザ (クライアント) 用
     // windowオブジェクトに一つずつくっつける
     window.ITEMS = ITEMS;
     window.RECIPES = RECIPES;
+    window.RANKS = RANKS;
+    window.TOTAL_RATE = TOTAL_RATE;
 }
