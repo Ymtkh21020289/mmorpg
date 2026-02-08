@@ -914,7 +914,7 @@ function createItemInstance(itemId, fixedRankId = null) {
     const data = ITEMS[itemId];
     if (!data) return null;
 
-    if (data.type !== 'equipment' || data.type !== 'weapon') {
+    if (data.type !== 'equipment' && data.type !== 'weapon') {
         return { 
             id: itemId,
             // スタック（重ね置き）できるように、あえて uniqueId は付けないか、
