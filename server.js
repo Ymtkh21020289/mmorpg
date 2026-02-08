@@ -9,7 +9,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // パスは server.js から見た相対パス
 const MAP_DATA = require('./public/data/maps.js');
-const { ITEMS, RECIPES } = require('./public/data/items.js');
+const { ITEMS, RECIPES, RANKS, TOTAL_RATE } = require('./public/data/items.js');
 const ENEMY_TYPES = require('./public/data/enemies.js');
 const npcs = require('./public/data/npc.js');
 
