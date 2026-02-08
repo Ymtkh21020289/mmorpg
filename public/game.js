@@ -1652,7 +1652,7 @@ function createMerchantUI(scene) {
 
     // --- タイトルなどのテキスト（NormalElementsに追加） ---
     const title = scene.add.text(150, 30, '=== 武器商人 ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
-    const closeHint = scene.add.text(150, 380, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    const closeHint = scene.add.text(150, 380, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
     const listTitle = scene.add.text(150, 70, '【商品一覧】', { fill: '#00ff00', fontSize: '16px' }).setOrigin(0.5);
     
     scene.merchantNormalElements.add([title, closeHint, listTitle]);
@@ -1733,7 +1733,7 @@ function createCraftingUI(scene) {
     scene.craftContainer.add(title);
     
     // --- 閉じる説明 ---
-    const closeHint = scene.add.text(200, 480, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    const closeHint = scene.add.text(200, 480, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
     scene.craftContainer.add(closeHint);
 
 
