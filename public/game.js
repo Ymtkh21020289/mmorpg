@@ -1372,7 +1372,7 @@ function createSlot(scene, index, x, y, isHotbar) {
 
         const itemData = ITEMS[item.id];
         if(itemData.rank) {
-            const rankId = itemData.rank;
+            const rankId = item.rank;
             const rankData = RANKS[rankId];
         }
         if (!itemData) return;
