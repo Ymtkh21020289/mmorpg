@@ -1369,16 +1369,22 @@ function createSlot(scene, index, x, y, isHotbar) {
         if (!item) return; // 空なら何もしない
 
         const itemData = ITEMS[item.id];
-        const rankId = itemData.rank || 'common';
-        const rankData = RANKS[rankId];
+        if(itemData.rank) {
+            const rankId = itemData.rank;
+            const rankData = RANKS[rankId];
+        }
         if (!itemData) return;
 
         // 1. 売値の計算
         const sellPrice = Math.floor(itemData.price / 2);
+        let text = "";
 
         // 2. 表示するテキストを作成
-        let text = `■[${rankData.name}] ${itemData.name}\n\n${itemData.desc || ''}\n`;
-
+        if(itemData.rank) {
+            text = `■[${rankData.name}] ${itemData.name}\n\n${itemData.desc || ''}\n`;
+        }else {
+            text = `■${itemData.name}\n\n${itemData.desc || ''}\n`;
+        }
         if (item.stats) {
             if (item.stats.atk) text += `攻撃力: ${item.stats.atk} (${Math.round(itemData.statsRange.atk.min * rankData.mult)}～${Math.round(itemData.statsRange.atk.max * rankData.mult)})\n`;
             if (item.stats.def) text += `防御力: ${item.stats.def} (${Math.round(itemData.statsRange.def.min * rankData.mult)}～${Math.round(itemData.statsRange.def.max * rankData.mult)})\n`;
