@@ -890,6 +890,7 @@ function update() {
     if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
         const slotItem = this.myInventory[this.selectedSlot];
         let weapon = { damage: 0, range: 30, radius: 40, color: 0xffffff }; // 素手
+        let weapon_damage = slotItem.stats.atk || 0
         if (slotItem && ITEMS[slotItem.id] && ITEMS[slotItem.id].type === 'weapon') {
             weapon = ITEMS[slotItem.id];
         }
@@ -919,7 +920,7 @@ function update() {
                 if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
                     
                     // ヒット確定！
-                    this.socket.emit('attackEnemy', { enemyId: enemy.id, damage: weapon.damage });
+                    this.socket.emit('attackEnemy', { enemyId: enemy.id, damage: weapon_damage });
                     
                     // ダメージ演出
                     enemy.setTint(0xff0000);
