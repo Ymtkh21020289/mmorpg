@@ -2033,8 +2033,8 @@ function updateMenuStats(scene) {
             if (item) {
                 const itemData = ITEMS[item.id];
                 if (itemData) {
-                    equipAtk += itemData.atk || 0;
-                    equipDef += itemData.def || 0;
+                    equipAtk += item.stats.atk || 0;
+                    equipDef += item.stats.def || 0;
                     // equipHp += itemData.hp || 0; // HP補正があれば
                 }
             }
