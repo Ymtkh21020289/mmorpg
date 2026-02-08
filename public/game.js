@@ -1372,10 +1372,8 @@ function createSlot(scene, index, x, y, isHotbar) {
 
         const itemData = ITEMS[item.id];
         console.log(`選択した武器のランク:`, item.rank);
-        if(item.rank) {
-            const rankId = item.rank;
-            const rankData = RANKS[rankId];
-        }
+        const rankId = item.rank;
+        const rankData = RANKS[rankId];
         if (!itemData) return;
 
         // 1. 売値の計算
