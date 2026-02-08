@@ -910,39 +910,57 @@ function updatePlayerStats(player) {
     });
 }
 
-function createItemInstance(itemId) {
+function createItemInstance(itemId, fixedRankId = null) {
     const data = ITEMS[itemId];
     if (!data) return null;
 
-    // ベースとなるアイテムオブジェクト
-    // IDだけでなく、個体ごとの性能(stats)を持たせます
-    const itemInstance = {
-        id: itemId,
-        uniqueId: Math.random().toString(36).substr(2, 9), // 個体識別用ID（売却時などに便利）
-        stats: {} // ここに確定した数値を入れます
-    };
+    // 1. ランクの決定
+    let rankId = 'common'; // デフォルト
 
-    // 変動ステータスの計算
-    if (data.statsRange) {
-        for (const [statName, range] of Object.entries(data.statsRange)) {
-            // R: 0 ～ 1 のランダムな値
-            const R = Math.random();
-            
-            // T: 差分 (Max - Min)
-            const T = range.max - range.min;
-
-            // 計算式: 最小値 + (R * T)
-            // ※ステータスは整数が扱いやすいため、Math.round または Math.floor します
-            const val = range.min + (R * T);
-            
-            itemInstance.stats[statName] = Math.round(val);
-        }
+    if (fixedRankId && RANKS[fixedRankId]) {
+        // A. ランク指定がある場合（ボスドロップや特別報酬など）
+        rankId = fixedRankId;
     } else {
-        // 変動設定がないアイテム（ポーションや既存武器など）は
-        // 既存の固定値をそのままコピーしておくと計算が楽です
-        if (data.atk) itemInstance.stats.atk = data.atk;
-        if (data.def) itemInstance.stats.def = data.def;
+        // B. ランダム抽選（通常のドロップや作成）
+        const rand = Math.random() * TOTAL_RATE;
+        let current = 0;
+        
+        for (const r of Object.values(RANKS)) {
+            current += r.rate;
+            if (rand < current) {
+                rankId = r.id;
+                break;
+            }
+        }
     }
 
+    const rankData = RANKS[rankId];
+
+    // 2. インスタンス作成
+    const itemInstance = {
+        id: itemId,
+        uniqueId: Math.random().toString(36).substr(2, 9),
+        rank: rankId, // ランク情報を保存
+        stats: {}
+    };
+
+    // 3. ステータス計算（ランク倍率 + ランダム個体値）
+    if (data.statsRange) {
+        for (const [statName, range] of Object.entries(data.statsRange)) {
+            // ステップA: ランク倍率を適用して、そのランク帯でのMin/Maxを出す
+            // 例: 攻撃10-20, レア(x1.5) => 15-30
+            const rankMin = range.min * rankData.mult;
+            const rankMax = range.max * rankData.mult;
+
+            // ステップB: その範囲内でランダムな値を決定 (0.0 ~ 1.0)
+            const R = Math.random();
+            const T = rankMax - rankMin;
+            
+            // 最終値 = ランク最小値 + (幅 * 乱数)
+            const finalVal = rankMin + (R * T);
+
+            itemInstance.stats[statName] = Math.round(finalVal);
+        }
+    }
     return itemInstance;
 }
