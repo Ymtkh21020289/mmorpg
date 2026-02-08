@@ -49,10 +49,10 @@ const RECIPES = [
 ];
 
 const RANKS = {
-    'common':    { id: 'C', name: 'C', rate: 60,  mult: 1.0, color: '#ffffff' },
-    'uncommon':  { id: 'B', name: 'B', rate: 30,  mult: 1.2, color: '#00ff00' },
-    'rare':      { id: 'A', name: 'A', rate: 8,   mult: 1.5, color: '#0000ff' },
-    'epic':      { id: 'S', name: 'S', rate: 2, mult: 2.5, color: '#ff8800' }
+    'C':    { id: 'C', name: 'C', rate: 60,  mult: 1.0, color: '#ffffff' },
+    'B':  { id: 'B', name: 'B', rate: 30,  mult: 1.2, color: '#00ff00' },
+    'A':      { id: 'A', name: 'A', rate: 8,   mult: 1.5, color: '#0000ff' },
+    'S':      { id: 'S', name: 'S', rate: 2, mult: 2.5, color: '#ff8800' }
 };
 
 // 確率計算用の重み合計（100になるように調整してありますが、動的に計算します）
