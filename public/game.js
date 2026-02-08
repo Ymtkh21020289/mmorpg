@@ -1369,18 +1369,20 @@ function createSlot(scene, index, x, y, isHotbar) {
         if (!item) return; // 空なら何もしない
 
         const itemData = ITEMS[item.id];
+        const rankId = itemData.rank || 'common';
+        const rankData = RANKS[rankId];
         if (!itemData) return;
 
         // 1. 売値の計算
         const sellPrice = Math.floor(itemData.price / 2);
 
         // 2. 表示するテキストを作成
-        let text = `■ ${itemData.name}\n\n${itemData.desc || ''}\n`;
+        let text = `■[${rankData.name}] ${itemData.name}\n\n${itemData.desc || ''}\n`;
 
         if (item.stats) {
-            if (item.stats.atk) text += `攻撃力: ${item.stats.atk}\n`;
-            if (item.stats.def) text += `防御力: ${item.stats.def}\n`;
-            if (item.stats.hp)  text += `HP  : +${item.stats.hp}\n`;
+            if (item.stats.atk) text += `攻撃力: ${item.stats.atk} (${Math.round(itemData.statsRange.atk.min * rankData.mult)}～${Math.round(itemData.statsRange.atk.max * rankData.mult)})\n`;
+            if (item.stats.def) text += `防御力: ${item.stats.def} (${Math.round(itemData.statsRange.def.min * rankData.mult)}～${Math.round(itemData.statsRange.def.max * rankData.mult)})\n`;
+            if (item.stats.hp)  text += `HP  : +${item.stats.hp} (${Math.round(itemData.statsRange.hp.min * rankData.mult)}～${Math.round(itemData.statsRange.hp.max * rankData.mult)})\n`;
         }
 
         text += `\n売値: ${sellPrice} G`;
@@ -1818,14 +1820,16 @@ function createEquipmentUI(scene) {
             const data = scene.equipSlots[slotName].itemData;
             if (data && scene.isInventoryOpen) { // インベントリが開いている時のみ
                  const itemInfo = ITEMS[data.id];
+                 const rankId = item.rank || 'common';
+                 const rankData = RANKS[rankId];
                  if (itemInfo) {
                      // 既存のツールチップ更新処理をここでも使う
                      // ※長いので関数化しておくと便利ですが、ここでは直書きイメージ
                      let text = `■ ${itemInfo.name}\n${itemInfo.desc || ''}\n`;
                      if (data.stats) {
-                        if (data.stats.atk) text += `攻撃力: ${data.stats.atk}\n`;
-                        if (data.stats.def) text += `防御力: ${data.stats.def}\n`;
-                        if (data.stats.hp)  text += `HP  : +${data.stats.hp}\n`;
+                        if (data.stats.atk) text += `攻撃力: ${data.stats.atk} (${Math.round(itemInfo.statsRange.atk.min * rankData.mult)}～${Math.round(itemInfo.statsRange.atk.max * rankData.mult)})\n`;
+                        if (data.stats.def) text += `防御力: ${data.stats.def} (${Math.round(itemInfo.statsRange.def.min * rankData.mult)}～${Math.round(itemInfo.statsRange.def.max * rankData.mult)})\n`;
+                        if (data.stats.hp)  text += `HP  : +${data.stats.hp} (${Math.round(itemInfo.statsRange.hp.min * rankData.mult)}～${Math.round(itemInfo.statsRange.hp.max * rankData.mult)})\n`;
                     }
                      scene.tooltipText.setText(text);
                      const bounds = scene.tooltipText.getBounds();
@@ -2018,7 +2022,7 @@ function updateMenuStats(scene) {
         const text = 
             `【 プレイヤー詳細 】\n\n` +
             `攻撃力: 10 (素10 + 装0)\n` +
-            `防御力: 0 (素0 + 装0\n`;
+            `防御力: 0 (素0 + 装0)\n`;
 
         scene.statusText.setText(text);
     }
