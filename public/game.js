@@ -1472,7 +1472,7 @@ function handleSlotClick(scene, index) {
     if (!scene.isInventoryOpen && index >= 3) return;
 
     // ★ここを追加：売却モードの処理
-    if (scene.isShopOpen && scene.isSellingMode) {
+    if (scene.isMerchantOpen && scene.isSellingMode) {
         // アイテムがあるか確認
         if (scene.myInventory[index]) {
             // サーバーに売却依頼
