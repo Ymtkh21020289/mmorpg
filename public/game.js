@@ -1396,9 +1396,9 @@ function createSlot(scene, index, x, y, isHotbar) {
                 let rangeInfo = '';
             
                 // 元データに min/max の定義があるか確認
-                if (baseData.statsRange && baseData.statsRange[statName]) {
-                    const baseMin = baseData.statsRange[statName].min;
-                    const baseMax = baseData.statsRange[statName].max;
+                if (itemData.statsRange && itemData.statsRange[statName]) {
+                    const baseMin = itemData.statsRange[statName].min;
+                    const baseMax = itemData.statsRange[statName].max;
                 
                     // ランク倍率を適用して計算（サーバーと同じ計算式）
                     const currentMin = Math.round(baseMin * rankData.mult);
