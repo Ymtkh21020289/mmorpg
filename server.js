@@ -914,6 +914,15 @@ function createItemInstance(itemId, fixedRankId = null) {
     const data = ITEMS[itemId];
     if (!data) return null;
 
+    if (data.type !== 'equipment' || data.type !== 'weapon') {
+        return { 
+            id: itemId,
+            // スタック（重ね置き）できるように、あえて uniqueId は付けないか、
+            // インベントリの仕様に合わせて最低限のデータだけ返します。
+            count: 1 
+        };
+    }
+
     // 1. ランクの決定
     let rankId = 'C'; // デフォルト
 
