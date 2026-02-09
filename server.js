@@ -79,6 +79,7 @@ const npcs = require('./public/data/npc.js');
 
 // プレイヤーデータを格納するオブジェクト
 let players = {};
+let savedData = {};
 let projectiles = {}; // 発射された魔法弾リスト
 let projectileIdCounter = 0; // ID採番用
 
