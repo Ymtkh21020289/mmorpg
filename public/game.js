@@ -20,6 +20,7 @@ let otherPlayers;
 let map;
 let layer;
 let mapReady = false; // ★重要：マップ読み込み完了フラグ
+let mapmake = false;
 
 function preload() {
     this.load.image('tiles', 'assets/tiles.png');
@@ -158,13 +159,14 @@ function create() {
         }
     };
 
-    // 初期マップ作成
-    this.createMap('town');
-
     // --- Socket イベント ---
     this.socket.on('currentPlayers', function (players) {
         Object.keys(players).forEach(function (id) {
             if (players[id].playerId === self.socket.id) {
+                if(!mapmake) {
+                    this.createMap(players[id].room);
+                    mapmake = true;
+                }
                 addPlayer(self, players[id]);
             } else {
                 addOtherPlayers(self, players[id]);
