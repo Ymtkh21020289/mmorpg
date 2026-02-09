@@ -3,9 +3,73 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-// 静的ファイル（publicフォルダの中身）を配信
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('MongoDB connected!'))
+    .catch(err => console.error('MongoDB connection error:', err));
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+const createEmptyInventory = () => Array(30).fill(null);
+
+// 装備の初期状態（全部null）
+const defaultEquipment = {
+    weapon: null,
+    head: null,
+    body: null,
+    accessory1: null,
+    accessory2: null,
+    accessory3: null
+};
+
+const playerSchema = new mongoose.Schema({
+    // --- 必須情報 ---
+    username: { type: String, required: true, unique: true }, // 永続化用のID
+
+    // --- 位置・部屋 ---
+    x: { type: Number, default: 400 },
+    y: { type: Number, default: 200 },
+    rotation: { type: Number, default: 0 },
+    room: { type: String, default: 'town' },
+
+    // --- ステータス ---
+    hp: { type: Number, default: 100 },
+    maxHp: { type: Number, default: 100 },
+    mp: { type: Number, default: 50 },
+    maxMp: { type: Number, default: 50 },
+    level: { type: Number, default: 1 },
+    exp: { type: Number, default: 0 },
+    maxExp: { type: Number, default: 100 }, // レベルアップ計算式があるなら不要かもですが保存用として
+    
+    // --- 戦闘パラメータ ---
+    baseAtk: { type: Number, default: 10 },
+    baseDef: { type: Number, default: 0 },
+    // totalAtk/totalDef は計算結果なのでDB保存しなくても良いですが、
+    // キャッシュとして保存するなら以下のように設定
+    totalAtk: { type: Number, default: 10 }, 
+    totalDef: { type: Number, default: 0 },
+    
+    lastDamageTime: { type: Number, default: 0 }, // 基本は0
+
+    // --- 所持品 ---
+    gold: { type: Number, default: 1000 },
+    
+    // インベントリ（Mixed型またはObject配列）
+    inventory: { 
+        type: Array, 
+        default: createEmptyInventory // 関数を渡すと作成時に実行される
+    },
+
+    // 装備
+    equipment: {
+        type: Object,
+        default: defaultEquipment
+    }
+});
+
+const PlayerModel = mongoose.model('Player', playerSchema);
 
 // パスは server.js から見た相対パス
 const MAP_DATA = require('./public/data/maps.js');
@@ -78,56 +142,52 @@ io.on('connection', (socket) => {
     console.log('ユーザー接続: ' + socket.id);
 
     // 初期データ作成（最初は 'town' にいるとする）
-    players[socket.id] = {
-        rotation: 0,
-        x: 400,
-        y: 200,
-        playerId: socket.id,
-        room: 'town', // ★現在いるマップ情報を追加
-        name: 'Player ' + socket.id.substr(0, 4),
-        hp: 100,
-        maxHp: 100,
-        lastDamageTime: 0, // 無敵時間の管理用
-        // ★追加：レベルとステータス
-        level: 1,
-        exp: 0,
-        maxExp: 100,   // 次のレベルまでに必要な経験値
-        baseAtk: 10, // プレイヤーの初期攻撃力
-        baseDef:0, //プレイヤーの初期防御力
-        totalAtk: 10,
-        totalDef: 0,
-        mp: 50,
-        maxMp: 50,
-        equipment: { 
-            weapon: null, 
-            head: null, 
-            body: null, 
-            accessory1: null, 
-            accessory2: null, 
-            accessory3: null 
-        },
-        inventory: [
-            { id: 'dagger', count: 1 }, // Slot 0
-            { id: 'sword', count: 1 },  // Slot 1
-            { id: 'spear', count: 1 },  // Slot 2
-            ...Array(27).fill(null)     // Slot 3~29 は空
-        ],
-        gold: 1000 // お金
-    };
+    socket.on('joinGame', async (username) => {
+        if (!username) return;
 
-    // ★Socket.ioの「town」という部屋に参加させる
-    socket.join('town');
+        // 1. DBから検索、なければ新規作成 (findOneAndUpdate の upsert オプションを利用)
+        // new: true → 更新後(作成後)のドキュメントを返す
+        // upsert: true → なければ作る
+        // setDefaultsOnInsert: true → Schemaのdefault値を適用する
+        let dbPlayer = await PlayerModel.findOneAndUpdate(
+            { username: username }, // 検索条件
+            {}, // 更新内容（ここでは何も更新しない、検索・作成が目的）
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
 
-    // ★ 'town' 部屋にいる人たちだけに、新入り情報を送る
-    // io.to('room名').emit(...) で、その部屋の人だけに送信できます
-    socket.to('town').emit('newPlayer', players[socket.id]);
+        // 2. Mongooseのドキュメントを普通のJSオブジェクトに変換
+        let playerData = dbPlayer.toObject();
 
-    socket.emit('currentEnemies', enemies);
-    socket.emit('currentNPCs', npcs);
+        // 3. サーバー実行時のみ必要な「一時データ」を合成する
+        // （socket.id や name の表示用加工など、DBに保存しない、または毎回変わるもの）
+        const player = {
+            ...playerData,          // DBのデータを展開（x, y, hp, inventoryなど全部入る）
+            id: socket.id,          // 現在のソケットIDで上書き
+            playerId: socket.id,    // クライアント側で使っている変数名に合わせる
+            name: playerData.username // 表示名はusernameを使う
+        };
+    
+        // ★重要: totalAtkなどの再計算が必要ならここで行う
+        // updatePlayerStats(player); 
 
-    socket.emit('inventoryUpdate', {
-        inventory: players[socket.id].inventory,
-        gold: players[socket.id].gold
+        // 4. メモリ上のリストに追加
+        players[socket.id] = player;
+
+        // 5. 送信処理
+        socket.emit('currentPlayers', players);
+        socket.join(player.room);
+
+        // ★ 'town' 部屋にいる人たちだけに、新入り情報を送る
+        // io.to('room名').emit(...) で、その部屋の人だけに送信できます
+        socket.to(player.room).emit('newPlayer', player);
+
+        socket.emit('currentEnemies', enemies);
+        socket.emit('currentNPCs', npcs);
+        socket.emit('inventoryUpdate', {
+            inventory: players[socket.id].inventory,
+            gold: players[socket.id].gold
+        });
+        console.log(`${username} が参加しました (Lv.${player.level})`);
     });
 
     // メッセージを受け取る
@@ -972,4 +1032,43 @@ function createItemInstance(itemId, fixedRankId = null) {
         }
     }
     return itemInstance;
+}
+
+function savePlayer(player) {
+    if (!player || !player.username) return;
+
+    // 保存したいデータだけを抽出（socketオブジェクトなどは保存できないため）
+    const dataToSave = {
+        username: player.username, // 検索キー
+        x: player.x,
+        y: player.y,
+        rotation: player.rotation,
+        room: player.room,
+        level: player.level,
+        hp: player.hp,
+        maxHp: player.maxHp,
+        exp: player.exp || 0,
+        maxExp: player.maxExp,
+        mp: player.mp,
+        maxMp: player.maxMp,
+        // インベントリと装備（中身はアイテムオブジェクト）
+        inventory: player.inventory,
+        equipment: player.equipment,
+        // その他必要なステータス
+        baseatk: player.baseatk,
+        basedef: player.basedef,
+        gold: player.gold
+    };
+
+    // メモリ上のデータを更新
+    savedData[player.username] = dataToSave;
+
+    // ファイルに書き出し（非同期推奨ですが、簡易的に同期処理で書きます）
+    // ※頻繁な書き込み負荷を減らすなら、ここは「数秒に1回」などに間引くのが定石です
+    try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(savedData, null, 2));
+        // console.log(`${player.username} のデータを保存しました`);
+    } catch (e) {
+        console.error('保存エラー:', e);
+    }
 }
