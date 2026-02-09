@@ -368,6 +368,7 @@ io.on('connection', (socket) => {
         // 6. クライアントにインベントリと装備の更新を通知
         socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
         socket.emit('equipmentUpdate', player.equipment);
+        savePlayer(player);
     });
 
     socket.on('unequipItem', (slotName) => {
@@ -391,6 +392,7 @@ io.on('connection', (socket) => {
         // クライアントに通知
         socket.emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
         socket.emit('equipmentUpdate', player.equipment);
+        savePlayer(player);
     });
     
     // 切断時の処理
@@ -423,6 +425,7 @@ io.on('connection', (socket) => {
             
             // 更新通知
             io.to(socket.id).emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
+            savePlayer(player);
         }
     });
 
@@ -481,7 +484,9 @@ io.on('connection', (socket) => {
 
         // 更新通知
         io.to(socket.id).emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
+        savePlayer(player);
     });
+    
     socket.on('sellItem', (slotIndex) => {
         const player = players[socket.id];
         if (!player) return;
@@ -514,6 +519,7 @@ io.on('connection', (socket) => {
             inventory: player.inventory, 
             gold: player.gold 
         });
+        savePlayer(player);
     });
     socket.on('useItem', (slotIndex) => {
         const player = players[socket.id];
@@ -549,6 +555,7 @@ io.on('connection', (socket) => {
 
             // 2. HPを更新（回復したから）
             io.to(socket.id).emit('updateHP', player.hp);
+            savePlayer(player);
         }
     });
 });
@@ -840,6 +847,7 @@ function addItemToInventory(player, itemId, amount) {
         if (emptyIndex !== -1) {
             const newItem = createItemInstance(itemId);
             player.inventory[emptyIndex] = { id: newItem.id, rank: newItem.rank, stats: newItem.stats, count: amount };
+            savePlayer(player);
         } else {
             // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
             console.log("Inventory full!");
