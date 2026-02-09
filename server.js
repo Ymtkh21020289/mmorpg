@@ -153,7 +153,7 @@ io.on('connection', (socket) => {
         let dbPlayer = await PlayerModel.findOneAndUpdate(
             { username: username }, // 検索条件
             {}, // 更新内容（ここでは何も更新しない、検索・作成が目的）
-            { upsert: true, new: true, setDefaultsOnInsert: true }
+            { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
         );
 
         // 2. Mongooseのドキュメントを普通のJSオブジェクトに変換
@@ -1103,7 +1103,7 @@ async function savePlayer(player) {
         await PlayerModel.findOneAndUpdate(
             { username: player.username }, 
             { $set: updateData }, 
-            { upsert: true, new: true } // データがなければ作成、あれば更新
+            { upsert: true, returnDocument: 'after' } // データがなければ作成、あれば更新
         );
         
         // デバッグ用（保存頻度が高い場合はコメントアウト推奨）
