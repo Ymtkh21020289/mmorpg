@@ -2012,8 +2012,8 @@ function updateMenuStats(scene) {
 }
 
 function showTooltip(item, x, y) {
-    const scene = window.gameScene; // または適切なシーン参照
-    const tooltip = scene.tooltipDiv;
+    const tooltip = document.getElementById('game-tooltip');
+    if (!tooltip) return;
 
     if (!item) {
         tooltip.style.display = 'none';
