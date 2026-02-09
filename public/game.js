@@ -900,7 +900,7 @@ function update() {
         const slotItem = this.myInventory[this.selectedSlot];
         let weapon = { damage: 0, range: 30, radius: 40, color: 0xffffff }; // 素手
         let weapon_damage = 0;
-        if (slotItem.stats) weapon_damage = slotItem.stats.atk;
+        if (slotItem) weapon_damage = slotItem.stats.atk;
         if (slotItem && ITEMS[slotItem.id] && ITEMS[slotItem.id].type === 'weapon') {
             weapon = ITEMS[slotItem.id];
         }
