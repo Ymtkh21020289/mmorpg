@@ -6,6 +6,57 @@
     <style>
         body { margin: 0; padding: 0; background: #000; overflow: hidden; }
         canvas { display: block; margin: 0 auto; }
+        #game-tooltip {
+            position: absolute;
+            display: none; /* 最初は非表示 */
+            background-color: rgba(0, 0, 0, 0.85); /* 半透明の黒背景 */
+            border: 2px solid #fff;
+            border-radius: 8px;
+            padding: 10px;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            pointer-events: none; /* マウス入力を透過させる（重要） */
+            z-index: 1000; /* ゲーム画面より手前に */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            min-width: 200px;
+        }
+
+        /* アイテム名のスタイル */
+        .tooltip-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        /* ★重要: 虹色に光る文字のエフェクト */
+        .rainbow-text {
+            background: linear-gradient(
+                to right, 
+                #ff0000, #ff7f00, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent; /* 文字色を透明にして背景のグラデーションを見せる */
+            animation: rainbow-anim 3s linear infinite;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255,255,255,0.2); /* ほんのり発光 */
+        }
+
+        /* グラデーションを動かすアニメーション */
+        @keyframes rainbow-anim {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; background-size: 200%; }
+        }
+
+        /* ランクごとの色（必要に応じて） */
+        .rank-C { color: #fff; }
+        .rank-B { color: #00ff00; }
+        .rank-A { color: #0088ff; }
+        .rank-S { color: #ff0000; } /* Sランクのベース色 */
     </style>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
