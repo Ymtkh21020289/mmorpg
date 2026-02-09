@@ -70,14 +70,20 @@ function create() {
 
     // --- 作成関数 ---
     // ★追加: 名前入力プロンプト
-    // （本来はHTMLで綺麗なタイトル画面を作りますが、テスト用として）
-    let username = '';
-    while (!username) {
-        username = prompt("ユーザー名を入力してください", "Player1");
+    // 1. ローカルストレージから名前を探す
+    let myUsername = localStorage.getItem('my_rpg_username');
+
+    // 2. 名前が保存されていなければ入力させる
+    if (!myUsername) {
+        while (!myUsername) {
+            myUsername = prompt("ユーザー名を入力してください", "Player1");
+        }
+        // 名前を保存する（次からは聞かれない）
+        localStorage.setItem('my_rpg_username', myUsername);
     }
 
     // 2. サーバーに「この名前で遊びたい」と伝える
-    this.socket.emit('joinGame', username);
+    this.socket.emit('joinGame', myUsername);
 
     this.createMap = (roomName) => {
         // 1. マップ更新中はフラグを下ろす
