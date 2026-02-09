@@ -159,10 +159,7 @@ function create() {
     };
 
     // --- Socket イベント ---
-
-    this.socket.on('firstMapMake', function (room){
-        this.createMap(room);
-    });
+    this.createMap("town");
     
     this.socket.on('currentPlayers', function (players) {
         Object.keys(players).forEach(function (id) {
