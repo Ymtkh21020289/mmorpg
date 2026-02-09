@@ -177,6 +177,7 @@ io.on('connection', (socket) => {
         // 5. 送信処理
         socket.emit('currentPlayers', players);
         socket.join(player.room);
+        socket.emit('firstMapMake', player.room);
         socket.emit('updateStats', {
                 level: player.level, exp: player.exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
