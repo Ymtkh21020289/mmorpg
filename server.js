@@ -177,6 +177,11 @@ io.on('connection', (socket) => {
         // 5. 送信処理
         socket.emit('currentPlayers', players);
         socket.join(player.room);
+        socket.emit('updateStats', {
+                level: player.level, exp: player.exp, maxExp: player.maxExp,
+                baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
+                mp: player.mp // ★MPも含める
+            });
         socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
         socket.emit('equipmentUpdate', player.equipment);
 
