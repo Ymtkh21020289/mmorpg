@@ -6,15 +6,6 @@
     <style>
         body { margin: 0; padding: 0; background: #000; overflow: hidden; }
         canvas { display: block; margin: 0 auto; }
-    </style>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-</head>
-<body>
-    <div id="game-container"></div>
-    <input type="text" id="chatInput" placeholder="Enterでチャット..." 
-           style="position: absolute; bottom: 20px; left: 20px; width: 300px; padding: 10px; display: none;">
-    <style>
         #game-tooltip {
             position: absolute;
             display: none; /* 最初は非表示 */
@@ -67,6 +58,13 @@
         .rank-A { color: #0088ff; }
         .rank-S { color: #ff0000; } /* Sランクのベース色 */
     </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+    <div id="game-container"></div>
+    <input type="text" id="chatInput" placeholder="Enterでチャット..." 
+           style="position: absolute; bottom: 20px; left: 20px; width: 300px; padding: 10px; display: none;">
     <script src="data/maps.js"></script>
     <script src="data/items.js"></script>
     <script src="game.js"></script>
