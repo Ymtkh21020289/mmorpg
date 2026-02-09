@@ -177,6 +177,8 @@ io.on('connection', (socket) => {
         // 5. 送信処理
         socket.emit('currentPlayers', players);
         socket.join(player.room);
+        socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
+        socket.emit('equipmentUpdate', player.equipment);
 
         // ★ 'town' 部屋にいる人たちだけに、新入り情報を送る
         // io.to('room名').emit(...) で、その部屋の人だけに送信できます
