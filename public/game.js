@@ -421,23 +421,32 @@ function create() {
     createCraftingUI(this); // 鍛冶屋のUI作成
 
     // 背景（黒い四角）
-    const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
-    tooltipBg.setOrigin(0, 0); // 左上基準
-    tooltipBg.setStrokeStyle(2, 0xffffff); // 白い枠線
+    //const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
+    //tooltipBg.setOrigin(0, 0); // 左上基準
+    //tooltipBg.setStrokeStyle(2, 0xffffff); // 白い枠線
 
     // 文字
-    const tooltipText = this.add.text(10, 10, '', {
-        fontSize: '14px',
-        fill: '#ffffff',
-        wordWrap: { width: 180 } // 長い文章は折り返す
-    });
+    //const tooltipText = this.add.text(10, 10, '', {
+        //fontSize: '14px',
+        //fill: '#ffffff',
+        //wordWrap: { width: 180 } // 長い文章は折り返す
+    //});
 
     // コンテナにまとめる
-    this.tooltip.add([tooltipBg, tooltipText]);
+    //this.tooltip.add([tooltipBg, tooltipText]);
     
     // あとでアクセスしやすいように参照を保存
-    this.tooltipBg = tooltipBg;
-    this.tooltipText = tooltipText;
+    //this.tooltipBg = tooltipBg;
+    //this.tooltipText = tooltipText;
+
+    this.tooltipDiv = document.createElement('div');
+    this.tooltipDiv.id = 'game-tooltip';
+    document.body.appendChild(this.tooltipDiv);
+
+    // シーンが終了したらDOMも消す処理（念のため）
+    this.events.on('shutdown', () => {
+        if (this.tooltipDiv) this.tooltipDiv.remove();
+    });
 
     // 2. サーバーから装備更新通知が来たら反映
     this.socket.on('equipmentUpdate', (equipmentData) => {
@@ -1376,77 +1385,20 @@ function createSlot(scene, index, x, y, isHotbar) {
         }
     });
     // ■ カーソルが乗ったとき（表示）
-    bg.on('pointerover', () => {
-        if (!scene.isInventoryOpen && !scene.isShopOpen) {
-            return;
-        }
-        // そのスロットに入っているアイテムデータを取得
-        const item = scene.myInventory[index];
-        if (!item) return; // 空なら何もしない
-
-        const itemData = ITEMS[item.id];
-        console.log(`選択した武器のランク:`, item.rank);
-        const rankId = item.rank;
-        const rankData = RANKS[rankId];
-        if (!itemData) return;
-
-        // 1. 売値の計算
-        const sellPrice = Math.floor(itemData.price / 2);
-        let text = "";
-
-        // 2. 表示するテキストを作成
-        if(item.rank) {
-            text = `■[${rankData.name}] ${itemData.name}\n\n${itemData.desc || ''}\n`;
-        }else {
-            text = `■${itemData.name}\n\n${itemData.desc || ''}\n`;
-        }
-        if (item.stats) {
-            Object.entries(item.stats).forEach(([statName, val]) => {
-                // 表示名マッピング（atk -> 攻撃力）
-                const labelMap = { atk: '攻撃力', def: '防御力', hp: 'HP' };
-                const label = labelMap[statName] || statName;
-
-                // --- ★ここがポイント：範囲の計算 ---
-                let rangeInfo = '';
-            
-                // 元データに min/max の定義があるか確認
-                if (itemData.statsRange && itemData.statsRange[statName]) {
-                    const baseMin = itemData.statsRange[statName].min;
-                    const baseMax = itemData.statsRange[statName].max;
-                
-                    // ランク倍率を適用して計算（サーバーと同じ計算式）
-                    const currentMin = Math.round(baseMin * rankData.mult);
-                    const currentMax = Math.round(baseMax * rankData.mult);
-                
-                    // 表示用文字列を作成
-                    rangeInfo = ` (${currentMin} ~ ${currentMax})`;
-                }
-
-                // 最終的なテキスト: "攻撃力: 15 (範囲: 12 ~ 18)"
-                text += `${label}: ${val}${rangeInfo}\n`;
-            });
-        }
-
-        text += `\n売値: ${sellPrice} G`;
-        // 3. テキストをセット
-        scene.tooltipText.setText(text);
-
-        // 4. 背景のサイズを文字量に合わせて自動調整
-        const bounds = scene.tooltipText.getBounds();
-        scene.tooltipBg.setSize(bounds.width + 20, bounds.height + 20);
-
-        // 5. 表示位置をスロットの右下あたりにする
-        // （pointer.x, pointer.y を使ってマウスに追従させることも可能ですが、今回はスロット基準で）
-        const worldPos = bg.getBounds();
-        scene.tooltip.setPosition(worldPos.x + 20, worldPos.y + 20);
-
-        // 6. 表示ON
-        scene.tooltip.setVisible(true);
+    bg.on('pointerover', (pointer) => {
+        // 第2, 第3引数にブラウザ上の生座標を渡す
+        showTooltip(itemData, pointer.event.clientX, pointer.event.clientY);
     });
 
-    // ■ カーソルが外れたとき（非表示）
+    bg.on('pointermove', (pointer) => {
+        // 動いている最中も追従させる
+        updateTooltipPosition(pointer.event.clientX, pointer.event.clientY);
+    });
+
     bg.on('pointerout', () => {
-        scene.tooltip.setVisible(false);
+        // 隠す
+        const tooltip = document.getElementById('game-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
     });
 }
 
@@ -1858,32 +1810,20 @@ function createEquipmentUI(scene) {
         });
 
         // --- ツールチップ（既存の仕組みを流用） ---
-        slotBg.on('pointerover', () => {
-            const data = scene.equipSlots[slotName].itemData;
-            if (data && scene.isInventoryOpen) { // インベントリが開いている時のみ
-                 const itemInfo = ITEMS[data.id];
-                 const rankId = data.rank || 'C';
-                 const rankData = RANKS[rankId];
-                 if (itemInfo) {
-                     // 既存のツールチップ更新処理をここでも使う
-                     // ※長いので関数化しておくと便利ですが、ここでは直書きイメージ
-                     let text = `■ ${itemInfo.name}\n${itemInfo.desc || ''}\n`;
-                     if (data.stats) {
-                        if (data.stats.atk) text += `攻撃力: ${data.stats.atk} (${Math.round(itemInfo.statsRange.atk.min * rankData.mult)}～${Math.round(itemInfo.statsRange.atk.max * rankData.mult)})\n`;
-                        if (data.stats.def) text += `防御力: ${data.stats.def} (${Math.round(itemInfo.statsRange.def.min * rankData.mult)}～${Math.round(itemInfo.statsRange.def.max * rankData.mult)})\n`;
-                        if (data.stats.hp)  text += `HP  : +${data.stats.hp} (${Math.round(itemInfo.statsRange.hp.min * rankData.mult)}～${Math.round(itemInfo.statsRange.hp.max * rankData.mult)})\n`;
-                    }
-                     scene.tooltipText.setText(text);
-                     const bounds = scene.tooltipText.getBounds();
-                     scene.tooltipBg.setSize(bounds.width + 20, bounds.height + 20);
-                     
-                     // ツールチップの位置調整（スロットの少し横など）
-                     // ワールド座標を取得する必要があるため getBounds を利用
-                     const worldPos = slotBg.getBounds();
-                     scene.tooltip.setPosition(worldPos.x + 40, worldPos.y);
-                     scene.tooltip.setVisible(true);
-                 }
-            }
+        slotBg.on('pointerover', (pointer) => {
+            // 第2, 第3引数にブラウザ上の生座標を渡す
+            showTooltip(itemData, pointer.event.clientX, pointer.event.clientY);
+        });
+
+        slotBg.on('pointermove', (pointer) => {
+            // 動いている最中も追従させる
+            updateTooltipPosition(pointer.event.clientX, pointer.event.clientY);
+        });
+
+        slotBg.on('pointerout', () => {
+            // 隠す
+            const tooltip = document.getElementById('game-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
         });
 
         slotBg.on('pointerout', () => {
@@ -2070,3 +2010,88 @@ function updateMenuStats(scene) {
     }
 }
 
+function showTooltip(item, x, y) {
+    const scene = window.gameScene; // または適切なシーン参照
+    const tooltip = scene.tooltipDiv;
+
+    if (!item) {
+        tooltip.style.display = 'none';
+        return;
+    }
+
+    // 1. 基本データの取得
+    const baseData = ITEMS[item.id];
+    const rankId = item.rank || 'common';
+    const rankData = RANKS[rankId]; // { name: 'S', mult: 5.0, ... }
+
+    // --- HTMLの組み立て開始 ---
+    let html = '';
+
+    // 2. タイトルとランク表示
+    // ★要件: ランクが 'S' (または最上位) の場合、ランク名だけ虹色にする
+    let rankHtml = '';
+    if (rankId === 's' || rankId === 'S') { // IDが 's' の場合
+        rankHtml = `<span class="rainbow-text">[${rankData.name}]</span>`;
+    } else {
+        // それ以外は通常の色（CSSクラスで指定）
+        rankHtml = `<span class="rank-${rankId}">[${rankData.name}]</span>`;
+    }
+
+    html += `<div class="tooltip-title">${rankHtml} ${baseData.name}</div>`;
+
+
+    // 3. ステータスの表示と「最大値判定」
+    if (item.stats) {
+        // 各ステータスを表示
+        // item.stats = { atk: 55, def: 10 }
+        
+        for (const [key, val] of Object.entries(item.stats)) {
+            let label = key.toUpperCase(); // ATK, DEF など
+            if (key === 'atk') label = '攻撃力';
+            if (key === 'def') label = '防御力';
+            if (key === 'hp')  label = 'HP';
+
+            let valHtml = `${val}`;
+
+            // --- ★最大値（理論値）の計算 ---
+            // そのアイテムのそのランクにおける最大値を計算して比較する
+            // 計算式: baseMax * rankMultiplier
+            if (baseData.statsRange && baseData.statsRange[key]) {
+                const baseMax = baseData.statsRange[key].max;
+                const rankMult = rankData.mult;
+                
+                // サーバー側の計算式に合わせて理論上の最大値を算出
+                // (Math.round等の誤差許容が必要な場合もありますが、一旦厳密に比較します)
+                const theoreticalMax = Math.round(baseMax * rankMult);
+
+                // ★要件: 最大値と一致していれば虹色にする
+                if (val >= theoreticalMax) {
+                    valHtml = `<span class="rainbow-text">${val} (MAX)</span>`;
+                }
+            }
+
+            html += `<div>${label}: ${valHtml}</div>`;
+        }
+    }
+
+    // 4. その他の情報（価格など）
+    html += `<div style="margin-top:8px; font-size:12px; color:#aaa;">売却価格: ${Math.floor(baseData.price * rankData.mult / 2)} G</div>`;
+
+    // 5. DOMに反映して表示
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    
+    // マウスの少し右下に表示
+    // x, y はPhaserのワールド座標ではなく、ブラウザのスクリーン座標(event.clientX/Y)を使います
+    updateTooltipPosition(x, y);
+}
+
+// マウス移動に合わせて位置を更新する関数
+function updateTooltipPosition(x, y) {
+    const tooltip = document.getElementById('game-tooltip');
+    if (tooltip && tooltip.style.display !== 'none') {
+        // 画面からはみ出さないような調整を入れるとベストですが、まずは単純配置
+        tooltip.style.left = (x + 15) + 'px';
+        tooltip.style.top = (y + 15) + 'px';
+    }
+}
