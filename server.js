@@ -177,7 +177,14 @@ io.on('connection', (socket) => {
         // 5. 送信処理
         socket.emit('currentPlayers', players);
         socket.join(player.room);
-        socket.emit('firstMapMake', player.room);
+        const roomPlayers = {};
+        Object.keys(players).forEach(id => {
+            if (players[id].room === player.room) {
+                roomPlayers[id] = players[id];
+            }
+        });
+        // クライアント側で「マップ切り替え処理」をするためのイベント
+        socket.emit('mapChanged', { room: player.room, players: roomPlayers, x: player.x, y: data.y });
         socket.emit('updateStats', {
                 level: player.level, exp: player.exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
