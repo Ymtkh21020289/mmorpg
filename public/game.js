@@ -2012,60 +2012,73 @@ function updateMenuStats(scene) {
 }
 
 function showTooltip(item, x, y) {
+    // 1. ツールチップ要素の取得（ID経由）
     const tooltip = document.getElementById('game-tooltip');
     if (!tooltip) return;
 
+    // アイテムデータがない場合は非表示にして終了
     if (!item) {
         tooltip.style.display = 'none';
         return;
     }
 
-    // 1. 基本データの取得
+    // 2. 基本データの取得（定数ITEMSから）
     const baseData = ITEMS[item.id];
-    const rankId = item.rank || 'common';
-    const rankData = RANKS[rankId]; // { name: 'S', mult: 5.0, ... }
+    if (!baseData) return; // 定義されていないアイテムなら何もしない
+
+    // 3. ランク情報の安全な取得
+    // item.rank が存在し、かつ RANKS 定数内にその定義がある場合のみデータを取り出す
+    const rankId = item.rank; 
+    const rankData = (rankId && RANKS[rankId]) ? RANKS[rankId] : null;
 
     // --- HTMLの組み立て開始 ---
     let html = '';
 
-    // 2. タイトルとランク表示
-    // ★要件: ランクが 'S' (または最上位) の場合、ランク名だけ虹色にする
-    let rankHtml = '';
-    if (rankId === 's' || rankId === 'S') { // IDが 's' の場合
-        rankHtml = `<span class="rainbow-text">[${rankData.name}]</span>`;
+    // 4. タイトル表示（ランクがある場合とない場合で分岐）
+    let titleHtml = '';
+    
+    if (rankData) {
+        // A. ランクがあるアイテム（装備など）
+        let rankLabel = '';
+        
+        // Sランク（最上位）なら虹色、それ以外は通常の色指定
+        if (rankId === 's' || rankId === 'S') {
+            rankLabel = `<span class="rainbow-text">[${rankData.name}]</span>`;
+        } else {
+            // rankData.color が定義されていればそれを使い、なければ白
+            const color = rankData.color || '#ffffff';
+            rankLabel = `<span style="color:${color}">[${rankData.name}]</span>`;
+        }
+        
+        titleHtml = `${rankLabel} ${baseData.name}`;
     } else {
-        // それ以外は通常の色（CSSクラスで指定）
-        rankHtml = `<span class="rank-${rankId}">[${rankData.name}]</span>`;
+        // B. ランクがないアイテム（ポーション、素材など）
+        // そのまま名前だけを表示
+        titleHtml = baseData.name;
     }
 
-    html += `<div class="tooltip-title">${rankHtml} ${baseData.name}</div>`;
+    html += `<div class="tooltip-title">${titleHtml}</div>`;
 
-
-    // 3. ステータスの表示と「最大値判定」
+    // 5. ステータスの表示（item.stats が存在する場合のみ）
     if (item.stats) {
-        // 各ステータスを表示
-        // item.stats = { atk: 55, def: 10 }
-        
         for (const [key, val] of Object.entries(item.stats)) {
-            let label = key.toUpperCase(); // ATK, DEF など
+            let label = key.toUpperCase();
             if (key === 'atk') label = '攻撃力';
             if (key === 'def') label = '防御力';
             if (key === 'hp')  label = 'HP';
-
+            
             let valHtml = `${val}`;
 
-            // --- ★最大値（理論値）の計算 ---
-            // そのアイテムのそのランクにおける最大値を計算して比較する
-            // 計算式: baseMax * rankMultiplier
-            if (baseData.statsRange && baseData.statsRange[key]) {
+            // --- 最大値（理論値）の判定 ---
+            // ランクデータがあり、かつstatsRange定義がある場合のみ計算する
+            if (rankData && baseData.statsRange && baseData.statsRange[key]) {
                 const baseMax = baseData.statsRange[key].max;
-                const rankMult = rankData.mult;
+                const rankMult = rankData.mult || 1; // 倍率がなければ1
                 
-                // サーバー側の計算式に合わせて理論上の最大値を算出
-                // (Math.round等の誤差許容が必要な場合もありますが、一旦厳密に比較します)
-                const theoreticalMax = Math.round(baseMax * rankMult);
+                // サーバー側の計算ロジックに合わせて最大値を算出
+                const theoreticalMax = Math.round(baseMax * rankMult); // または適宜補正計算
 
-                // ★要件: 最大値と一致していれば虹色にする
+                // 最大値以上なら虹色＆MAX表記
                 if (val >= theoreticalMax) {
                     valHtml = `<span class="rainbow-text">${val} (MAX)</span>`;
                 }
@@ -2073,25 +2086,39 @@ function showTooltip(item, x, y) {
 
             html += `<div>${label}: ${valHtml}</div>`;
         }
+    } else {
+        // item.stats がない（固定アイテム）場合
+        // ITEMS定数に atk/def 等が直接書いてあればそれを表示するなどの処理
+        if (baseData.atk) html += `<div>攻撃力: ${baseData.atk}</div>`;
+        if (baseData.def) html += `<div>防御力: ${baseData.def}</div>`;
+        // ポーションなどの回復量や説明文があればここに追記
+        if (baseData.description) html += `<div style="font-size:12px; color:#ccc;">${baseData.description}</div>`;
     }
 
-    // 4. その他の情報（価格など）
-    html += `<div style="margin-top:8px; font-size:12px; color:#aaa;">売却価格: ${Math.floor(baseData.price * rankData.mult / 2)} G</div>`;
+    // 6. 価格表示（ランクがあれば倍率計算、なければ定価）
+    let price = baseData.price || 0;
+    if (rankData) {
+        price = Math.floor(price * (rankData.mult || 1));
+    }
+    // 売値は買値の半額とする場合
+    const sellPrice = Math.floor(price / 2);
+    
+    if (sellPrice > 0) {
+        html += `<div style="margin-top:8px; font-size:12px; color:#aaa;">売却: ${sellPrice} G</div>`;
+    }
 
-    // 5. DOMに反映して表示
+    // 7. DOMに反映して表示
     tooltip.innerHTML = html;
     tooltip.style.display = 'block';
     
-    // マウスの少し右下に表示
-    // x, y はPhaserのワールド座標ではなく、ブラウザのスクリーン座標(event.clientX/Y)を使います
+    // 位置更新（初回表示用）
     updateTooltipPosition(x, y);
 }
 
-// マウス移動に合わせて位置を更新する関数
+// （位置更新関数は前回のままでOKです）
 function updateTooltipPosition(x, y) {
     const tooltip = document.getElementById('game-tooltip');
     if (tooltip && tooltip.style.display !== 'none') {
-        // 画面からはみ出さないような調整を入れるとベストですが、まずは単純配置
         tooltip.style.left = (x + 15) + 'px';
         tooltip.style.top = (y + 15) + 'px';
     }
