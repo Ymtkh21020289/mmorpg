@@ -1388,12 +1388,11 @@ function createSlot(scene, index, x, y, isHotbar) {
     bg.on('pointerover', (pointer) => {
         // 第2, 第3引数にブラウザ上の生座標を渡す
         const item = scene.myInventory[index];
-        showTooltip(itemData, pointer.event.clientX, pointer.event.clientY);
+        showTooltip(item, pointer.event.clientX, pointer.event.clientY);
     });
 
     bg.on('pointermove', (pointer) => {
         // 動いている最中も追従させる
-        const item = scene.myInventory[index];
         updateTooltipPosition(pointer.event.clientX, pointer.event.clientY);
     });
 
