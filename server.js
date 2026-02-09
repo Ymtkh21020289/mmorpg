@@ -1099,7 +1099,7 @@ async function savePlayer(player) {
         );
         
         // デバッグ用（保存頻度が高い場合はコメントアウト推奨）
-        // console.log(`[Save] ${player.username} のデータを保存しました。`);
+        console.log(`[Save] ${player.username} のデータを保存しました。`);
 
     } catch (e) {
         console.error(`[Error] ${player.username} の保存に失敗しました:`, e);
