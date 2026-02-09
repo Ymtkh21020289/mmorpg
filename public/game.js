@@ -69,6 +69,15 @@ function create() {
     });
 
     // --- 作成関数 ---
+    // ★追加: 名前入力プロンプト
+    // （本来はHTMLで綺麗なタイトル画面を作りますが、テスト用として）
+    let username = '';
+    while (!username) {
+        username = prompt("ユーザー名を入力してください", "Player1");
+    }
+
+    // 2. サーバーに「この名前で遊びたい」と伝える
+    this.socket.emit('joinGame', username);
 
     this.createMap = (roomName) => {
         // 1. マップ更新中はフラグを下ろす
