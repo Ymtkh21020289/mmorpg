@@ -1043,41 +1043,58 @@ function createItemInstance(itemId, fixedRankId = null) {
     return itemInstance;
 }
 
-function savePlayer(player) {
+// server.js
+
+async function savePlayer(player) {
+    // プレイヤーデータがない、または永続化キー(username)がない場合は保存しない
     if (!player || !player.username) return;
 
-    // 保存したいデータだけを抽出（socketオブジェクトなどは保存できないため）
-    const dataToSave = {
-        username: player.username, // 検索キー
+    // 保存するデータをオブジェクトにまとめる
+    // ※ socket.id や playerId は毎回変わるので保存しません
+    const updateData = {
+        // --- 位置・シーン情報 ---
         x: player.x,
         y: player.y,
         rotation: player.rotation,
         room: player.room,
-        level: player.level,
+
+        // --- 基本ステータス ---
         hp: player.hp,
         maxHp: player.maxHp,
-        exp: player.exp || 0,
-        maxExp: player.maxExp,
         mp: player.mp,
         maxMp: player.maxMp,
-        // インベントリと装備（中身はアイテムオブジェクト）
-        inventory: player.inventory,
-        equipment: player.equipment,
-        // その他必要なステータス
-        baseatk: player.baseatk,
-        basedef: player.basedef,
-        gold: player.gold
+        lastDamageTime: player.lastDamageTime, // 必要であれば保存
+
+        // --- レベル・経験値 ---
+        level: player.level,
+        exp: player.exp,
+        maxExp: player.maxExp,
+
+        // --- 戦闘パラメータ ---
+        baseAtk: player.baseAtk,
+        baseDef: player.baseDef,
+        totalAtk: player.totalAtk,
+        totalDef: player.totalDef,
+
+        // --- 所持品・装備 ---
+        gold: player.gold,
+        inventory: player.inventory, // 配列の中身ごと保存されます
+        equipment: player.equipment  // オブジェクトの中身ごと保存されます
     };
 
-    // メモリ上のデータを更新
-    savedData[player.username] = dataToSave;
-
-    // ファイルに書き出し（非同期推奨ですが、簡易的に同期処理で書きます）
-    // ※頻繁な書き込み負荷を減らすなら、ここは「数秒に1回」などに間引くのが定石です
     try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(savedData, null, 2));
-        // console.log(`${player.username} のデータを保存しました`);
+        // MongoDBへの保存実行
+        // { username: player.username } をキーにして検索し、updateDataで上書きします
+        await PlayerModel.findOneAndUpdate(
+            { username: player.username }, 
+            { $set: updateData }, 
+            { upsert: true, new: true } // データがなければ作成、あれば更新
+        );
+        
+        // デバッグ用（保存頻度が高い場合はコメントアウト推奨）
+        // console.log(`[Save] ${player.username} のデータを保存しました。`);
+
     } catch (e) {
-        console.error('保存エラー:', e);
+        console.error(`[Error] ${player.username} の保存に失敗しました:`, e);
     }
 }
