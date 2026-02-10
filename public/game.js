@@ -2156,3 +2156,78 @@ function updateTooltipPosition(x, y) {
         tooltip.style.top = (y + 15) + 'px';
     }
 }
+
+function createAppraiserUI(scene) {
+    scene.isAppraiserOpen = false;
+
+    // 全体コンテナ
+    scene.appraiserContainer = scene.add.container(200, 100).setScrollFactor(0).setDepth(200);
+    scene.appraiserContainer.setVisible(false);
+
+    // 背景
+    const bg = scene.add.rectangle(200, 250, 400, 500, 0x000000, 0.9);
+    bg.setStrokeStyle(4, 0x8800ff); // 鑑定士は紫色の枠
+    bg.setInteractive();
+    scene.appraiserContainer.add(bg);
+
+    // タイトル
+    const title = scene.add.text(200, 30, '=== 鑑定士 ===', { fontSize: '20px', fill: '#d4aaff' }).setOrigin(0.5);
+    scene.appraiserContainer.add(title);
+    
+    // 閉じるボタン
+    const closeBtn = scene.add.text(200, 480, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    scene.appraiserContainer.add(closeBtn);
+
+    // アイテムリスト表示用コンテナ（更新のたびに作り直す）
+    scene.appraiserList = scene.add.container(0, 0);
+    scene.appraiserContainer.add(scene.appraiserList);
+}
+
+// 鑑定士UIの中身を更新する関数（開いた時や鑑定後に呼ぶ）
+function updateAppraiserList(scene) {
+    scene.appraiserList.removeAll(true); // 前の中身を消去
+
+    // プレイヤーのインベントリを取得
+    // （※ game.js内で自分のインベントリデータを管理している変数を使ってください。
+    //   例: scene.myInventory や、サーバーから送られてきたデータ）
+    const inventory = scene.myPlayer.inventory || []; 
+
+    inventory.forEach((item, index) => {
+        if (!item) return; // 空きスロットはスキップ
+
+        const y = 80 + index * 45; // 位置計算（簡易的に縦に並べる）
+        const baseData = ITEMS[item.id];
+        
+        // 鑑定費用
+        const cost = Math.floor((baseData.price || 100) * 0.5);
+
+        // 背景ボタン
+        const btn = scene.add.rectangle(200, y, 350, 40, 0x222222).setInteractive({ useHandCursor: true });
+        
+        // テキスト
+        let displayText = '';
+        let color = '#ffffff';
+
+        if (item.isUnidentified) {
+            // 未鑑定の場合
+            displayText = `[未鑑定] ${baseData.name} (費用: ${cost}G)`;
+            color = '#ffff00'; // 黄色で目立たせる
+            btn.setStrokeStyle(1, 0xffff00);
+            
+            // クリックイベント：鑑定リクエスト
+            btn.on('pointerdown', () => {
+                scene.socket.emit('identifyItem', index);
+            });
+        } else {
+            // 鑑定済みの場合
+            displayText = `[鑑定済] ${baseData.name}`;
+            color = '#555555'; // グレーアウト
+            btn.setFillStyle(0x111111); // 暗くする
+            // クリックイベントなし
+        }
+
+        const text = scene.add.text(200, y, displayText, { fontSize: '14px', fill: color }).setOrigin(0.5);
+        
+        scene.appraiserList.add([btn, text]);
+    });
+}
