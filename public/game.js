@@ -2013,107 +2013,103 @@ function updateMenuStats(scene) {
 }
 
 function showTooltip(item, x, y) {
-    if (scene.isInventoryOpen) return;
-    // 1. ツールチップ要素の取得（ID経由）
+    // 1. ツールチップ要素の取得
     const tooltip = document.getElementById('game-tooltip');
     if (!tooltip) return;
 
-    // アイテムデータがない場合は非表示にして終了
     if (!item) {
         tooltip.style.display = 'none';
         return;
     }
 
-    // 2. 基本データの取得（定数ITEMSから）
+    // 2. 基本データの取得
     const baseData = ITEMS[item.id];
-    if (!baseData) return; // 定義されていないアイテムなら何もしない
+    if (!baseData) return;
 
-    // 3. ランク情報の安全な取得
-    // item.rank が存在し、かつ RANKS 定数内にその定義がある場合のみデータを取り出す
+    // 3. ランク情報の取得
     const rankId = item.rank; 
     const rankData = (rankId && RANKS[rankId]) ? RANKS[rankId] : null;
 
-    // --- HTMLの組み立て開始 ---
+    // --- HTMLの組み立て ---
     let html = '';
 
-    // 4. タイトル表示（ランクがある場合とない場合で分岐）
+    // 4. タイトル表示
     let titleHtml = '';
     
     if (rankData) {
-        // A. ランクがあるアイテム（装備など）
+        // ランクあり（装備品など）
         let rankLabel = '';
-        
-        // Sランク（最上位）なら虹色、それ以外は通常の色指定
         if (rankId === 's' || rankId === 'S') {
             rankLabel = `<span class="rainbow-text">[${rankData.name}]</span>`;
         } else {
-            // rankData.color が定義されていればそれを使い、なければ白
             const color = rankData.color || '#ffffff';
             rankLabel = `<span style="color:${color}">[${rankData.name}]</span>`;
         }
-        
         titleHtml = `${rankLabel} ${baseData.name}`;
     } else {
-        // B. ランクがないアイテム（ポーション、素材など）
-        // そのまま名前だけを表示
+        // ランクなし（消耗品など）
         titleHtml = baseData.name;
     }
 
     html += `<div class="tooltip-title">${titleHtml}</div>`;
 
-    // 5. ステータスの表示（item.stats が存在する場合のみ）
+    // 5. ステータスの表示
     if (item.stats) {
         for (const [key, val] of Object.entries(item.stats)) {
+            // 表示ラベルの変換
             let label = key.toUpperCase();
             if (key === 'atk') label = '攻撃力';
             if (key === 'def') label = '防御力';
             if (key === 'hp')  label = 'HP';
             
             let valHtml = `${val}`;
+            let rangeHtml = ''; // 範囲表示用の変数
 
-            // --- 最大値（理論値）の判定 ---
-            // ランクデータがあり、かつstatsRange定義がある場合のみ計算する
+            // --- 最小値・最大値の計算と表示 ---
+            // ランク情報があり、かつ「基本データの範囲(statsRange)」が定義されている場合のみ計算
             if (rankData && baseData.statsRange && baseData.statsRange[key]) {
+                const baseMin = baseData.statsRange[key].min;
                 const baseMax = baseData.statsRange[key].max;
-                const rankMult = rankData.mult || 1; // 倍率がなければ1
-                
-                // サーバー側の計算ロジックに合わせて最大値を算出
-                const theoreticalMax = Math.round(baseMax * rankMult); // または適宜補正計算
+                const rankMult = rankData.mult || 1;
 
-                // 最大値以上なら虹色＆MAX表記
+                // 理論上の最小値・最大値を計算 (サーバー側の計算式と合わせる)
+                const theoreticalMin = Math.round(baseMin * rankMult);
+                const theoreticalMax = Math.round(baseMax * rankMult);
+
+                // ★追加: 範囲テキストを作成 (例: " (10~20)")
+                // グレーにして少し小さく表示すると見やすいです
+                rangeHtml = `<span style="font-size: 0.85em; color: #aaaaaa; margin-left: 4px;">(${theoreticalMin}～${theoreticalMax})</span>`;
+
+                // 最大値判定（虹色演出）
                 if (val >= theoreticalMax) {
                     valHtml = `<span class="rainbow-text">${val} (MAX)</span>`;
                 }
             }
 
-            html += `<div>${label}: ${valHtml}</div>`;
+            // HTMLに結合: "攻撃力: 15 (MAX) (12～15)" のような形になる
+            html += `<div>${label}: ${valHtml}${rangeHtml}</div>`;
         }
     } else {
-        // item.stats がない（固定アイテム）場合
-        // ITEMS定数に atk/def 等が直接書いてあればそれを表示するなどの処理
+        // statsプロパティがない固定アイテムの場合の表示
         if (baseData.atk) html += `<div>攻撃力: ${baseData.atk}</div>`;
         if (baseData.def) html += `<div>防御力: ${baseData.def}</div>`;
-        // ポーションなどの回復量や説明文があればここに追記
         if (baseData.description) html += `<div style="font-size:12px; color:#ccc;">${baseData.description}</div>`;
     }
 
-    // 6. 価格表示（ランクがあれば倍率計算、なければ定価）
+    // 6. 価格表示
     let price = baseData.price || 0;
     if (rankData) {
         price = Math.floor(price * (rankData.mult || 1));
     }
-    // 売値は買値の半額とする場合
     const sellPrice = Math.floor(price / 2);
     
     if (sellPrice > 0) {
         html += `<div style="margin-top:8px; font-size:12px; color:#aaa;">売却: ${sellPrice} G</div>`;
     }
 
-    // 7. DOMに反映して表示
+    // 7. 表示反映
     tooltip.innerHTML = html;
     tooltip.style.display = 'block';
-    
-    // 位置更新（初回表示用）
     updateTooltipPosition(x, y);
 }
 
