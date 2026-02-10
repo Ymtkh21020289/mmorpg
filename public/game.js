@@ -2013,6 +2013,7 @@ function updateMenuStats(scene) {
 }
 
 function showTooltip(item, x, y) {
+    if (scene.isInventoryOpen) return;
     // 1. ツールチップ要素の取得（ID経由）
     const tooltip = document.getElementById('game-tooltip');
     if (!tooltip) return;
