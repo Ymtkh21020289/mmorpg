@@ -898,7 +898,7 @@ function addItemToInventory(player, itemId, amount) {
         
         if (emptyIndex !== -1) {
             const newItem = createItemInstance(itemId, null, true);
-            player.inventory[emptyIndex] = { id: newItem.id, rank: newItem.rank, stats: newItem.stats, count: amount, isUnidentified: newitem.isUnidentified };
+            player.inventory[emptyIndex] = { id: newItem.id, rank: newItem.rank, stats: newItem.stats, count: amount, isUnidentified: newItem.isUnidentified };
             savePlayer(player);
         } else {
             // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
@@ -1227,10 +1227,10 @@ function createItemInstance(itemId, fixedRankId = null, isUnidentified = false) 
         
         if (!fixedRankId) {
              // fixedRankIdがない（通常生成）なら抽選を行う
-             rollItemStats(itemInstance);
+             itemInstance = rollItemStats(itemInstance);
         } else {
              // ランク指定あり（ボスドロップ等）ならそのランクで計算
-             rollItemStats(itemInstance); 
+             itemInstance = rollItemStats(itemInstance); 
         }
     }
 
