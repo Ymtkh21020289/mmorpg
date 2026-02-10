@@ -484,7 +484,7 @@ function create() {
             this.menuStatus.setVisible(false);
             this.menuSuicide.setVisible(false);
             // 他のウィンドウ（インベントリやショップ）を閉じる処理をここに入れても親切です
-            // this.inventoryContainer.setVisible(false); 
+            // thisContainer.setVisible(false); 
         } else {
             // メニューを閉じる
             this.menuContainer.setVisible(false);
@@ -2190,7 +2190,7 @@ function updateAppraiserList(scene) {
     // プレイヤーのインベントリを取得
     // （※ game.js内で自分のインベントリデータを管理している変数を使ってください。
     //   例: scene.myInventory や、サーバーから送られてきたデータ）
-    const inventory = scene.myPlayer.inventory || []; 
+    const inventory = scene.myinventory || []; 
 
     inventory.forEach((item, index) => {
         if (!item) return; // 空きスロットはスキップ
