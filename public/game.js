@@ -467,8 +467,11 @@ function create() {
         }else if (this.isCraftingOpen) {
             this.isCraftingOpen = false;
             this.tooltip.setVisible(false);
-            this.craftContainer.setVisible(false);;
-        } 
+            this.craftContainer.setVisible(false);
+        }else if (this.isAppraiserOpen) {
+            this.isAppraiserOpen = false;
+            this.appraiserContainer.setVisible(false);
+        }
     });
 
     createMenuUI(this);
