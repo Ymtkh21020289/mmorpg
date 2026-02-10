@@ -2179,7 +2179,7 @@ function createAppraiserUI(scene) {
     scene.appraiserContainer.add(title);
     
     // 閉じるボタン
-    const closeBtn = scene.add.text(200, 480, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    const closeBtn = scene.add.text(200, 480, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
     scene.appraiserContainer.add(closeBtn);
 
     // アイテムリスト表示用コンテナ（更新のたびに作り直す）
