@@ -934,6 +934,7 @@ function performEnemyAttack(enemy, stats) {
                 // ★命中！
                 const damage1 = p.totalDef / (mitigation + p.totalDef);
                 p.hp -= Math.floor(Math.max(stats.damage * (1 - damage1), 0));
+                console.log(`${player.name}に${Math.floor(Math.max(stats.damage * (1 - damage1), 0));}ダメージを与えた！`);
                 p.lastDamageTime = now;
                 // 死亡判定などはここに記述
                 if (p.hp <= 0) {
