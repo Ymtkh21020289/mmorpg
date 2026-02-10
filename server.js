@@ -630,15 +630,14 @@ setInterval(() => {
                         enemy.targetAngle = Math.atan2(target.dy, target.dx);
 
                         // クライアントに「予兆を出せ」と命令
-                        io.emit('enemyCharge', {
+                        io.to(enemy.room).emit('enemyCharge', {
                             id: enemyId,
                             x: enemy.x,
                             y: enemy.y,
                             angle: enemy.targetAngle,
                             radius: stats.attackRadius,
                             width: stats.attackAngle,
-                            duration: stats.chargeTime,
-                            room: enemy.room
+                            duration: stats.chargeTime
                         });
                     } else {
                         const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
