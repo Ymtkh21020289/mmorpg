@@ -637,7 +637,8 @@ setInterval(() => {
                             angle: enemy.targetAngle,
                             radius: stats.attackRadius,
                             width: stats.attackAngle,
-                            duration: stats.chargeTime
+                            duration: stats.chargeTime,
+                            room: enemy.room
                         });
                     } else {
                         const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
@@ -877,7 +878,7 @@ function performEnemyAttack(enemy, stats) {
     for (const pid in players) {
         const p = players[pid];
         // マップチェック（マップ実装済みなら）
-        // if (p.mapId !== enemy.mapId) continue;
+        if (p.room !== enemy.mapId) continue;
 
         const dx = p.x - enemy.x;
         const dy = p.y - enemy.y;
