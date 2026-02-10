@@ -533,8 +533,7 @@ io.on('connection', (socket) => {
 
         // 4. クライアントに通知
         // インベントリ更新、所持金更新、鑑定完了エフェクト用通知など
-        socket.emit('updateInventory', player.inventory);
-        socket.emit('updateGold', player.gold); // 金額更新イベントがある場合
+        socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
         socket.emit('identifySuccess', { index: inventoryIndex, item: item });
         savePlayer(player);
     });
