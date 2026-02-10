@@ -998,6 +998,7 @@ function update() {
                         this.isCraftingOpen = true;
                         this.craftContainer.setVisible(true);
                     }else if (enemy.getData('type') === 'identify' && !this.isAppraiserOpen) {
+                        this.isAppraiserOpen = true;
                         this.appraiserContainer.setVisible(true);
                         updateAppraiserList(this);
                     }
