@@ -16,7 +16,7 @@ const npcs = {
         radius: 30             // 当たり判定の大きさ
     },
     'identifer_1': { 
-        x: 304, y: 48,        // 配置座標
+        x: 304, y: 240,        // 配置座標
         mapId: 'shop',        // 配置マップ
         name: '鑑定屋',
         type: 'identify',
