@@ -1813,7 +1813,8 @@ function createEquipmentUI(scene) {
         // --- ツールチップ（既存の仕組みを流用） ---
         slotBg.on('pointerover', (pointer) => {
             // 第2, 第3引数にブラウザ上の生座標を渡す
-            showTooltip(itemData, pointer.event.clientX, pointer.event.clientY);
+            const data = scene.equipSlots[slotName].itemData;
+            showTooltip(data, pointer.event.clientX, pointer.event.clientY);
         });
 
         slotBg.on('pointermove', (pointer) => {
