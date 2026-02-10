@@ -502,6 +502,42 @@ io.on('connection', (socket) => {
         io.to(socket.id).emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
         savePlayer(player);
     });
+
+    socket.on('identifyItem', (inventoryIndex) => {
+        const player = players[socket.id];
+        if (!player) return;
+
+        // インデックスの正当性チェック
+        const item = player.inventory[inventoryIndex];
+        if (!item || !item.isUnidentified) return;
+
+        // 鑑定費用の計算（例: アイテム価格の 50%）
+        // 未鑑定だとランク不明なので、ベース価格を参照
+        const baseData = ITEMS[item.id];
+        const cost = Math.floor((baseData.price || 100) * 0.5);
+
+        if (player.gold < cost) {
+            socket.emit('systemMessage', 'ゴールドが足りません！');
+            return;
+        }
+
+        // 1. お金を減らす
+        player.gold -= cost;
+
+        // 2. ランクとステータスを抽選（ここで初めて決まる！）
+        rollItemStats(item);
+
+        // 3. ログ出力＆保存
+        console.log(`Identified: ${baseData.name} -> Rank: ${item.rank}`);
+        savePlayer(player);
+
+        // 4. クライアントに通知
+        // インベントリ更新、所持金更新、鑑定完了エフェクト用通知など
+        socket.emit('updateInventory', player.inventory);
+        socket.emit('updateGold', player.gold); // 金額更新イベントがある場合
+        socket.emit('identifySuccess', { index: inventoryIndex, item: item });
+        savePlayer(player);
+    });
     
     socket.on('sellItem', (slotIndex) => {
         const player = players[socket.id];
@@ -861,8 +897,8 @@ function addItemToInventory(player, itemId, amount) {
         const emptyIndex = player.inventory.findIndex(slot => slot === null);
         
         if (emptyIndex !== -1) {
-            const newItem = createItemInstance(itemId);
-            player.inventory[emptyIndex] = { id: newItem.id, rank: newItem.rank, stats: newItem.stats, count: amount };
+            const newItem = createItemInstance(itemId, null, true);
+            player.inventory[emptyIndex] = { id: newItem.id, rank: newItem.rank, stats: newItem.stats, count: amount, isUnidentified: newitem.isUnidentified };
             savePlayer(player);
         } else {
             // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
@@ -1112,4 +1148,91 @@ async function savePlayer(player) {
     } catch (e) {
         console.error(`[Error] ${player.username} の保存に失敗しました:`, e);
     }
+}
+
+function rollItemStats(itemInstance) {
+    const data = ITEMS[itemInstance.id];
+    if (!data) return;
+
+    // A. ランクの抽選（まだ決まっていない場合）
+    if (!itemInstance.rank || itemInstance.rank === 'unknown') {
+        const rand = Math.random() * TOTAL_RATE;
+        let current = 0;
+        let selectedRank = 'C';
+
+        for (const r of Object.values(RANKS)) {
+            current += r.rate;
+            if (rand < current) {
+                selectedRank = r.id;
+                break;
+            }
+        }
+        itemInstance.rank = selectedRank;
+    }
+
+    // B. ステータスの計算（ランクに基づいて乱数生成）
+    const rankData = RANKS[itemInstance.rank];
+    itemInstance.stats = {}; // 初期化
+
+    if (data.statsRange) {
+        for (const [statName, range] of Object.entries(data.statsRange)) {
+            const rankMin = range.min * rankData.mult;
+            const rankMax = range.max * rankData.mult;
+            
+            // 0~1の乱数
+            const R = Math.random();
+            const T = rankMax - rankMin;
+            
+            // 最終値
+            const finalVal = rankMin + (R * T);
+            itemInstance.stats[statName] = Math.round(finalVal);
+        }
+    }
+
+    // 未鑑定フラグを消す
+    delete itemInstance.isUnidentified;
+    
+    return itemInstance;
+}
+
+// --- 2. アイテム生成関数の改修 ---
+// isUnidentified: true なら「未鑑定状態」で返す
+function createItemInstance(itemId, fixedRankId = null, isUnidentified = false) {
+    const data = ITEMS[itemId];
+    if (!data) return null;
+    if (data.type !== 'equipment' && data.type !== 'weapon') {
+        return { 
+            id: itemId,
+            // スタック（重ね置き）できるように、あえて uniqueId は付けないか、
+            // インベントリの仕様に合わせて最低限のデータだけ返します。
+            count: 1 
+        };
+    }
+
+    const itemInstance = {
+        id: itemId,
+        uniqueId: Math.random().toString(36).substr(2, 9),
+        // 未鑑定ならランクは不明、そうでなければ指定orコモン（後でrollItemStatsを通すなら上書きされる）
+        rank: isUnidentified ? 'unknown' : (fixedRankId || 'common'),
+        stats: {},
+        isUnidentified: isUnidentified // フラグ付与
+    };
+
+    // 未鑑定でなければ、即座にステータスを計算して返す
+    // （店売り品や、確定ドロップなどはここで完成させる）
+    if (!isUnidentified) {
+        // 固定ランク指定がない場合はランダム抽選させたいので、rankを一旦クリアしてから通す等の調整が必要ですが、
+        // シンプルに「店売り＝コモン固定」「ボス＝レジェンド固定」ならこのままでOK。
+        // もし「店売りでもランダム」にしたいなら rollItemStats(itemInstance) を呼びます。
+        
+        if (!fixedRankId) {
+             // fixedRankIdがない（通常生成）なら抽選を行う
+             rollItemStats(itemInstance);
+        } else {
+             // ランク指定あり（ボスドロップ等）ならそのランクで計算
+             rollItemStats(itemInstance); 
+        }
+    }
+
+    return itemInstance;
 }
