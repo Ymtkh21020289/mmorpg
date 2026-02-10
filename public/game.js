@@ -993,7 +993,7 @@ function update() {
                     }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
                         this.isCraftingOpen = true;
                         this.craftContainer.setVisible(true);
-                    }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
+                    }else if (enemy.getData('type') === 'identify' && !this.isAppraiserOpen) {
                         this.appraiserContainer.setVisible(true);
                         updateAppraiserList(this);
                     }
