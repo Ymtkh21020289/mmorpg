@@ -2193,7 +2193,7 @@ function updateAppraiserList(scene) {
     // プレイヤーのインベントリを取得
     // （※ game.js内で自分のインベントリデータを管理している変数を使ってください。
     //   例: scene.myInventory や、サーバーから送られてきたデータ）
-    const inventory = scene.myinventory || []; 
+    const inventory = scene.myInventory || []; 
 
     inventory.forEach((item, index) => {
         if (!item) return; // 空きスロットはスキップ
