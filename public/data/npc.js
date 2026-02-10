@@ -14,6 +14,14 @@ const npcs = {
         type: 'blacksmith',
         color: 0x00ff00,       // 緑色（味方っぽい色）
         radius: 30             // 当たり判定の大きさ
+    },
+    'identifer_1': { 
+        x: 304, y: 48,        // 配置座標
+        mapId: 'shop',        // 配置マップ
+        name: '鑑定屋',
+        type: 'identify',
+        color: 0x00ff00,       // 緑色（味方っぽい色）
+        radius: 30             // 当たり判定の大きさ
     }
 };
 
