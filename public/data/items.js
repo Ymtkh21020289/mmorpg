@@ -22,7 +22,7 @@ const ITEMS = {
     },
     'great_axe': { name: 'スゴイ斧', type: 'weapon', statsRange: { atk: { min: 20, max: 60 }}, range: 120, radius: 90, color: 0x00ffff, price: 500, desc: 'スゴイ斧。\n高い攻撃力で一掃が可能。' },
     'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', statsRange: { atk: { min: 35, max: 45 }}, range: 10, radius: 150, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
-    'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2, desc: 'プルプルした謎の物体。\nクラフト素材として使える。' },
+    'slime_gel': { name: 'スライムゼリー', type: 'material', price: 10000, desc: 'プルプルした謎の物体。\nクラフト素材として使える。' },
     'slime_heart': { name: 'スライムの心', type: 'material', price: 100, desc: '極稀にスライムが落とすアイテム。\nクラフト素材として使える。' },
     'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 5, desc: 'なんかゴワゴワしてる…\nクラフト素材として使える。' },
     'wolf_heart':  { name: 'オオカミの心', type: 'material', price: 200, desc: '極稀にオオカミが落とすアイテム。\nクラフト素材として使える。' },
