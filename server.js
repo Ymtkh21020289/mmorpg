@@ -913,7 +913,7 @@ function performEnemyAttack(enemy, stats) {
     for (const pid in players) {
         const p = players[pid];
         // マップチェック（マップ実装済みなら）
-        if (p.room !== enemy.mapId) continue;
+        if (p.room !== enemy.room) continue;
 
         const dx = p.x - enemy.x;
         const dy = p.y - enemy.y;
@@ -934,7 +934,6 @@ function performEnemyAttack(enemy, stats) {
                 // ★命中！
                 const damage1 = p.totalDef / (mitigation + p.totalDef);
                 p.hp -= Math.floor(Math.max(stats.damage * (1 - damage1), 0));
-                console.log(`${player.name}に${Math.floor(Math.max(stats.damage * (1 - damage1), 0));}ダメージを与えた！`);
                 p.lastDamageTime = now;
                 // 死亡判定などはここに記述
                 if (p.hp <= 0) {
