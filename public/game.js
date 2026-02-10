@@ -419,6 +419,7 @@ function create() {
 
     createMerchantUI(this); // 武器商人のUI作成
     createCraftingUI(this); // 鍛冶屋のUI作成
+    createAppraiserUI(this);
 
     // 背景（黒い四角）
     //const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
