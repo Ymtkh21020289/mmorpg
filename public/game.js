@@ -673,6 +673,22 @@ function create() {
 
     // --- チャット入力の制御 ---
     const chatInput = document.getElementById('chatInput');
+
+    this.socket.on('identifySuccess', (data) => {
+        const item = data.item;
+        
+        // ログ表示など
+        console.log('鑑定成功！', item);
+        
+        // 鑑定UIが開いていればリストを再描画（済マークをつけるため）
+        if (this.isAppraiserOpen) {
+            updateAppraiserList(this);
+        }
+        
+        // 派手な演出を入れるならここ
+        // 例: this.sound.play('success_se');
+        alert(`鑑定結果: [${item.rank}] が出ました！`);
+    });
     
     // エンターキーが押されたら入力ボックスを表示/非表示
     this.input.keyboard.on('keydown-ENTER', () => {
@@ -977,6 +993,9 @@ function update() {
                     }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
                         this.isCraftingOpen = true;
                         this.craftContainer.setVisible(true);
+                    }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
+                        this.appraiserContainer.setVisible(true);
+                        updateAppraiserList(this);
                     }
                 }
             }
@@ -2035,76 +2054,91 @@ function showTooltip(item, x, y) {
 
     // 4. タイトル表示
     let titleHtml = '';
-    
-    if (rankData) {
-        // ランクあり（装備品など）
-        let rankLabel = '';
-        if (rankId === 's' || rankId === 'S') {
-            rankLabel = `<span class="rainbow-text">[${rankData.name}]</span>`;
-        } else {
-            const color = rankData.color || '#ffffff';
-            rankLabel = `<span style="color:${color}">[${rankData.name}]</span>`;
-        }
-        titleHtml = `${rankLabel} ${baseData.name}`;
+
+    if (item.isUnidentified) {
+        // --- 未鑑定表示 ---
+        html += `<div class="tooltip-title" style="color:#aaa;">? 未鑑定の装備 ?</div>`;
+        html += `<div style="color:#ffff00; margin-bottom:5px;">鑑定が必要です</div>`;
+        
+        // ベースの名前くらいは表示しても良いかも（例: 鉄の剣）
+        // 完全に隠すなら "???" にする
+        html += `<div>種別: ${baseData.name}</div>`;
+        
+        // 費用目安
+        const cost = Math.floor((baseData.price || 100) * 0.5);
+        html += `<div style="color:#aaa; font-size:12px; margin-top:5px;">鑑定費用: ${cost} G</div>`;
+
     } else {
-        // ランクなし（消耗品など）
-        titleHtml = baseData.name;
-    }
-
-    html += `<div class="tooltip-title">${titleHtml}</div>`;
-
-    // 5. ステータスの表示
-    if (item.stats) {
-        for (const [key, val] of Object.entries(item.stats)) {
-            // 表示ラベルの変換
-            let label = key.toUpperCase();
-            if (key === 'atk') label = '攻撃力';
-            if (key === 'def') label = '防御力';
-            if (key === 'hp')  label = 'HP';
-            
-            let valHtml = `${val}`;
-            let rangeHtml = ''; // 範囲表示用の変数
-
-            // --- 最小値・最大値の計算と表示 ---
-            // ランク情報があり、かつ「基本データの範囲(statsRange)」が定義されている場合のみ計算
-            if (rankData && baseData.statsRange && baseData.statsRange[key]) {
-                const baseMin = baseData.statsRange[key].min;
-                const baseMax = baseData.statsRange[key].max;
-                const rankMult = rankData.mult || 1;
-
-                // 理論上の最小値・最大値を計算 (サーバー側の計算式と合わせる)
-                const theoreticalMin = Math.round(baseMin * rankMult);
-                const theoreticalMax = Math.round(baseMax * rankMult);
-
-                // ★追加: 範囲テキストを作成 (例: " (10~20)")
-                // グレーにして少し小さく表示すると見やすいです
-                rangeHtml = `<span style="font-size: 0.85em; color: #aaaaaa; margin-left: 4px;">(${theoreticalMin}～${theoreticalMax})</span>`;
-
-                // 最大値判定（虹色演出）
-                if (val >= theoreticalMax) {
-                    valHtml = `<span class="rainbow-text">${val} (MAX)</span>`;
-                }
+        if (rankData) {
+            // ランクあり（装備品など）
+            let rankLabel = '';
+            if (rankId === 's' || rankId === 'S') {
+                rankLabel = `<span class="rainbow-text">[${rankData.name}]</span>`;
+            } else {
+                const color = rankData.color || '#ffffff';
+                rankLabel = `<span style="color:${color}">[${rankData.name}]</span>`;
             }
-
-            // HTMLに結合: "攻撃力: 15 (MAX) (12～15)" のような形になる
-            html += `<div>${label}: ${valHtml}${rangeHtml}</div>`;
+            titleHtml = `${rankLabel} ${baseData.name}`;
+        } else {
+            // ランクなし（消耗品など）
+            titleHtml = baseData.name;
         }
-    } else {
-        // statsプロパティがない固定アイテムの場合の表示
-        if (baseData.atk) html += `<div>攻撃力: ${baseData.atk}</div>`;
-        if (baseData.def) html += `<div>防御力: ${baseData.def}</div>`;
-        if (baseData.description) html += `<div style="font-size:12px; color:#ccc;">${baseData.description}</div>`;
-    }
 
-    // 6. 価格表示
-    let price = baseData.price || 0;
-    if (rankData) {
-        price = Math.floor(price * (rankData.mult || 1));
-    }
-    const sellPrice = Math.floor(price / 2);
+        html += `<div class="tooltip-title">${titleHtml}</div>`;
+
+        // 5. ステータスの表示
+        if (item.stats) {
+            for (const [key, val] of Object.entries(item.stats)) {
+                // 表示ラベルの変換
+                let label = key.toUpperCase();
+                if (key === 'atk') label = '攻撃力';
+                if (key === 'def') label = '防御力';
+                if (key === 'hp')  label = 'HP';
+            
+                let valHtml = `${val}`;
+                let rangeHtml = ''; // 範囲表示用の変数
+
+                // --- 最小値・最大値の計算と表示 ---
+                // ランク情報があり、かつ「基本データの範囲(statsRange)」が定義されている場合のみ計算
+                if (rankData && baseData.statsRange && baseData.statsRange[key]) {
+                    const baseMin = baseData.statsRange[key].min;
+                    const baseMax = baseData.statsRange[key].max;
+                    const rankMult = rankData.mult || 1;
+
+                    // 理論上の最小値・最大値を計算 (サーバー側の計算式と合わせる)
+                    const theoreticalMin = Math.round(baseMin * rankMult);
+                    const theoreticalMax = Math.round(baseMax * rankMult);
+
+                    // ★追加: 範囲テキストを作成 (例: " (10~20)")
+                    // グレーにして少し小さく表示すると見やすいです
+                    rangeHtml = `<span style="font-size: 0.85em; color: #aaaaaa; margin-left: 4px;">(${theoreticalMin}～${theoreticalMax})</span>`;
+
+                    // 最大値判定（虹色演出）
+                    if (val >= theoreticalMax) {
+                        valHtml = `<span class="rainbow-text">${val} (MAX)</span>`;
+                    }
+                }
+
+                // HTMLに結合: "攻撃力: 15 (MAX) (12～15)" のような形になる
+                html += `<div>${label}: ${valHtml}${rangeHtml}</div>`;
+            }
+        } else {
+            // statsプロパティがない固定アイテムの場合の表示
+            if (baseData.atk) html += `<div>攻撃力: ${baseData.atk}</div>`;
+            if (baseData.def) html += `<div>防御力: ${baseData.def}</div>`;
+            if (baseData.description) html += `<div style="font-size:12px; color:#ccc;">${baseData.description}</div>`;
+        }
+
+        // 6. 価格表示
+        let price = baseData.price || 0;
+        if (rankData) {
+            price = Math.floor(price * (rankData.mult || 1));
+        }
+        const sellPrice = Math.floor(price / 2);
     
-    if (sellPrice > 0) {
-        html += `<div style="margin-top:8px; font-size:12px; color:#aaa;">売却: ${sellPrice} G</div>`;
+        if (sellPrice > 0) {
+            html += `<div style="margin-top:8px; font-size:12px; color:#aaa;">売却: ${sellPrice} G</div>`;
+        }
     }
 
     // 7. 表示反映
