@@ -2317,7 +2317,7 @@ function updateAppraiserList(scene) {
 }
 
 function openPlayerSelection(scene) {
-    // 既存のUIが開いていれば閉じる等の処理推奨
+    // 既存のUIがあれば閉じる
     if (scene.transferContainer) scene.transferContainer.destroy();
 
     // コンテナ作成
@@ -2339,33 +2339,31 @@ function openPlayerSelection(scene) {
         .on('pointerdown', () => container.destroy());
     container.add(closeBtn);
 
-    // プレイヤーリストの取得（scene.otherPlayers はPhaserのGroupまたはMap）
-    // ※自分以外のプレイヤーを抽出
+    // --- ★ここを修正: グループ内の全スプライトを取得 ---
     let y = -140;
-    
-    // scene.otherPlayers はオブジェクトマップ { socketId: sprite, ... } の想定
-    Object.keys(scene.otherPlayers).forEach(id => {
-        const otherPlayerSprite = scene.otherPlayers[id];
-        // 名前情報の取得方法は実装によりますが、sprite.username や nameText などから取得
-        // ここでは仮に sprite.username とします
-        const name = otherPlayerSprite.username || 'Unknown';
+    const others = scene.otherPlayers.getChildren(); // グループから配列として取得
+
+    if (others.length === 0) {
+        container.add(scene.add.text(0, 0, '近くに誰もいません', { color: '#888' }).setOrigin(0.5));
+    }
+
+    others.forEach((sprite) => {
+        // 手順1で保存した username を取り出す
+        const name = sprite.username || '名無し'; 
+        const id = sprite.playerId; // socket.id
 
         const pBtn = scene.add.text(0, y, `👤 ${name}`, { fontSize: '18px', fill: '#ffff00' })
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true });
 
         pBtn.on('pointerdown', () => {
-            // プレイヤーを選んだら、次はアイテム選択へ
+            // アイテム選択画面へ進む
             openTransferInventory(scene, id, name);
         });
 
         container.add(pBtn);
         y += 40;
     });
-
-    if (Object.keys(scene.otherPlayers).length === 0) {
-        container.add(scene.add.text(0, 0, '近くに誰もいません', { color: '#888' }).setOrigin(0.5));
-    }
 }
 
 function openTransferInventory(scene, targetId, targetName) {
