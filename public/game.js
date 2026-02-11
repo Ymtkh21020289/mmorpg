@@ -2164,74 +2164,147 @@ function updateTooltipPosition(x, y) {
 function createAppraiserUI(scene) {
     scene.isAppraiserOpen = false;
 
-    // 全体コンテナ
-    scene.appraiserContainer = scene.add.container(200, 100).setScrollFactor(0).setDepth(200);
+    // --- 設定値 ---
+    const UI_X = 200;
+    const UI_Y = 100;
+    const UI_W = 400;
+    const UI_H = 500;
+    const HEADER_H = 60; // タイトルや閉じるボタンのエリアの高さ
+    
+    // リストが表示されるエリアの高さ（全体 - ヘッダー分）
+    const LIST_H = UI_H - HEADER_H - 40; 
+    const LIST_START_Y = UI_Y + HEADER_H;
+
+    // 1. 全体コンテナ（背景や枠などの動かないもの）
+    scene.appraiserContainer = scene.add.container(0, 0).setScrollFactor(0).setDepth(200);
     scene.appraiserContainer.setVisible(false);
 
     // 背景
-    const bg = scene.add.rectangle(200, 250, 400, 500, 0x000000, 0.9);
-    bg.setStrokeStyle(4, 0x8800ff); // 鑑定士は紫色の枠
-    bg.setInteractive();
+    const bg = scene.add.rectangle(UI_X + UI_W/2, UI_Y + UI_H/2, UI_W, UI_H, 0x000000, 0.95);
+    bg.setStrokeStyle(4, 0x8800ff);
+    bg.setInteractive(); // クリックが後ろに貫通しないように
     scene.appraiserContainer.add(bg);
 
     // タイトル
-    const title = scene.add.text(200, 30, '=== 鑑定士 ===', { fontSize: '20px', fill: '#d4aaff' }).setOrigin(0.5);
+    const title = scene.add.text(UI_X + UI_W/2, UI_Y + 30, '=== 鑑定士 ===', { fontSize: '20px', fill: '#d4aaff' }).setOrigin(0.5);
     scene.appraiserContainer.add(title);
     
     // 閉じるボタン
-    const closeBtn = scene.add.text(200, 480, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    const closeBtn = scene.add.text(UI_X + UI_W/2, UI_Y + UI_H - 25, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
     scene.appraiserContainer.add(closeBtn);
 
-    // アイテムリスト表示用コンテナ（更新のたびに作り直す）
-    scene.appraiserList = scene.add.container(0, 0);
-    scene.appraiserContainer.add(scene.appraiserList);
+
+    // 2. スクロールするリスト用コンテナ
+    // ここにアイテムのボタンなどを入れます
+    scene.appraiserList = scene.add.container(UI_X, LIST_START_Y).setScrollFactor(0).setDepth(200);
+    scene.appraiserList.setVisible(false); // 親が開くときにtrueにする
+
+    // 3. マスク（切り抜き）の作成
+    // Graphicsで作った四角形の範囲外にあるリストアイテムを非表示にします
+    const shape = scene.make.graphics();
+    shape.fillStyle(0xffffff);
+    // リストが表示される範囲だけを白く塗る
+    shape.fillRect(UI_X, LIST_START_Y, UI_W, LIST_H);
+    
+    const mask = shape.createGeometryMask();
+    scene.appraiserList.setMask(mask); // コンテナにマスクを適用
+
+    // --- 4. スクロール機能の実装 ---
+    // マウスホイールイベントの登録
+    scene.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        if (!scene.isAppraiserOpen) return;
+
+        // マウスがUIの範囲内にあるときだけスクロール
+        if (pointer.x >= UI_X && pointer.x <= UI_X + UI_W &&
+            pointer.y >= UI_Y && pointer.y <= UI_Y + UI_H) {
+            
+            const list = scene.appraiserList;
+            const contentHeight = list.contentHeight || 0;
+            
+            // リストが枠より小さいならスクロール不要
+            if (contentHeight <= LIST_H) return;
+
+            // スクロール速度
+            const scrollSpeed = 0.5;
+            list.y -= deltaY * scrollSpeed;
+
+            // --- 範囲制限（重要） ---
+            // 上限: 初期位置 (LIST_START_Y)
+            // 下限: コンテンツの長さ分だけ上にズレた位置
+            const minY = LIST_START_Y - (contentHeight - LIST_H + 20); // 20は余白
+            const maxY = LIST_START_Y;
+
+            // Phaser.Math.Clamp で範囲内に収める
+            list.y = Phaser.Math.Clamp(list.y, minY, maxY);
+        }
+    });
 }
 
 // 鑑定士UIの中身を更新する関数（開いた時や鑑定後に呼ぶ）
 function updateAppraiserList(scene) {
-    scene.appraiserList.removeAll(true); // 前の中身を消去
+    // リストの中身をクリア
+    scene.appraiserList.removeAll(true);
 
-    // プレイヤーのインベントリを取得
-    // （※ game.js内で自分のインベントリデータを管理している変数を使ってください。
-    //   例: scene.myInventory や、サーバーから送られてきたデータ）
-    const inventory = scene.myInventory || []; 
+    const inventory = scene.myPlayer.inventory || []; 
+    const itemHeight = 45; // 1行あたりの高さ
+    let currentY = 20; // コンテナ内での開始Y座標（少し余白）
 
     inventory.forEach((item, index) => {
-        if (!item) return; // 空きスロットはスキップ
+        if (!item) return;
 
-        const y = 80 + index * 45; // 位置計算（簡易的に縦に並べる）
+        // --- コンテナ内部座標なので、Xは相対位置 ---
+        // 親コンテナが(200, 100)にあるので、ここは幅の中心(200)を指定
+        const localX = 200; 
         const baseData = ITEMS[item.id];
-        
-        // 鑑定費用
         const cost = Math.floor((baseData.price || 100) * 0.5);
 
-        // 背景ボタン
-        const btn = scene.add.rectangle(200, y, 350, 40, 0x222222).setInteractive({ useHandCursor: true });
+        // ボタン背景
+        const btn = scene.add.rectangle(localX, currentY, 350, 40, 0x222222).setInteractive({ useHandCursor: true });
         
-        // テキスト
         let displayText = '';
         let color = '#ffffff';
 
         if (item.isUnidentified) {
-            // 未鑑定の場合
             displayText = `[未鑑定] ${baseData.name} (費用: ${cost}G)`;
-            color = '#ffff00'; // 黄色で目立たせる
+            color = '#ffff00';
             btn.setStrokeStyle(1, 0xffff00);
             
-            // クリックイベント：鑑定リクエスト
             btn.on('pointerdown', () => {
                 scene.socket.emit('identifyItem', index);
             });
         } else {
-            // 鑑定済みの場合
             displayText = `[鑑定済] ${baseData.name}`;
-            color = '#555555'; // グレーアウト
-            btn.setFillStyle(0x111111); // 暗くする
-            // クリックイベントなし
+            color = '#555555';
+            btn.setFillStyle(0x111111);
         }
 
-        const text = scene.add.text(200, y, displayText, { fontSize: '14px', fill: color }).setOrigin(0.5);
+        const text = scene.add.text(localX, currentY, displayText, { fontSize: '14px', fill: color }).setOrigin(0.5);
         
+        // ツールチップ用エリア判定の修正（スクロール対応）
+        // スクロールコンテナ内の要素はpointermoveイベントの座標計算が複雑になるため、
+        // 簡易的にボタン自体のイベントを使います
+        btn.on('pointerover', () => {
+            // スクロール中の位置ズレを考慮してツールチップを出すのは難しいので、
+            // 簡易版としてマウス座標に直接出すのが無難です
+            const pointer = scene.input.activePointer;
+            showTooltip(item, pointer.x, pointer.y);
+        });
+        btn.on('pointerout', () => {
+             const tooltip = document.getElementById('game-tooltip');
+             if(tooltip) tooltip.style.display = 'none';
+        });
+
+        // コンテナに追加
         scene.appraiserList.add([btn, text]);
+
+        // 次の行へ
+        currentY += itemHeight;
     });
+
+    // ★重要: 全体の高さを保存しておく（スクロール計算用）
+    scene.appraiserList.contentHeight = currentY;
+    
+    // リスト更新時は一番上に戻す
+    const HEADER_H = 60;
+    scene.appraiserList.y = 100 + HEADER_H;
 }
