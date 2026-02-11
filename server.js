@@ -647,7 +647,7 @@ io.on('connection', (socket) => {
             // 送信者から減らす
             item.count -= amount;
             if (item.count <= 0) {
-                sender.inventory[itemIndex] = null; // 0になったら消す
+                sender.inventory[data.itemIndex] = null; // 0になったら消す
             }
 
             // 受信者に追加する（既存スタックがあれば合算）
