@@ -2247,7 +2247,7 @@ function updateAppraiserList(scene) {
     // リストの中身をクリア
     scene.appraiserList.removeAll(true);
 
-    const inventory = scene.myPlayer.inventory || []; 
+    const inventory = scene.myInventory || []; 
     const itemHeight = 45; // 1行あたりの高さ
     let currentY = 20; // コンテナ内での開始Y座標（少し余白）
 
