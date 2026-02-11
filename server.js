@@ -820,7 +820,7 @@ function handleEnemyDeath(enemy, player) {
     if (player.exp >= player.maxExp) {
         player.level++;
         player.exp = 0;
-        player.maxExp = Math.floor(player.level ** 2 + (player.level * 10) + 100);
+        player.maxExp = Math.floor( 2 * (player.level ** 2) + (player.level * 20) + 200);
         player.baseAtk += 2;
         player.hp = player.maxHp;
         player.mp = player.maxMp;
