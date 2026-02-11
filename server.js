@@ -973,37 +973,8 @@ function isMapWall(mapId, x, y) {
 
 function updatePlayerStats(player) {
     // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
-    player.totalAtk = player.baseAtk + (player.level * 2);
+    player.totalAtk = player.baseAtk + (player.level * 1);
     player.totalDef = player.baseDef + (player.level * 1);
-
-    // 2. 装備スロットを全部見て回る
-    for (const slot in player.equipment) {
-        const item = player.equipment[slot];
-        
-        // 装備していれば加算
-        if (item) {
-            // ITEMSデータから性能を参照（itemにはIDが入っている想定）
-            // ※ items.js を require している前提です
-            const itemData = ITEMS[item.id]; 
-            
-            if (itemData) {
-                if (item.stats.atk) player.totalAtk += item.stats.atk;
-                if (item.stats.def) player.totalDef += item.stats.def;
-            }
-        }
-    }
-    
-    // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
-    io.to(player.id).emit('updateStats', { 
-        atk: player.totalAtk, 
-        def: player.totalDef 
-    });
-}
-
-function updatePlayerStats(player) {
-    // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
-    player.totalAtk = player.baseAtk; // + (player.level * 2) など
-    player.totalDef = player.baseDef; // + (player.level * 1) など
 
     // 2. 装備スロットを全部見て回る
     for (const slot in player.equipment) {
