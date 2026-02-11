@@ -1107,7 +1107,8 @@ function addOtherPlayers(self, playerInfo) {
 
     // ★重要：スプライト自体に「あなたの名札はこれですよ」と覚えさせる
     otherPlayer.nameLabel = nameText;
-
+    otherPlayer.playerId = playerInfo.playerId;
+    otherPlayer.username = playerInfo.username || 'Unknown Player';
     otherPlayer.hpText = self.add.text(playerInfo.x, playerInfo.y - 50, `HP: ${playerInfo.hp}`, { 
         fontSize: '14px', 
         fill: '#00ff00',
