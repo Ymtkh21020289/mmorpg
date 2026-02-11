@@ -2339,6 +2339,7 @@ function openPlayerSelection(scene) {
     const closeBtn = scene.add.text(0, 180, 'キャンセル', { fill: '#aaa' })
         .setOrigin(0.5)
         .setInteractive()
+        .setScrollFactor(0)
         .on('pointerdown', () => container.destroy());
     container.add(closeBtn);
 
@@ -2357,6 +2358,7 @@ function openPlayerSelection(scene) {
 
         const pBtn = scene.add.text(0, y, `👤 ${name}`, { fontSize: '18px', fill: '#ffff00' })
             .setOrigin(0.5)
+            .setScrollFactor(0)
             .setInteractive({ useHandCursor: true });
 
         pBtn.on('pointerdown', () => {
@@ -2383,7 +2385,7 @@ function openTransferInventory(scene, targetId, targetName) {
     container.add(scene.add.text(0, -230, `${targetName} に送るアイテム`, { fontSize: '18px' }).setOrigin(0.5));
 
     // インベントリ一覧表示（簡易スクロールなし版）
-    const inventory = scene.myPlayer.inventory || [];
+    const inventory = scene.myInventory || [];
     let y = -180;
 
     inventory.forEach((item, index) => {
@@ -2404,11 +2406,11 @@ function openTransferInventory(scene, targetId, targetName) {
 
             // 素材(material)なら個数を聞く
             if (baseData.type === 'material') {
-                const input = prompt(`「${baseData.name}」をいくつ送りますか？ (所持: ${item.qty})`, "1");
+                const input = prompt(`「${baseData.name}」をいくつ送りますか？ (所持: ${item.count})`, "1");
                 if (input === null) return; // キャンセル
                 amount = parseInt(input);
                 
-                if (isNaN(amount) || amount <= 0 || amount > item.qty) {
+                if (isNaN(amount) || amount <= 0 || amount > item.count) {
                     alert("無効な数値です");
                     return;
                 }
