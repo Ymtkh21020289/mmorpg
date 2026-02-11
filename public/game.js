@@ -1923,6 +1923,10 @@ function createMenuUI(scene) {
 
     // --- ボタン配置 ---
     // [ステータス]
+    const btnStatus = createMenuButton(-120, 'アイテム受け渡し', () => {
+        openPlayerSelection(scene);
+    });
+    
     const btnStatus = createMenuButton(-50, 'ステータス', () => {
         scene.menuMain.setVisible(false);   // メインを隠す
         scene.menuStatus.setVisible(true);  // ステータスを出す
@@ -2309,4 +2313,126 @@ function updateAppraiserList(scene) {
     // リスト更新時は一番上に戻す
     const HEADER_H = 60;
     scene.appraiserList.y = 100 + HEADER_H;
+}
+
+function openPlayerSelection(scene) {
+    // 既存のUIが開いていれば閉じる等の処理推奨
+    if (scene.transferContainer) scene.transferContainer.destroy();
+
+    // コンテナ作成
+    const container = scene.add.container(400, 300).setScrollFactor(0).setDepth(300);
+    scene.transferContainer = container;
+
+    // 背景
+    const bg = scene.add.rectangle(0, 0, 300, 400, 0x000000, 0.9).setStrokeStyle(2, 0xffffff);
+    container.add(bg);
+
+    // タイトル
+    const title = scene.add.text(0, -180, '誰に送りますか？', { fontSize: '20px' }).setOrigin(0.5);
+    container.add(title);
+    
+    // 閉じるボタン
+    const closeBtn = scene.add.text(0, 180, 'キャンセル', { fill: '#aaa' })
+        .setOrigin(0.5)
+        .setInteractive()
+        .on('pointerdown', () => container.destroy());
+    container.add(closeBtn);
+
+    // プレイヤーリストの取得（scene.otherPlayers はPhaserのGroupまたはMap）
+    // ※自分以外のプレイヤーを抽出
+    let y = -140;
+    
+    // scene.otherPlayers はオブジェクトマップ { socketId: sprite, ... } の想定
+    Object.keys(scene.otherPlayers).forEach(id => {
+        const otherPlayerSprite = scene.otherPlayers[id];
+        // 名前情報の取得方法は実装によりますが、sprite.username や nameText などから取得
+        // ここでは仮に sprite.username とします
+        const name = otherPlayerSprite.username || 'Unknown';
+
+        const pBtn = scene.add.text(0, y, `👤 ${name}`, { fontSize: '18px', fill: '#ffff00' })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        pBtn.on('pointerdown', () => {
+            // プレイヤーを選んだら、次はアイテム選択へ
+            openTransferInventory(scene, id, name);
+        });
+
+        container.add(pBtn);
+        y += 40;
+    });
+
+    if (Object.keys(scene.otherPlayers).length === 0) {
+        container.add(scene.add.text(0, 0, '近くに誰もいません', { color: '#888' }).setOrigin(0.5));
+    }
+}
+
+function openTransferInventory(scene, targetId, targetName) {
+    // さっきのプレイヤー選択画面を消す（または再利用してもOK）
+    if (scene.transferContainer) scene.transferContainer.destroy();
+
+    // 新しくインベントリ選択用コンテナ作成
+    const container = scene.add.container(400, 300).setScrollFactor(0).setDepth(300);
+    scene.transferContainer = container;
+
+    const bg = scene.add.rectangle(0, 0, 400, 500, 0x000000, 0.95).setStrokeStyle(2, 0x008800);
+    container.add(bg);
+
+    container.add(scene.add.text(0, -230, `${targetName} に送るアイテム`, { fontSize: '18px' }).setOrigin(0.5));
+
+    // インベントリ一覧表示（簡易スクロールなし版）
+    const inventory = scene.myPlayer.inventory || [];
+    let y = -180;
+
+    inventory.forEach((item, index) => {
+        if (!item) return;
+        const baseData = ITEMS[item.id];
+        
+        // 表示テキスト
+        let txt = baseData.name;
+        if (item.qty) txt += ` x${item.qty}`; // 素材なら個数表示
+        
+        const itemBtn = scene.add.text(0, y, txt, { fontSize: '16px', fill: '#ffffff' })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+        itemBtn.on('pointerdown', () => {
+            // アイテムクリック時の処理
+            let amount = 1;
+
+            // 素材(material)なら個数を聞く
+            if (baseData.type === 'material') {
+                const input = prompt(`「${baseData.name}」をいくつ送りますか？ (所持: ${item.qty})`, "1");
+                if (input === null) return; // キャンセル
+                amount = parseInt(input);
+                
+                if (isNaN(amount) || amount <= 0 || amount > item.qty) {
+                    alert("無効な数値です");
+                    return;
+                }
+            } else {
+                // 装備品の場合は確認ダイアログだけ出す
+                if (!confirm(`「${baseData.name}」を本当に送りますか？`)) return;
+            }
+
+            // サーバーへ送信
+            scene.socket.emit('transferItem', {
+                targetId: targetId,
+                itemIndex: index,
+                amount: amount
+            });
+
+            // UIを閉じる
+            container.destroy();
+        });
+
+        container.add(itemBtn);
+        y += 35;
+    });
+    
+    // 閉じるボタン
+    container.add(scene.add.text(0, 230, 'キャンセル', { fill: '#aaa' })
+        .setOrigin(0.5)
+        .setInteractive()
+        .on('pointerdown', () => container.destroy()));
 }
