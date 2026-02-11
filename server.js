@@ -397,7 +397,15 @@ io.on('connection', (socket) => {
 
         // インベントリに空きがあるか確認（簡易的に制限なしならpushでOK）
         // 実際はMAX個数チェックなどを入れる
-        addItemToInventory(player, item.id, 1);
+        const emptyIndex = player.inventory.findIndex(slot => slot === null);
+        
+        if (emptyIndex !== -1) {
+            player.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: 1};
+            savePlayer(player);
+        } else {
+            // インベントリがいっぱいの時の処理（今回は省略、本来は地面に落とすなど）
+            console.log("Inventory full!");
+        }
 
         // 装備スロットを空にする
         player.equipment[slotName] = null;
