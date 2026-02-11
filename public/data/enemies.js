@@ -15,13 +15,13 @@ const ENEMY_TYPES = {
     },
     // 新しい敵：スライム（弱い、群れる、青い）
     slime:   { 
-        hp: 30,  
-        maxHp: 30,  
-        exp: 10, 
+        hp: 45,  
+        maxHp: 45,  
+        exp: 2, 
         speed: 1, 
         attackRange: 60,
         attackRadius: 80,
-        attackAngle: Math.PI / 6, // 狭いけど長い（45度）
+        attackAngle: Math.PI / 3, // 狭いけど長い（45度）
         damage: 5,
         chargeTime: 1000,
         cooldown: 2000,
@@ -29,13 +29,13 @@ const ENEMY_TYPES = {
     },
     // 新しい敵：ウルフ（強い、速い、赤い）
     wolf:    { 
-        hp: 60,  
-        maxHp: 60,  
-        exp: 30, 
+        hp: 75,  
+        maxHp: 75,  
+        exp: 10, 
         speed: 3, 
         attackRange: 80,
         attackRadius: 100,
-        attackAngle: Math.PI / 4, // 狭いけど長い（45度）
+        attackAngle: Math.PI / 2, // 狭いけど長い（45度）
         damage: 20,
         chargeTime: 1000,
         cooldown: 2000,
