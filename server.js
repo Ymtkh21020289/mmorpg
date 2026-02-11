@@ -617,6 +617,76 @@ io.on('connection', (socket) => {
             savePlayer(player);
         }
     });
+    socket.on('transferItem', async (data) => {
+        // data = { targetId: '相手のSocketID', itemIndex: 0, amount: 1 }
+        const sender = players[socket.id];
+        const receiver = players[data.targetId];
+
+        // 1. 基本的な検証
+        if (!sender || !receiver) return;
+        if (sender.id === receiver.id) return; // 自分には送れない
+    
+        const item = sender.inventory[data.itemIndex];
+        if (!item) return;
+
+        const baseData = ITEMS[item.id]; // 定数データ参照
+    
+        // 2. アイテムタイプの判定（素材か装備か）
+        const isMaterial = (baseData.type === 'material'); // ※ITEMS定義に type:'material' がある前提
+
+        if (isMaterial) {
+            // --- A. 素材（スタック可能アイテム）の場合 ---
+            let amount = parseInt(data.amount) || 1;
+        
+            // 所持数チェック
+            if (!item.count || item.count < amount) {
+                socket.emit('systemMessage', '数が足りません。');
+                return;
+            }
+
+            // 送信者から減らす
+            item.count -= amount;
+            if (item.count <= 0) {
+                sender.inventory[itemIndex] = null; // 0になったら消す
+            }
+
+            // 受信者に追加する（既存スタックがあれば合算）
+            const existingItem = receiver.inventory.find(i => i.id === item.id);
+            if (existingItem) {
+                existingItem.count = (existingItem.count || 1) + amount;
+            } else {
+                const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
+        
+                if (emptyIndex !== -1) {
+                    receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: amount, isUnidentified: item.isUnidentified };
+                }
+            }
+            socket.emit('systemMessage', `${receiver.username} に ${baseData.name} を ${amount}個 送りました。`);
+            io.to(receiver.id).emit('systemMessage', `${sender.username} から ${baseData.name} を ${amount}個 受け取りました！`);
+
+        } else {
+            // --- B. 装備品（スタック不可）の場合 ---
+            const transferredItem = sender.inventory[slotIndex];
+            sender.inventory[itemIndex] = null;
+            // 受信者のインベントリへそのままpush（ランクや性能も維持される）
+            const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
+        
+            if (emptyIndex !== -1) {
+                receiver.inventory[emptyIndex] = { id: transferredItem.id, rank: transferredItem.rank, stats: transferredItem.stats, count: amount, isUnidentified: transferredItem.isUnidentified };
+            }
+
+            socket.emit('systemMessage', `${receiver.username} に ${baseData.name} を送りました。`);
+            io.to(receiver.id).emit('systemMessage', `${sender.username} から ${baseData.name} を受け取りました！`);
+        }
+
+        // 3. 両者のデータを保存
+        await savePlayer(sender);
+        await savePlayer(receiver);
+
+        // 4. クライアントの表示を更新
+        io.to(sender.id).emit('inventoryUpdate', { inventory: sender.inventory, gold: sender.gold });
+        io.to(receiver.id).emit('inventoryUpdate', { inventory: receiver.inventory, gold: receiver.gold });
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
