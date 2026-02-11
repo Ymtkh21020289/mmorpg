@@ -987,8 +987,8 @@ function updatePlayerStats(player) {
             const itemData = ITEMS[item.id]; 
             
             if (itemData) {
-                if (itemData.stats.atk) player.totalAtk += itemData.stats.atk;
-                if (itemData.stats.def) player.totalDef += itemData.stats.def;
+                if (item.stats.atk) player.totalAtk += item.stats.atk;
+                if (item.stats.def) player.totalDef += item.stats.def;
             }
         }
     }
