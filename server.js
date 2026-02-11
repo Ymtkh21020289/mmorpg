@@ -973,8 +973,8 @@ function isMapWall(mapId, x, y) {
 
 function updatePlayerStats(player) {
     // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
-    player.totalAtk = player.baseAtk + (player.level * 1);
-    player.totalDef = player.baseDef + (player.level * 1);
+    player.totalAtk = player.baseAtk;
+    player.totalDef = player.baseDef;
 
     // 2. 装備スロットを全部見て回る
     for (const slot in player.equipment) {
