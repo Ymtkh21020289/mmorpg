@@ -471,6 +471,7 @@ function create() {
         }else if (this.isAppraiserOpen) {
             this.isAppraiserOpen = false;
             this.appraiserContainer.setVisible(false);
+            this.appraiserList.setVisible(false);
         }
     });
 
@@ -1000,6 +1001,7 @@ function update() {
                     }else if (enemy.getData('type') === 'identify' && !this.isAppraiserOpen) {
                         this.isAppraiserOpen = true;
                         this.appraiserContainer.setVisible(true);
+                        this.appraiserList.setVisible(true);
                         updateAppraiserList(this);
                     }
                 }
