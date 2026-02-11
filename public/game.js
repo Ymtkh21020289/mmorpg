@@ -1923,7 +1923,7 @@ function createMenuUI(scene) {
 
     // --- ボタン配置 ---
     // [ステータス]
-    const btnStatus = createMenuButton(-120, 'アイテム受け渡し', () => {
+    const btnAssignment = createMenuButton(-120, 'アイテム受け渡し', () => {
         openPlayerSelection(scene);
     });
     
@@ -1947,7 +1947,7 @@ function createMenuUI(scene) {
     // 将来ここに「スキル」「クエスト」などを追加できます
     // createMenuButton(0, 'スキル', ...); 
 
-    scene.menuMain.add([...btnStatus, ...btnUnstuck, ...btnClose]);
+    scene.menuMain.add([...btnAssignment, ...btnStatus, ...btnUnstuck, ...btnClose]);
 
 
     // --- 3. ステータス画面のコンテナ ---
