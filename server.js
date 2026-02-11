@@ -96,7 +96,7 @@ const spawners = [
     // カカシ（単体）
     { type: 'kakashi', x: 600, y: 400, count: 1, radius: 0, room: 'town' },
     // スライムの群れ（Townの左上、5匹、半径100pxに散らばる）
-    { type: 'slime',   x: 160, y: 200, count: 5, radius: 100, room: 'adventure', spriteKey: 'slimeSprite' },
+    { type: 'slime',   x: 140, y: 200, count: 5, radius: 75, room: 'adventure', spriteKey: 'slimeSprite' },
     // ウルフの群れ（Adventureマップ、3匹）
     { type: 'wolf',    x: 496, y: 176, count: 3, radius: 100, room: 'adventure', spriteKey: 'wolfSprite'},
 ];
