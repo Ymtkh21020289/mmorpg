@@ -1925,6 +1925,7 @@ function createMenuUI(scene) {
     // --- ボタン配置 ---
     // [ステータス]
     const btnAssignment = createMenuButton(-120, 'アイテム受け渡し', () => {
+        scene.menuMain.setVisible(false); 
         openPlayerSelection(scene);
     });
     
