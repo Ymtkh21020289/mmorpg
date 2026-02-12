@@ -99,9 +99,9 @@ const spawners = [
     { type: 'slime',   x: 140, y: 200, count: 5, radius: 75, room: 'adventure', spriteKey: 'slimeSprite' },
     // ウルフの群れ（Adventureマップ、3匹）
     { type: 'wolf',    x: 496, y: 176, count: 3, radius: 100, room: 'adventure', spriteKey: 'wolfSprite'},
-    { type: 'wolf',    x: 538, y: 538, count: 5, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
-    { type: 'wolf',    x: 538, y: 272, count: 5, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
-    { type: 'slime',    x: 1024, y: 256, count: 7, radius: 96, room: '1021', spriteKey: 'wolfSprite'},
+    { type: 'wolf',    x: 538, y: 538, count: 2, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
+    { type: 'wolf',    x: 538, y: 272, count: 2, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
+    { type: 'slime',    x: 1024, y: 256, count: 4, radius: 96, room: '1021', spriteKey: 'wolfSprite'},
 ];
 
 const mitigation = 300;
