@@ -1,8 +1,8 @@
 const ENEMY_TYPES = {
     // 既存のカカシ（とりあえずボス扱い）
     kakashi: { 
-        hp: 100,  
-        maxHp: 100, 
+        hp: 10000,  
+        maxHp: 10000, 
         exp: 0,
         speed: 0, 
         attackRange: 0,      // 攻撃を開始する距離
