@@ -2146,9 +2146,6 @@ function showTooltip(item, x, y) {
 
         // 6. 価格表示
         let price = baseData.price || 0;
-        if (rankData) {
-            price = Math.floor(price * (rankData.mult || 1));
-        }
         const sellPrice = Math.floor(price / 2);
     
         if (sellPrice > 0) {
@@ -2439,7 +2436,7 @@ function openTransferInventory(scene, targetId, targetName) {
 
         const text = scene.add.text(UI_W/2, currentY, txt, { 
             fontSize: '16px', fill: textColor 
-        }).setScrollFactor(0).setOrigin(0.5);
+        }).setScrollFactor(0).setScrollFactor(0).setOrigin(0.5);
 
         // --- イベント設定 ---
 
