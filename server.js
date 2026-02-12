@@ -672,7 +672,7 @@ io.on('connection', (socket) => {
             const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
         
             if (emptyIndex !== -1) {
-                receiver.inventory[emptyIndex] = { id: transferredItem.id, rank: transferredItem.rank, stats: transferredItem.stats, count: amount, isUnidentified: transferredItem.isUnidentified };
+                receiver.inventory[emptyIndex] = { id: transferredItem.id, rank: transferredItem.rank, stats: transferredItem.stats, count: 1, isUnidentified: transferredItem.isUnidentified };
             }
 
             socket.emit('systemMessage', `${receiver.username} に ${baseData.name} を送りました。`);
