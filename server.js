@@ -136,6 +136,7 @@ function spawnGroup(spawner) {
         };
     }
     // 全員に通知
+    console.error(`${enemies} を作成しました。`);
     io.emit('currentEnemies', enemies);
 }
 
