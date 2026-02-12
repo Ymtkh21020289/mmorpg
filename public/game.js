@@ -2402,7 +2402,7 @@ function openTransferInventory(scene, targetId, targetName) {
     // タイトル
     const title = scene.add.text(UI_X + UI_W/2, UI_Y + 30, `${targetName} に送るアイテム`, { 
         fontSize: '20px', fill: '#88ff88', fontStyle: 'bold' 
-    }).setOrigin(0.5);
+    }).setScrollFactor(0).setOrigin(0.5);
     mainContainer.add(title);
     
     // 2. リスト用コンテナ（ここがスクロールする）
@@ -2422,7 +2422,7 @@ function openTransferInventory(scene, targetId, targetName) {
         // アイテムボタン背景（クリック領域）
         // 親コンテナ(LIST_X)からの相対位置なので、X中心は UI_W/2
         const btn = scene.add.rectangle(UI_W/2, currentY, 350, 40, 0x222222)
-            .setInteractive({ useHandCursor: true });
+            .setInteractive({ useHandCursor: true }).setScrollFactor(0);
 
         // テキスト表示
         let txt = baseData.name;
@@ -2436,7 +2436,7 @@ function openTransferInventory(scene, targetId, targetName) {
 
         const text = scene.add.text(UI_W/2, currentY, txt, { 
             fontSize: '16px', fill: textColor 
-        }).setScrollFactor(0).setScrollFactor(0).setOrigin(0.5);
+        }).setScrollFactor(0).setOrigin(0.5);
 
         // --- イベント設定 ---
 
@@ -2497,6 +2497,7 @@ function openTransferInventory(scene, targetId, targetName) {
 
     // 4. マスク（切り抜き）設定
     const shape = scene.make.graphics();
+    shape..setScrollFactor(0);
     shape.fillStyle(0xffffff);
     shape.fillRect(LIST_X, LIST_START_Y, UI_W, LIST_H);
     const mask = shape.createGeometryMask();
