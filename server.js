@@ -108,9 +108,10 @@ const mitigation = 300;
 
 // --- 関数：群れをスポーンさせる ---
 function spawnGroup(spawner) {
+    const spawnerIndex = spawners.indexOf(spawner);
     for (let i = 0; i < spawner.count; i++) {
         // ユニークなIDを生成 (例: slime_17123456789_0)
-        const id = `${spawner.type}_${Date.now()}_${i}`;
+        const id = `${spawner.type}_${spawnerIndex}_${Date.now()}_${i}`;
         const template = ENEMY_TYPES[spawner.type];
 
         // 指定座標の周りにランダムに散らす
