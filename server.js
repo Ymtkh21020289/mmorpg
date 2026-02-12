@@ -666,7 +666,7 @@ io.on('connection', (socket) => {
 
         } else {
             // --- B. 装備品（スタック不可）の場合 ---
-            const transferredItem = sender.inventory[slotIndex];
+            const transferredItem = sender.inventory[data.itemIndex];
             sender.inventory[itemIndex] = null;
             // 受信者のインベントリへそのままpush（ランクや性能も維持される）
             const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
