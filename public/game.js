@@ -2372,42 +2372,89 @@ function openPlayerSelection(scene) {
 }
 
 function openTransferInventory(scene, targetId, targetName) {
-    // さっきのプレイヤー選択画面を消す（または再利用してもOK）
-    if (scene.transferContainer) scene.transferContainer.destroy();
+    // 既存のコンテナがあれば削除（二重表示防止）
+    if (scene.transferContainer) {
+        scene.transferContainer.destroy();
+    }
+    
+    // スクロールイベントが重複しないように、古いイベントリスナーを削除するフラグ管理
+    // （簡易的に、閉じるボタンを押した時にイベントをオフにする実装にします）
 
-    // 新しくインベントリ選択用コンテナ作成
-    const container = scene.add.container(400, 300).setScrollFactor(0).setDepth(300);
-    scene.transferContainer = container;
+    // --- 設定値 ---
+    const UI_X = 200;
+    const UI_Y = 100;
+    const UI_W = 400;
+    const UI_H = 500;
+    const HEADER_H = 60; 
+    
+    // リストが表示されるエリアの定義
+    const LIST_X = UI_X;
+    const LIST_START_Y = UI_Y + HEADER_H;
+    const LIST_H = UI_H - HEADER_H - 40; 
 
-    const bg = scene.add.rectangle(0, 0, 400, 500, 0x000000, 0.95).setStrokeStyle(2, 0x008800);
-    container.add(bg);
+    // 1. 全体コンテナ（背景・枠・タイトル）
+    const mainContainer = scene.add.container(0, 0).setScrollFactor(0).setDepth(300);
+    scene.transferContainer = mainContainer; // シーンプロパティに保存
 
-    container.add(scene.add.text(0, -230, `${targetName} に送るアイテム`, { fontSize: '18px' }).setOrigin(0.5));
+    // 背景
+    const bg = scene.add.rectangle(UI_X + UI_W/2, UI_Y + UI_H/2, UI_W, UI_H, 0x000000, 0.95);
+    bg.setStrokeStyle(2, 0x008800);
+    bg.setInteractive(); // 下のレイヤーへのクリック防止
+    mainContainer.add(bg);
 
-    // インベントリ一覧表示（簡易スクロールなし版）
+    // タイトル
+    const title = scene.add.text(UI_X + UI_W/2, UI_Y + 30, `${targetName} に送るアイテム`, { 
+        fontSize: '20px', fill: '#88ff88', fontStyle: 'bold' 
+    }).setOrigin(0.5);
+    mainContainer.add(title);
+    
+    // 2. リスト用コンテナ（ここがスクロールする）
+    const listContainer = scene.add.container(LIST_X, LIST_START_Y).setScrollFactor(0);
+    mainContainer.add(listContainer);
+
+    // 3. インベントリの中身を作成
     const inventory = scene.myInventory || [];
-    let y = -180;
+    let currentY = 10; // コンテナ内でのY座標
+    const itemHeight = 45;
 
     inventory.forEach((item, index) => {
-        if (!item) return;
+        if (!item) return; // 空きスロットはスキップ
+
         const baseData = ITEMS[item.id];
         
-        // 表示テキスト
-        let txt = baseData.name;
-        if (item.qty) txt += ` x${item.qty}`; // 素材なら個数表示
-        
-        const itemBtn = scene.add.text(0, y, txt, { fontSize: '16px', fill: '#ffffff' })
-            .setOrigin(0.5)
+        // アイテムボタン背景（クリック領域）
+        // 親コンテナ(LIST_X)からの相対位置なので、X中心は UI_W/2
+        const btn = scene.add.rectangle(UI_W/2, currentY, 350, 40, 0x222222)
             .setInteractive({ useHandCursor: true });
 
-        itemBtn.on('pointerdown', () => {
-            // アイテムクリック時の処理
+        // テキスト表示
+        let txt = baseData.name;
+        if (item.count) txt += ` x${item.count}`; // 素材なら個数
+        
+        // ランクによる色分け（あれば）
+        let textColor = '#ffffff';
+        if (item.rank && RANKS[item.rank]) {
+            textColor = RANKS[item.rank].color || '#ffffff';
+        }
+
+        const text = scene.add.text(UI_W/2, currentY, txt, { 
+            fontSize: '16px', fill: textColor 
+        }).setScrollFactor(0).setOrigin(0.5);
+
+        // --- イベント設定 ---
+
+        // A. クリックで譲渡処理
+        btn.on('pointerdown', () => {
             let amount = 1;
 
-            // 素材(material)なら個数を聞く
+            // 素材なら個数指定
             if (baseData.type === 'material') {
+                // 一旦ツールチップを消す
+                const tooltip = document.getElementById('game-tooltip');
+                if(tooltip) tooltip.style.display = 'none';
+
                 const input = prompt(`「${baseData.name}」をいくつ送りますか？ (所持: ${item.count})`, "1");
-                if (input === null) return; // キャンセル
+                if (input === null) return; 
                 amount = parseInt(input);
                 
                 if (isNaN(amount) || amount <= 0 || amount > item.count) {
@@ -2415,28 +2462,90 @@ function openTransferInventory(scene, targetId, targetName) {
                     return;
                 }
             } else {
-                // 装備品の場合は確認ダイアログだけ出す
                 if (!confirm(`「${baseData.name}」を本当に送りますか？`)) return;
             }
 
-            // サーバーへ送信
+            // 送信
             scene.socket.emit('transferItem', {
                 targetId: targetId,
                 itemIndex: index,
                 amount: amount
             });
 
-            // UIを閉じる
-            container.destroy();
+            // 送信したら閉じる
+            cleanup();
         });
 
-        container.add(itemBtn);
-        y += 35;
+        // B. ホバーでツールチップ表示
+        btn.on('pointerover', () => {
+            const pointer = scene.input.activePointer;
+            showTooltip(item, pointer.x, pointer.y);
+            btn.setFillStyle(0x444444); // ハイライト
+        });
+
+        // C. ホバー解除で非表示
+        btn.on('pointerout', () => {
+            const tooltip = document.getElementById('game-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
+            btn.setFillStyle(0x222222); // 元の色
+        });
+        
+        // コンテナに追加
+        listContainer.add([btn, text]);
+        currentY += itemHeight;
     });
-    
-    // 閉じるボタン
-    container.add(scene.add.text(0, 230, 'キャンセル', { fill: '#aaa' })
+
+    // コンテンツの高さを保存
+    listContainer.contentHeight = currentY;
+
+    // 4. マスク（切り抜き）設定
+    const shape = scene.make.graphics();
+    shape.fillStyle(0xffffff);
+    shape.fillRect(LIST_X, LIST_START_Y, UI_W, LIST_H);
+    const mask = shape.createGeometryMask();
+    listContainer.setMask(mask);
+
+    // 5. スクロール処理関数
+    const onScroll = (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        // マウスがUI内にあるか簡易チェック
+        if (pointer.x >= UI_X && pointer.x <= UI_X + UI_W &&
+            pointer.y >= UI_Y && pointer.y <= UI_Y + UI_H) {
+            
+            const contentH = listContainer.contentHeight || 0;
+            if (contentH <= LIST_H) return; // スクロール不要なら何もしない
+
+            listContainer.y -= deltaY * 0.5;
+
+            // 範囲制限
+            const minY = LIST_START_Y - (contentH - LIST_H + 20);
+            const maxY = LIST_START_Y;
+            listContainer.y = Phaser.Math.Clamp(listContainer.y, minY, maxY);
+        }
+    };
+
+    // イベント登録
+    scene.input.on('wheel', onScroll);
+
+    // 6. 閉じるボタンとクリーンアップ関数
+    const cleanup = () => {
+        // コンテナ削除
+        if (scene.transferContainer) {
+            scene.transferContainer.destroy();
+            scene.transferContainer = null;
+        }
+        // スクロールイベント削除（重要）
+        scene.input.off('wheel', onScroll);
+        
+        // ツールチップも消す
+        const tooltip = document.getElementById('game-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+    };
+
+    const closeBtn = scene.add.text(UI_X + UI_W/2, UI_Y + UI_H - 25, 'キャンセル', { fill: '#aaa' })
         .setOrigin(0.5)
-        .setInteractive()
-        .on('pointerdown', () => container.destroy()));
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true });
+        
+    closeBtn.on('pointerdown', cleanup);
+    mainContainer.add(closeBtn);
 }
