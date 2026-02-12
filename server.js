@@ -1056,6 +1056,8 @@ function isMapWall(mapId, x, y) {
 
 function updatePlayerStats(player) {
     // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
+    player.baseAtk = (player.level * 2) + 10;
+    player.baseDef = player.level + 5
     player.totalAtk = player.baseAtk;
     player.totalDef = player.baseDef;
 
