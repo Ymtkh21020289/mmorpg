@@ -2497,7 +2497,7 @@ function openTransferInventory(scene, targetId, targetName) {
 
     // 4. マスク（切り抜き）設定
     const shape = scene.make.graphics();
-    shape..setScrollFactor(0);
+    shape.setScrollFactor(0);
     shape.fillStyle(0xffffff);
     shape.fillRect(LIST_X, LIST_START_Y, UI_W, LIST_H);
     const mask = shape.createGeometryMask();
