@@ -420,6 +420,7 @@ function create() {
     createMerchantUI(this); // 武器商人のUI作成
     createCraftingUI(this); // 鍛冶屋のUI作成
     createAppraiserUI(this);
+    createGoldTransferButton(this);
 
     // 背景（黒い四角）
     //const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
@@ -1928,7 +1929,9 @@ function createMenuUI(scene) {
         scene.menuMain.setVisible(false); 
         scene.menuContainer.setVisible(false);
         scene.isMenuOpen = false;
-        openPlayerSelection(scene);
+        openPlayerSelection(scene, 'アイテムを送る相手を選択', (targetId, targetName) => {
+            openTransferInventory(scene, targetId, targetName);
+        });
     });
     
     const btnStatus = createMenuButton(-50, 'ステータス', () => {
@@ -2316,42 +2319,40 @@ function updateAppraiserList(scene) {
     scene.appraiserList.y = 100 + HEADER_H;
 }
 
-function openPlayerSelection(scene) {
-    // 既存のUIがあれば閉じる
+function openPlayerSelection(scene, title, onSelectCallback) {
     if (scene.transferContainer) scene.transferContainer.destroy();
 
-    // コンテナ作成
     const container = scene.add.container(400, 300).setScrollFactor(0).setDepth(300);
     scene.transferContainer = container;
 
     // 背景
     const bg = scene.add.rectangle(0, 0, 300, 400, 0x000000, 0.9).setStrokeStyle(2, 0xffffff);
+    bg.setInteractive(); // 裏クリック防止
     container.add(bg);
 
-    // タイトル
-    const title = scene.add.text(0, -180, '誰に送りますか？', { fontSize: '20px' }).setOrigin(0.5);
-    container.add(title);
+    // タイトル (引数で変えられるように変更)
+    const titleText = scene.add.text(0, -180, title, { fontSize: '20px' }).setOrigin(0.5);
+    container.add(titleText);
     
     // 閉じるボタン
     const closeBtn = scene.add.text(0, 180, 'キャンセル', { fill: '#aaa' })
         .setOrigin(0.5)
-        .setInteractive()
         .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => container.destroy());
     container.add(closeBtn);
 
-    // --- ★ここを修正: グループ内の全スプライトを取得 ---
+    // プレイヤーリスト表示
     let y = -140;
-    const others = scene.otherPlayers.getChildren(); // グループから配列として取得
+    const others = scene.otherPlayers.getChildren();
 
     if (others.length === 0) {
         container.add(scene.add.text(0, 0, '近くに誰もいません', { color: '#888' }).setOrigin(0.5));
     }
 
     others.forEach((sprite) => {
-        // 手順1で保存した username を取り出す
         const name = sprite.username || '名無し'; 
-        const id = sprite.playerId; // socket.id
+        const id = sprite.playerId;
 
         const pBtn = scene.add.text(0, y, `👤 ${name}`, { fontSize: '18px', fill: '#ffff00' })
             .setOrigin(0.5)
@@ -2359,8 +2360,11 @@ function openPlayerSelection(scene) {
             .setInteractive({ useHandCursor: true });
 
         pBtn.on('pointerdown', () => {
-            // アイテム選択画面へ進む
-            openTransferInventory(scene, id, name);
+            // ★重要: ここで渡されたコールバック関数を実行する
+            if (onSelectCallback) {
+                onSelectCallback(id, name);
+            }
+            container.destroy(); // 選択したらこの画面は閉じる
         });
 
         container.add(pBtn);
@@ -2546,4 +2550,45 @@ function openTransferInventory(scene, targetId, targetName) {
         
     closeBtn.on('pointerdown', cleanup);
     mainContainer.add(closeBtn);
+}
+
+function createGoldTransferButton(scene) {
+    // アイテム譲渡ボタンの下あたりに配置
+    const btn = scene.add.text(700, 600, '💰 送金する', {
+        fontSize: '18px',
+        fill: '#ffffff',
+        backgroundColor: '#D4AF37', // 金色っぽい背景
+        padding: { x: 10, y: 5 }
+    })
+    .setScrollFactor(0)
+    .setInteractive({ useHandCursor: true });
+
+    btn.on('pointerdown', () => {
+        // プレイヤー選択画面を開く
+        openPlayerSelection(scene, '誰に送金しますか？', (targetId, targetName) => {
+            // --- コールバック: プレイヤーが選ばれた後の処理 ---
+            
+            // 金額入力ダイアログ (ブラウザ標準)
+            const input = prompt(`${targetName} さんにいくら送りますか？\n(所持金: ${scene.myPlayer.gold} G)`, "0");
+            
+            if (input === null) return; // キャンセル
+
+            const amount = parseInt(input);
+            if (isNaN(amount) || amount <= 0) {
+                alert("金額が不正です。");
+                return;
+            }
+
+            if (amount > scene.myPlayer.gold) {
+                alert("所持金が足りません！");
+                return;
+            }
+
+            // サーバーへ送信
+            scene.socket.emit('transferGold', {
+                targetId: targetId,
+                amount: amount
+            });
+        });
+    });
 }
