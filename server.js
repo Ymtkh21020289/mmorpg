@@ -84,8 +84,8 @@ let projectiles = {}; // 発射された魔法弾リスト
 let projectileIdCounter = 0; // ID採番用
 
 const DROP_TABLE = {
-    'slime': { money: 4, items: [{ id: 'slime_gel', rate: 0.5 }, { id: 'dagger', rate: 0.02 }, { id: 'magic_stone', rate: 0.1 }, { id: 'slime_heart', rate: 0.01}] },
-    'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.6 }, { id: 'sword', rate: 0.02 }, { id: 'magic_stone', rate: 0.1 }, { id: 'wolf_heart', rate: 0.01}] },
+    'slime': { money: 4, items: [{ id: 'slime_gel', rate: 0.2 }, { id: 'dagger', rate: 0.02 }, { id: 'magic_stone', rate: 0.05 }, { id: 'slime_heart', rate: 0.01}] },
+    'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.1 }, { id: 'sword', rate: 0.02 }, { id: 'magic_stone', rate: 0.05 }, { id: 'wolf_heart', rate: 0.01}] },
 };
 
 // 現在の敵リスト（初期状態は空にして、関数で生み出す）
@@ -903,7 +903,7 @@ function handleEnemyDeath(enemy, player) {
     if (player.exp >= player.maxExp) {
         player.level++;
         player.exp = 0;
-        player.maxExp = Math.floor( 2 * (player.level ** 2) + (player.level * 40) + 200);
+        player.maxExp = Math.floor( 2 * ((player.level ** 2) + (player.level * 40) + 200));
         player.baseAtk += 2;
         player.hp = player.maxHp;
         player.mp = player.maxMp;
