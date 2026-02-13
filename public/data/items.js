@@ -25,6 +25,7 @@ const ITEMS = {
     'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2, desc: 'プルプルした謎の物体。\nクラフト素材として使える。' },
     'slime_heart': { name: 'スライムの心', type: 'material', price: 100, desc: '極稀にスライムが落とすアイテム。\nクラフト素材として使える。' },
     'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 5, desc: 'なんかゴワゴワしてる…\nクラフト素材として使える。' },
+    'wolf_crow':  { name: 'オオカミの鉤爪', type: 'material', price: 10, desc: 'あぁ、無情。' },
     'wolf_heart':  { name: 'オオカミの心', type: 'material', price: 200, desc: '極稀にオオカミが落とすアイテム。\nクラフト素材として使える。' },
     'magic_stone': { name: '魔石', type: 'material', price: 10, desc: '光り輝く綺麗な石。\nクラフト素材や強化素材として使える。' },
     'potion': { name: 'ポーション', type: 'consumable', price: 50, heal: 50, desc: 'HPを50回復する。\n冒険の必需品。' }
@@ -33,7 +34,7 @@ const ITEMS = {
 const RECIPES = [
     {
         id: 'great_axe', 
-        materials: { 'wolf_fur': 5, 'magic_stone': 1 }, // 必要な素材と数
+        materials: { 'wolf_crow': 20, 'magic_stone': 10 }, // 必要な素材と数
         cost: 100 // 手数料
     },
     {
@@ -43,7 +44,7 @@ const RECIPES = [
     },
     {
         id: 'wonder_spear', 
-        materials: { 'slime_heart': 1, 'wolf_heart': 1 }, // woodは未実装ですが例として
+        materials: { 'slime_heart': 3, 'wolf_heart': 3 }, // woodは未実装ですが例として
         cost: 300
     }
 ];
