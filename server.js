@@ -692,6 +692,43 @@ io.on('connection', (socket) => {
         io.to(sender.id).emit('inventoryUpdate', { inventory: sender.inventory, gold: sender.gold });
         io.to(receiver.id).emit('inventoryUpdate', { inventory: receiver.inventory, gold: receiver.gold });
     });
+
+    socket.on('transferGold', async (data) => {
+        // data = { targetId: '...', amount: 100 }
+        const sender = players[socket.id];
+        const receiver = players[data.targetId];
+
+        // 1. 基本的な検証
+        if (!sender || !receiver) return;
+        if (sender.id === receiver.id) return;
+
+        // 金額の検証
+        const amount = parseInt(data.amount);
+        if (isNaN(amount) || amount <= 0) {
+            socket.emit('systemMessage', '無効な金額です。');
+            return;
+        }
+
+        if (sender.gold < amount) {
+            socket.emit('systemMessage', 'ゴールドが足りません。');
+            return;
+        }
+
+        // 2. 送金処理
+        sender.gold -= amount;
+        receiver.gold = (receiver.gold || 0) + amount; // receiver.goldがundefinedの場合の対策
+
+        // 3. 保存
+        await savePlayer(sender);
+        await savePlayer(receiver);
+
+        // 4. 通知と更新
+        io.to(sender.id).emit('inventoryUpdate', { inventory: sender.inventory, gold: sender.gold });
+        io.to(receiver.id).emit('inventoryUpdate', { inventory: receiver.inventory, gold: receiver.gold });
+
+        socket.emit('systemMessage', `${receiver.username} に ${amount} G 送金しました。`);
+        io.to(receiver.id).emit('systemMessage', `${sender.username} から ${amount} G 受け取りました！`);
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
