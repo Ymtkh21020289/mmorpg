@@ -1,7 +1,7 @@
 const ITEMS = {
-    'dagger': { name: 'ダガー', type: 'weapon', statsRange: { atk: { min: 1, max: 5 }}, range: 45, radius: 60, color: 0xcccccc, price: 20, desc: '初心者のための短剣。\n素早い攻撃が可能。（嘘）' }, // 短い・弱い
-    'sword': { name: 'ソード', type: 'weapon',   statsRange: { atk: { min: 7, max: 12 }}, range: 75, radius: 80, color: 0xffff00, price: 100, desc: '初心者のための剣。\n広範囲に攻撃が可能。' }, // 普通・普通
-    'spear': { name: 'スピア', type: 'weapon', statsRange: { atk: { min: 2, max: 7 }}, range: 15, radius: 120, color: 0xff0000, price: 200, desc: '初心者のための槍。\n遠くに攻撃が可能。' },
+    'dagger': { name: 'ダガー', type: 'weapon', statsRange: { atk: { min: 1, max: 5 }}, range: 45, radius: 60, cooldown: 300, color: 0xcccccc, price: 20, desc: '初心者のための短剣。\n素早い攻撃が可能。（嘘）' }, // 短い・弱い
+    'sword': { name: 'ソード', type: 'weapon',   statsRange: { atk: { min: 7, max: 12 }}, range: 75, radius: 80, cooldown: 500, color: 0xffff00, price: 100, desc: '初心者のための剣。\n広範囲に攻撃が可能。' }, // 普通・普通
+    'spear': { name: 'スピア', type: 'weapon', statsRange: { atk: { min: 2, max: 7 }}, range: 15, radius: 120, cooldown:500, color: 0xff0000, price: 200, desc: '初心者のための槍。\n遠くに攻撃が可能。' },
     'leather_helm': { name: '革の帽子', type: 'equipment', slot: 'head',   // 頭装備
         statsRange: {
             def: { min: 2, max: 5 },
@@ -20,8 +20,8 @@ const ITEMS = {
             def: { min: 1, max: 5 },
         }, price: 500
     },
-    'great_axe': { name: '狼牙の大斧', type: 'weapon', statsRange: { atk: { min: 10, max: 30 }}, range: 120, radius: 90, color: 0x00ffff, price: 500, desc: 'スゴイ斧。\n高い攻撃力で一掃が可能。' },
-    'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', statsRange: { atk: { min: 15, max: 25 }}, range: 10, radius: 150, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
+    'great_axe': { name: '狼牙の大斧', type: 'weapon', statsRange: { atk: { min: 10, max: 30 }}, range: 120, radius: 90, cooldown: 1000,  color: 0x00ffff, price: 500, desc: 'スゴイ斧。\n高い攻撃力で一掃が可能。' },
+    'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', statsRange: { atk: { min: 15, max: 25 }}, range: 10, radius: 150, cooldown:450, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
     'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2, desc: 'プルプルした謎の物体。\nクラフト素材として使える。' },
     'slime_heart': { name: 'スライムの心', type: 'material', price: 100, desc: '極稀にスライムが落とすアイテム。\nクラフト素材として使える。' },
     'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 5, desc: 'なんかゴワゴワしてる…\nクラフト素材として使える。' },
