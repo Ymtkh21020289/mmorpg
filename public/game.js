@@ -932,14 +932,15 @@ function update() {
             }
         }
     }
-    if (this.keys.attack.isDown && !this.isTyping && Date.now() - this.lastAttackTime > 500) {
+    if (this.keys.attack.isDown && !this.isTyping ) {
         const slotItem = this.myInventory[this.selectedSlot];
-        let weapon = { damage: 0, range: 30, radius: 40, color: 0xffffff }; // 素手
+        let weapon = { damage: 0, range: 30, radius: 40, cooldown: 500, color: 0xffffff }; // 素手
         let weapon_damage = 0;
         if (slotItem && slotItem.stats && slotItem.stats.atk ) weapon_damage = slotItem.stats.atk;
         if (slotItem && ITEMS[slotItem.id] && ITEMS[slotItem.id].type === 'weapon') {
             weapon = ITEMS[slotItem.id];
         }
+        if(Date.now() - this.lastAttackTime < weapon.cooldown) return;
         this.lastAttackTime = Date.now();
         
         // 1. 斬撃エフェクトを出す
