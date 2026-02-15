@@ -234,9 +234,9 @@ io.on('connection', (socket) => {
                 x: player.x,
                 y: player.y,
                 angle: angle,
-                speed: 10, // 弾の速さ
+                speed: 20, // 弾の速さ
                 room: player.room,
-                timeLeft: 1000 // 1秒で消える（射程距離）
+                timeLeft: 3000 // 1秒で消える（射程距離）
             };
 
             // MPが減ったことを本人に通知
