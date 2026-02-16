@@ -272,7 +272,7 @@ function create() {
             // サーバーに「この角度で撃って！」と依頼
             // 自分の位置からマウスへの角度を計算
             const angle = Phaser.Math.Angle.Between(self.player.x, self.player.y, pointer.worldX, pointer.worldY);
-            self.socket.emit('shootFireball', angle);
+            self.socket.emit('shootFireball', {angle: angle, speed: 20, damage: 20, mp: 10, time: 3000});
         }
     });
 
@@ -556,6 +556,9 @@ function create() {
 
             self.statusText.setText(text);
         }
+        self.totalAtk = stats.totalAtk;
+        self.totalDef = stats.totalDef;
+        self.maxMp = stats.maxMp;
     });
 
     // 2. 誰かがレベルアップした時の派手な演出
@@ -942,73 +945,73 @@ function update() {
         }
         if(Date.now() - this.lastAttackTime < weapon.cooldown) return;
         this.lastAttackTime = Date.now();
-        
-        // 1. 斬撃エフェクトを出す
-        showSlashEffect(this, this.player, angle, weapon);
 
-        // 2. 近くの敵を探す
-        this.enemies.getChildren().forEach((enemy) => {
-            // A. 距離のチェック (80px以内まで届くように延長)
-            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+        if (weapon.weapontype === 'direct'){
+            // 1. 斬撃エフェクトを出す
+            showSlashEffect(this, this.player, angle, weapon);
+
+            // 2. 近くの敵を探す
+            this.enemies.getChildren().forEach((enemy) => {
+                // A. 距離のチェック (80px以内まで届くように延長)
+                const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
             
-            if (distance < weapon.radius) { // 以前は60でした
+                if (distance < weapon.radius) {
                 
-                // B. 角度のチェック（ここが新機能！）
+                    // B. 角度のチェック（ここが新機能！）
                 
-                // 敵が「自分の位置から見てどの方角にいるか」を計算
-                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+                    // 敵が「自分の位置から見てどの方角にいるか」を計算
+                    const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
                 
-                // 「自分が向いている方向(rotation)」と「敵の方角」の差を計算
-                // Phaser.Math.Angle.Wrap は、角度のズレを -PI ～ +PI の範囲に綺麗に整えてくれる便利な関数です
-                const angleDiff = Phaser.Math.Angle.Wrap(angle - angleToEnemy);
+                    // 「自分が向いている方向(rotation)」と「敵の方角」の差を計算
+                    // Phaser.Math.Angle.Wrap は、角度のズレを -PI ～ +PI の範囲に綺麗に整えてくれる便利な関数です
+                    const angleDiff = Phaser.Math.Angle.Wrap(angle - angleToEnemy);
 
-                // 差が 90度(PI/2) 以内ならヒット
-                // (右90度 + 左90度 = 合計180度の半円範囲になります)
-                if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
+                    // 差が 90度(PI/2) 以内ならヒット
+                    // (右90度 + 左90度 = 合計180度の半円範囲になります)
+                    if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
                     
-                    // ヒット確定！
-                    this.socket.emit('attackEnemy', { enemyId: enemy.id, damage: weapon_damage });
+                        // ヒット確定！
+                        this.socket.emit('attackEnemy', { enemyId: enemy.id, damage: weapon_damage });
                     
-                    // ダメージ演出
-                    enemy.setTint(0xff0000);
-                    this.time.delayedCall(200, () => {
-                        enemy.clearTint();
-                    });
-                }
-            }
-        });
-        this.npcGroup.getChildren().forEach((enemy) => {
-            // A. 距離のチェック (80px以内まで届くように延長)
-            const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
-            
-            if (distance < weapon.radius) { // 以前は60でした
-                
-                const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
-                
-                // Phaser.Math.Angle.Wrap は、角度のズレを -PI ～ +PI の範囲に綺麗に整えてくれる
-                const angleDiff = Phaser.Math.Angle.Wrap(angle - angleToEnemy);
-
-                // 差が 90度(PI/2) 以内ならヒット
-                // (右90度 + 左90度 = 合計180度の半円範囲になる)
-                if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
-                    // ヒット確定！
-                    if (enemy.getData('type') === 'merchant' && !this.isMerchantOpen) {
-                        this.isMerchantOpen = true;
-                        this.merchantContainer.setVisible(true);
-                        this.tooltip.setVisible(false);
-                        this.isSellingMode = false;
-                    }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
-                        this.isCraftingOpen = true;
-                        this.craftContainer.setVisible(true);
-                    }else if (enemy.getData('type') === 'identify' && !this.isAppraiserOpen) {
-                        this.isAppraiserOpen = true;
-                        this.appraiserContainer.setVisible(true);
-                        this.appraiserList.setVisible(true);
-                        updateAppraiserList(this);
+                        // ダメージ演出
+                        enemy.setTint(0xff0000);
+                        this.time.delayedCall(200, () => {
+                            enemy.clearTint();
+                        });
                     }
                 }
-            }
-        });
+            });
+            this.npcGroup.getChildren().forEach((enemy) => {
+                const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+            
+                if (distance < weapon.radius) {
+                
+                    const angleToEnemy = Phaser.Math.Angle.Between(this.player.x, this.player.y, enemy.x, enemy.y);
+                    const angleDiff = Phaser.Math.Angle.Wrap(angle - angleToEnemy);
+                    if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
+                        // ヒット確定！
+                        if (enemy.getData('type') === 'merchant' && !this.isMerchantOpen) {
+                            this.isMerchantOpen = true;
+                            this.merchantContainer.setVisible(true);
+                            this.tooltip.setVisible(false);
+                            this.isSellingMode = false;
+                        }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
+                            this.isCraftingOpen = true;
+                            this.craftContainer.setVisible(true);
+                        }else if (enemy.getData('type') === 'identify' && !this.isAppraiserOpen) {
+                            this.isAppraiserOpen = true;
+                            this.appraiserContainer.setVisible(true);
+                            this.appraiserList.setVisible(true);
+                            updateAppraiserList(this);
+                        }
+                    }
+                }
+            });
+        } else if(weapon.weapontype === 'indirect'){
+            const damage = Math.floor((self.totalAtk / 4) + (self.maxMp /2));
+            const angle = Phaser.Math.Angle.Between(self.player.x, self.player.y, pointer.worldX, pointer.worldY);
+            self.socket.emit('shootFireball', {angle: angle, speed: weapon.speed, damage: , mp: 10, time: 3000});
+        }
     }
 }
 
