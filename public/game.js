@@ -1008,7 +1008,7 @@ function update() {
                 }
             });
         } else if(weapon.weapontype === 'indirect'){
-            const damage = Math.floor(((this.totalAtk + weapon_damage) / 4) + (self.maxMp /2));
+            const damage = Math.floor(((this.totalAtk + weapon_damage) / 4) + (this.maxMp /2));
             const angle = Phaser.Math.Angle.Between(this.player.x, this.player.y, pointer.worldX, pointer.worldY);
             this.socket.emit('shootFireball', {angle: angle, speed: weapon.speed, damage: damage, mp: weapon.mana, time: weapon.time});
         }
