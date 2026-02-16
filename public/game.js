@@ -1577,7 +1577,7 @@ function createShopUI(scene) {
     // --- 左側：ショップ（購入） ---
     scene.shopContent.add(scene.add.text(50, 60, '【購入】', { fill: '#00ff00' }));
     
-    const shopItems = ['potion', 'sword', 'leather_helm', 'chain_mail', 'power_ring']; // 売っているものリスト
+    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring']; // 売っているものリスト
     
     shopItems.forEach((id, index) => {
         const item = ITEMS[id];
