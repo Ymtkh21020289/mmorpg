@@ -36,8 +36,8 @@ const RECIPES = [
     },
     {
         id: 'wooden_wand',
-        materials: { 'slime_gel': 10, 'magic_stone': 5 },
-        cost: 150
+        materials: { 'slime_gel': 10, 'magic_stone': 5, 'wood': 2 },
+        cost: 100
     }
 ];
 
