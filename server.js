@@ -193,7 +193,7 @@ io.on('connection', (socket) => {
         socket.emit('updateStats', {
                 level: player.level, exp: player.exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
-                mp: player.mp // ★MPも含める
+                mp: player.mp, maxMp: player.maxMp // ★MPも含める
             });
         socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
         socket.emit('equipmentUpdate', player.equipment);
@@ -244,7 +244,7 @@ io.on('connection', (socket) => {
             socket.emit('updateStats', {
                 level: player.level, exp: player.exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
-                mp: player.mp // ★MPも含める
+                mp: player.mp, maxMp: player.maxMp // ★MPも含める
             });
         }
     });
@@ -911,7 +911,7 @@ setInterval(() => {
             // 本人に通知
             io.to(id).emit('updateStats', {
                 level: player.level, exp: player.exp, maxExp: player.maxExp,
-                baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp
+                baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
             });
         }
     });
@@ -952,7 +952,7 @@ function handleEnemyDeath(enemy, player) {
     // (socket経由ではなくio.toを使うことで、どこから呼ばれても動くようにする)
     io.to(player.playerId).emit('updateStats', {
         level: player.level, exp: player.exp, maxExp: player.maxExp,
-        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp
+        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
     });
 
     // 2. 死亡・復活処理
@@ -1118,7 +1118,7 @@ function updatePlayerStats(player) {
     // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
     io.to(player.id).emit('updateStats', { 
         level: player.level, exp: player.exp, maxExp: player.maxExp,
-        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp
+        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
     });
 }
 
