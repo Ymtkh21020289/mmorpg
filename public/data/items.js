@@ -7,7 +7,7 @@ const ITEMS = {
     'power_ring': { name: '力の指輪', type: 'equipment', slot: 'accessory', statsRange: { atk: { min: 1, max: 5 }, def: { min: 1, max: 5 }}, price: 500 },
     'great_axe': { name: '狼牙の大斧', type: 'weapon', weapontype: 'direct', statsRange: { atk: { min: 10, max: 30 }}, range: 120, radius: 90, cooldown: 1000,  color: 0x00ffff, price: 500, desc: 'スゴイ斧。\n高い攻撃力で一掃が可能。' },
     'wonder_spear': { name: 'めっちゃスゴイ槍', type: 'weapon', weapontype: 'direct', statsRange: { atk: { min: 15, max: 25 }}, range: 10, radius: 150, cooldown:450, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
-    'wonder_spear': { name: '木の杖', type: 'weapon', weapontype: 'indirect', statsRange: { atk: { min: 2, max: 5 }}, speed: 10, time: 150, mana:5, cooldown:2000, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
+    'wooden_wand': { name: '木の杖', type: 'weapon', weapontype: 'indirect', statsRange: { atk: { min: 2, max: 5 }}, speed: 10, time: 150, mana:5, cooldown:2000, color: 0x00ffff, price: 1000, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
     'slime_gel': { name: 'スライムゼリー', type: 'material', price: 2, desc: 'プルプルした謎の物体。\nクラフト素材として使える。' },
     'slime_heart': { name: 'スライムの心', type: 'material', price: 100, desc: '極稀にスライムが落とすアイテム。\nクラフト素材として使える。' },
     'wolf_fur':  { name: 'オオカミの毛皮', type: 'material', price: 5, desc: 'なんかゴワゴワしてる…\nクラフト素材として使える。' },
@@ -25,13 +25,18 @@ const RECIPES = [
     },
     {
         id: 'spear', 
-        materials: { 'slime_gel': 10, 'wood': 2 }, // woodは未実装ですが例として
+        materials: { 'slime_gel': 10 },
         cost: 50
     },
     {
         id: 'wonder_spear', 
-        materials: { 'slime_heart': 3, 'wolf_heart': 3 }, // woodは未実装ですが例として
+        materials: { 'slime_heart': 3, 'wolf_heart': 3 },
         cost: 300
+    },
+    {
+        id: 'wooden_wand',
+        materials: { 'slime_gel': 10, 'magic_stone': 20 },
+        cost: 150
     }
 ];
 
