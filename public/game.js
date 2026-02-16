@@ -1658,7 +1658,7 @@ function createMerchantUI(scene) {
 
 
     // --- 商品リストの生成（NormalElementsに追加） ---
-    const shopItems = ['potion', 'sword', 'leather_helm', 'chain_mail', 'power_ring']; 
+    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring']; 
     
     shopItems.forEach((id, index) => {
         const item = ITEMS[id]; 
