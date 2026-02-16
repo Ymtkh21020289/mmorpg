@@ -14,6 +14,7 @@ const ITEMS = {
     'wolf_crow':  { name: 'オオカミの鉤爪', type: 'material', price: 10, desc: 'あぁ、無情。' },
     'wolf_heart':  { name: 'オオカミの心', type: 'material', price: 200, desc: '極稀にオオカミが落とすアイテム。\nクラフト素材として使える。' },
     'magic_stone': { name: '魔石', type: 'material', price: 10, desc: '光り輝く綺麗な石。\nクラフト素材や強化素材として使える。' },
+    'wood': { name: '木', type: 'material', price: 20, },
     'potion': { name: 'ポーション', type: 'consumable', price: 50, heal: 50, desc: 'HPを50回復する。\n冒険の必需品。' }
 };
 
