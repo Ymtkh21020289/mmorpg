@@ -218,13 +218,13 @@ io.on('connection', (socket) => {
         io.emit('chatUpdate', { playerId: socket.id, msg: message });
     });
 
-    socket.on('shootFireball', (angle) => {
+    socket.on('shootFireball', (data) => {
         const player = players[socket.id];
         // プレイヤーが生きていて、MPが10以上あるなら
-        if (player && !player.isDead && player.mp >= 10) {
+        if (player && !player.isDead && player.mp >= data.mp) {
             
             // MP消費
-            player.mp -= 10;
+            player.mp -= data.mp;
             
             // 弾丸を生成
             const id = 'p_' + projectileIdCounter++;
@@ -233,10 +233,11 @@ io.on('connection', (socket) => {
                 ownerId: socket.id, // 誰が撃ったか
                 x: player.x,
                 y: player.y,
-                angle: angle,
-                speed: 20, // 弾の速さ
+                angle: data.angle,
+                speed: data.speed, // 弾の速さ
                 room: player.room,
-                timeLeft: 3000 // 1秒で消える（射程距離）
+                timeLeft: data.time, // 1秒で消える（射程距離）
+                damage: data.damage
             };
 
             // MPが減ったことを本人に通知
@@ -873,7 +874,7 @@ setInterval(() => {
                 delete projectiles[id]; // 弾は消える
 
                 // ダメージ計算（魔法攻撃力はとりあえず固定20 + レベル補正などにしてもOK）
-                const damage = 20;
+                const damage = p.damage;
                 enemy.hp -= damage;
                 
                 // ダメージ通知
