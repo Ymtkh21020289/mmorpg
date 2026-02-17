@@ -1633,83 +1633,166 @@ function createMerchantUI(scene) {
     scene.isMerchantOpen = false;
     scene.isSellingMode = false;
 
-    // 1. 全体を入れる大枠のコンテナ
-    scene.merchantContainer = scene.add.container(200, 100).setScrollFactor(0).setDepth(200);
+    // --- 1. 設定値（レイアウト調整用） ---
+    const UI_X = 200;
+    const UI_Y = 100;
+    const UI_W = 300;
+    const UI_H = 400;
+    
+    // リストが表示されるエリアの定義（コンテナ内の相対位置ではなく、画面上の絶対位置計算用）
+    const LIST_X = UI_X;      // コンテナ左上と同じX
+    const LIST_Y = UI_Y + 90; // タイトルの下あたり
+    const LIST_W = UI_W;
+    const LIST_H = 240;       // 売却ボタンの上のスペースまで
+
+    // --- 2. 全体を入れる大枠のコンテナ ---
+    // 内部座標を扱いやすくするため (0,0) ではなく UI_X, UI_Y を基準にします
+    scene.merchantContainer = scene.add.container(UI_X, UI_Y).setScrollFactor(0).setDepth(200);
     scene.merchantContainer.setVisible(false);
 
-    // 2. 「通常時（購入モード）に表示する要素」をまとめるコンテナ
-    //    ※ここに入れたものが、売却モード時に一括で消えます
+    // --- 3. 「通常時（購入モード）」のコンテナ ---
     scene.merchantNormalElements = scene.add.container(0, 0);
     scene.merchantContainer.add(scene.merchantNormalElements);
 
-    // --- 背景（NormalElementsに追加） ---
-    const bg = scene.add.rectangle(150, 200, 300, 400, 0x000000, 0.9);
+    // 背景
+    // 基準点が(UI_X, UI_Y)になったので、相対座標は (UI_W/2, UI_H/2) が中心
+    const bg = scene.add.rectangle(UI_W/2, UI_H/2, UI_W, UI_H, 0x000000, 0.9);
     bg.setStrokeStyle(4, 0x00ff00);
     bg.setInteractive(); // クリック透過防止
-    bg.setScrollFactor(0);
     scene.merchantNormalElements.add(bg);
 
-    // --- タイトルなどのテキスト（NormalElementsに追加） ---
-    const title = scene.add.text(150, 30, '=== 武器商人 ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
-    const closeHint = scene.add.text(150, 380, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
-    const listTitle = scene.add.text(150, 70, '【商品一覧】', { fill: '#00ff00', fontSize: '16px' }).setOrigin(0.5);
+    // タイトルなど
+    const title = scene.add.text(UI_W/2, 30, '=== 武器商人 ===', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
+    const listTitle = scene.add.text(UI_W/2, 70, '【商品一覧】', { fill: '#00ff00', fontSize: '16px' }).setOrigin(0.5);
+    const closeHint = scene.add.text(UI_W/2, UI_H - 20, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
     
-    scene.merchantNormalElements.add([title, closeHint, listTitle]);
+    scene.merchantNormalElements.add([title, listTitle, closeHint]);
 
 
-    // --- 商品リストの生成（NormalElementsに追加） ---
-    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring']; 
+    // --- 4. スクロール用商品リストコンテナ ---
+    // merchantNormalElements の中に入れます
+    // 座標は親コンテナ(UI_X, UI_Y)からの相対位置
+    const listContainer = scene.add.container(0, 90); 
+    scene.merchantNormalElements.add(listContainer);
+
+    let currentY = 0;
+    const itemHeight = 45;
     
-    shopItems.forEach((id, index) => {
+    // 仮の商品データ
+    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring', 'iron_sword', 'magic_stone']; 
+    
+    shopItems.forEach((id) => {
         const item = ITEMS[id]; 
         if (!item) return;
 
-        const y = 110 + index * 40;
+        // ボタン作成 (相対座標: 幅の中心, currentY)
+        const btn = scene.add.rectangle(UI_W/2, currentY + itemHeight/2, 240, 35, 0x333333).setInteractive({ useHandCursor: true });
         
-        const btn = scene.add.rectangle(150, y, 240, 30, 0x333333).setInteractive({ useHandCursor: true });
-        btn.setScrollFactor(0);
-
-        const text = scene.add.text(150, y, `${item.name} (${item.price}G)`, { fontSize: '14px', fill: '#ffffff' }).setOrigin(0.5);
+        const text = scene.add.text(UI_W/2, currentY + itemHeight/2, `${item.name} (${item.price}G)`, { fontSize: '14px', fill: '#ffffff' }).setOrigin(0.5);
         
+        // 購入イベント
         btn.on('pointerdown', () => {
+            // クリック時のフィードバック
+            scene.tweens.add({ targets: btn, scaleX: 0.95, scaleY: 0.95, duration: 50, yoyo: true });
             scene.socket.emit('buyItem', id);
         });
 
-        scene.merchantNormalElements.add([btn, text]);
+        // ホバー
+        btn.on('pointerover', () => btn.setFillStyle(0x555555));
+        btn.on('pointerout', () => btn.setFillStyle(0x333333));
+
+        listContainer.add([btn, text]);
+        currentY += itemHeight;
     });
 
+    listContainer.contentHeight = currentY;
 
-    // --- 3. 売却モード切替ボタン（ここは親コンテナに直接置く） ---
-    //    ※これだけは常に表示させたいので、merchantNormalElementsには入れません
-    const sellBtn = scene.add.rectangle(150, 340, 200, 40, 0xaa0000);
-    sellBtn.setScrollFactor(0);
-    sellBtn.setInteractive({ useHandCursor: true });
-    
-    const sellText = scene.add.text(150, 340, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
 
-    // ボタンのクリックイベント
+    // --- 5. マスク設定 ---
+    const shape = scene.make.graphics();
+    shape.fillStyle(0xffffff);
+    // マスクは画面絶対座標 (LIST_X, LIST_Y)
+    shape.fillRect(LIST_X, LIST_Y, LIST_W, LIST_H);
+    shape.setScrollFactor(0); 
+    const mask = shape.createGeometryMask();
+    listContainer.setMask(mask);
+
+
+    // --- 6. 売却モード切替ボタン ---
+    // これは merchantContainer 直下（merchantNormalElementsの外）に置く
+    const sellBtnY = UI_H - 60;
+    const sellBtn = scene.add.rectangle(UI_W/2, sellBtnY, 200, 40, 0xaa0000).setInteractive({ useHandCursor: true });
+    const sellText = scene.add.text(UI_W/2, sellBtnY, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+
     sellBtn.on('pointerdown', () => {
         scene.isSellingMode = !scene.isSellingMode;
 
         if (scene.isSellingMode) {
-            // ■ ONの場合
+            // ON: 購入画面（リスト含む）を隠す
             sellBtn.setFillStyle(0xff0000, 1);
-            sellText.setText('売却モード: ON (アイテムを選択)');
-            
-            // 背景やリストをすべて隠す！
+            sellText.setText('売却モード: ON (所持品を選択)');
             scene.merchantNormalElements.setVisible(false);
-            
         } else {
-            // ■ OFFの場合
+            // OFF: 購入画面を表示
             sellBtn.setFillStyle(0xaa0000, 1);
             sellText.setText('売却モード: OFF');
-            
-            // 背景やリストを再表示
             scene.merchantNormalElements.setVisible(true);
         }
     });
 
     scene.merchantContainer.add([sellBtn, sellText]);
+
+
+    // --- 7. スクロール制御 ---
+    const onScroll = (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        // UIが開いていない、または「売却モード中」ならスクロールしない
+        if (!scene.isMerchantOpen) return;
+        if (scene.isSellingMode) return; // ★重要: 売却中はリストが見えないので無視
+
+        // マウス位置チェック
+        if (pointer.x >= LIST_X && pointer.x <= LIST_X + LIST_W &&
+            pointer.y >= LIST_Y && pointer.y <= LIST_Y + LIST_H) {
+            
+            const contentH = listContainer.contentHeight;
+            if (contentH <= LIST_H) return;
+
+            listContainer.y -= deltaY * 0.5;
+            
+            // 範囲制限 (listContainerの初期Yは 90)
+            const initialY = 90;
+            const minY = initialY - (contentH - LIST_H + 10);
+            const maxY = initialY;
+            
+            listContainer.y = Phaser.Math.Clamp(listContainer.y, minY, maxY);
+        }
+    };
+
+    // --- 8. 開閉管理ヘルパー ---
+    scene.closeMerchantUI = () => {
+        scene.merchantContainer.setVisible(false);
+        scene.isMerchantOpen = false;
+        scene.isSellingMode = false; // モードリセット
+        
+        // リセット処理
+        sellBtn.setFillStyle(0xaa0000, 1);
+        sellText.setText('売却モード: OFF');
+        scene.merchantNormalElements.setVisible(true);
+
+        scene.input.off('wheel', onScroll);
+    };
+
+    scene.openMerchantUI = () => {
+        scene.merchantContainer.setVisible(true);
+        scene.isMerchantOpen = true;
+        scene.isSellingMode = false;
+        
+        // リスト位置リセット
+        listContainer.y = 90;
+
+        // イベント再登録
+        scene.input.off('wheel', onScroll);
+        scene.input.on('wheel', onScroll);
+    };
 }
 
 function createCraftingUI(scene) {
