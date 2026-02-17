@@ -2023,8 +2023,8 @@ function createMenuUI(scene) {
 
     // ボタン生成ヘルパー（Y座標は自動計算するので引数から削除）
     const createMenuButton = (text, callback, parentContainer, yOffset) => {
-        const btnBg = scene.add.rectangle(0, yOffset, 220, 45, 0x333333).setInteractive({ useHandCursor: true });
-        const btnText = scene.add.text(0, yOffset, text, { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+        const btnBg = scene.add.rectangle(0, yOffset, 220, 45, 0x333333).setScrollFactor(0).setInteractive({ useHandCursor: true });
+        const btnText = scene.add.text(0, yOffset, text, { fontSize: '18px', fill: '#fff' }).setScrollFactor(0).setOrigin(0.5);
         
         btnBg.on('pointerdown', callback);
         btnBg.on('pointerover', () => btnBg.setFillStyle(0x555555));
