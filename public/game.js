@@ -461,10 +461,8 @@ function create() {
     // Bキーで鍛冶屋を開く(閉じるときだけ機能する)
     this.input.keyboard.on('keydown-B', () => {
         if (this.isMerchantOpen) {
-            this.isMerchantOpen = false;
-            this.isSellingMode = false;
+            this.closeMerchantUI();
             this.tooltip.setVisible(false);
-            this.merchantContainer.setVisible(false);
         }else if (this.isCraftingOpen) {
             this.isCraftingOpen = false;
             this.tooltip.setVisible(false);
@@ -991,10 +989,7 @@ function update() {
                     if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
                         // ヒット確定！
                         if (enemy.getData('type') === 'merchant' && !this.isMerchantOpen) {
-                            this.isMerchantOpen = true;
-                            this.merchantContainer.setVisible(true);
-                            this.tooltip.setVisible(false);
-                            this.isSellingMode = false;
+                            this.openMerchantUI();
                         }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
                             this.isCraftingOpen = true;
                             this.craftContainer.setVisible(true);
