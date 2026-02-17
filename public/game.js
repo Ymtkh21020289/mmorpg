@@ -1715,67 +1715,179 @@ function createMerchantUI(scene) {
 function createCraftingUI(scene) {
     scene.isCraftingOpen = false;
 
-    // --- コンテナ作成 ---
-    // 商人とは少し位置を変えても良いかもしれません
-    scene.craftContainer = scene.add.container(200, 100).setScrollFactor(0).setDepth(200);
+    // --- 1. 設定値 ---
+    const UI_X = 200; // 画面上のX座標
+    const UI_Y = 50;  // 画面上のY座標
+    const UI_W = 400;
+    const UI_H = 500;
+    const HEADER_H = 90; // タイトル＋「作成リスト」の文字の高さ
+    const FOOTER_H = 30; // 下部の余白
+
+    // リストの表示エリア（窓）の定義
+    const LIST_X = UI_X;
+    const LIST_Y = UI_Y + HEADER_H;
+    const LIST_W = UI_W;
+    const LIST_H = UI_H - HEADER_H - FOOTER_H;
+
+    // --- 2. 全体の親コンテナ ---
+    // 座標計算を簡単にするため、親コンテナは(0,0)に置き、内部で絶対座標配置します
+    scene.craftContainer = scene.add.container(0, 0).setScrollFactor(0).setDepth(200);
     scene.craftContainer.setVisible(false);
 
-    // --- 背景 ---
-    const bg = scene.add.rectangle(200, 250, 400, 500, 0x000000, 0.9); // レシピは見やすいよう少し広めに
-    bg.setStrokeStyle(4, 0xff4400); // 鍛冶屋は赤っぽい枠
-    bg.setInteractive();
-    bg.setScrollFactor(0);
+    // 背景
+    const bg = scene.add.rectangle(UI_X + UI_W / 2, UI_Y + UI_H / 2, UI_W, UI_H, 0x000000, 0.9);
+    bg.setStrokeStyle(4, 0xff4400); // 鍛冶屋らしい赤枠
+    bg.setInteractive(); // 裏クリック防止
     scene.craftContainer.add(bg);
 
-    // --- タイトル ---
-    const title = scene.add.text(200, 30, '=== 鍛冶職人 ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
+    // タイトル
+    const title = scene.add.text(UI_X + UI_W / 2, UI_Y + 30, '=== 鍛冶職人 ===', { fontSize: '24px', fill: '#ff4400', fontStyle: 'bold' }).setOrigin(0.5);
     scene.craftContainer.add(title);
+
+    const subTitle = scene.add.text(UI_X + UI_W / 2, UI_Y + 70, '【作成リスト】', { fill: '#ffaa00', fontSize: '16px' }).setOrigin(0.5);
+    scene.craftContainer.add(subTitle);
+
+    // 閉じるボタン（テキストではなくボタン化して親切に）
+    const closeBtn = scene.add.text(UI_X + UI_W / 2, UI_Y + UI_H - 20, '閉じる (B)', { fontSize: '14px', fill: '#aaa' })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
     
-    // --- 閉じる説明 ---
-    const closeHint = scene.add.text(200, 480, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
-    scene.craftContainer.add(closeHint);
+    // 閉じる処理の登録（後で定義するcleanupを呼ぶ）
+    closeBtn.on('pointerdown', () => {
+        closeCrafting();
+    });
+    scene.craftContainer.add(closeBtn);
 
 
-    // --- 【クラフトリスト】の生成 ---
-    scene.craftContainer.add(scene.add.text(200, 70, '【作成リスト】', { fill: '#ffaa00', fontSize: '16px' }).setOrigin(0.5));
+    // --- 3. リスト用コンテナ（スクロールする部分） ---
+    // 初期位置はリスト表示エリアの左上
+    const listContainer = scene.add.container(LIST_X, LIST_Y);
+    scene.craftContainer.add(listContainer);
+
+
+    // --- 4. レシピの生成ループ ---
+    let currentY = 10; // リストコンテナ内でのY座標
+    const itemHeight = 70; // 1つの項目の高さ（少し広めに）
 
     // RECIPESはグローバル定義されている前提
-    RECIPES.forEach((recipe, index) => {
-        const resultItem = ITEMS[recipe.id];
-        if (!resultItem) return;
+    if (typeof RECIPES !== 'undefined') {
+        RECIPES.forEach((recipe, index) => {
+            const resultItem = ITEMS[recipe.id];
+            if (!resultItem) return;
 
-        const y = 120 + index * 60; // 情報量が多いので間隔を広めに
+            // X座標はコンテナの幅の中心（相対座標）
+            const itemX = UI_W / 2;
 
-        // 素材テキストの生成
-        let reqText = '';
-        if (recipe.materials) {
-            for (const [matId, count] of Object.entries(recipe.materials)) {
-                const matName = ITEMS[matId] ? ITEMS[matId].name : matId;
-                reqText += `${matName}x${count}  `;
+            // 素材テキストの生成
+            let reqText = '';
+            if (recipe.materials) {
+                for (const [matId, count] of Object.entries(recipe.materials)) {
+                    const matName = ITEMS[matId] ? ITEMS[matId].name : matId;
+                    reqText += `${matName}x${count}  `;
+                }
             }
-        }
 
-        // ボタン背景
-        const btn = scene.add.rectangle(200, y, 350, 50, 0x442200).setInteractive({ useHandCursor: true });
-        btn.setStrokeStyle(1, 0x884400);
-        btn.setScrollFactor(0);
-        
-        // アイテム名
-        const nameText = scene.add.text(200, y - 12, `作る: ${resultItem.name}`, { fontSize: '16px', fill: '#ffdd00' }).setOrigin(0.5);
-        
-        // 必要素材と費用
-        const infoText = scene.add.text(200, y + 12, `必要: ${reqText}\n費用: ${recipe.cost}G`, { fontSize: '11px', fill: '#cccccc', align: 'center' }).setOrigin(0.5);
+            // ボタン背景
+            const btn = scene.add.rectangle(itemX, currentY + itemHeight / 2, 350, 60, 0x442200)
+                .setInteractive({ useHandCursor: true });
+            btn.setStrokeStyle(1, 0x884400);
 
-        // 作成イベント
-        btn.on('pointerdown', () => {
-            console.log(`${resultItem.name} の作成リクエスト`);
-            scene.socket.emit('craftItem', index);
+            // テキスト情報
+            const nameText = scene.add.text(itemX, currentY + 15, `作る: ${resultItem.name}`, { fontSize: '18px', fill: '#ffdd00', fontStyle: 'bold' }).setOrigin(0.5);
+            const infoText = scene.add.text(itemX, currentY + 45, `必要: ${reqText}\n費用: ${recipe.cost}G`, { fontSize: '12px', fill: '#cccccc', align: 'center' }).setOrigin(0.5);
+
+            // 作成イベント
+            btn.on('pointerdown', () => {
+                // アニメーション的なフィードバック
+                scene.tweens.add({
+                    targets: btn,
+                    scaleX: 0.95, scaleY: 0.95,
+                    duration: 50,
+                    yoyo: true
+                });
+                console.log(`${resultItem.name} の作成リクエスト`);
+                scene.socket.emit('craftItem', index);
+            });
+
+            // ホバー効果
+            btn.on('pointerover', () => btn.setFillStyle(0x663300));
+            btn.on('pointerout', () => btn.setFillStyle(0x442200));
+
+            // コンテナに追加
+            listContainer.add([btn, nameText, infoText]);
+
+            currentY += itemHeight + 5; // 間隔を空ける
         });
+    }
 
-        scene.craftContainer.add([btn, nameText, infoText]);
-    });
+    // コンテンツ全体の高さを保存
+    listContainer.contentHeight = currentY;
+
+
+    // --- 5. マスク（切り抜き）設定 ---
+    const shape = scene.make.graphics();
+    shape.fillStyle(0xffffff);
+    // マスク範囲は画面絶対座標で指定
+    shape.fillRect(LIST_X, LIST_Y, LIST_W, LIST_H);
+    shape.setScrollFactor(0); // ★重要：これを忘れるとプレイヤー移動時にマスクがズレます
+    const mask = shape.createGeometryMask();
+    listContainer.setMask(mask);
+
+
+    // --- 6. スクロール機能の実装 ---
+    const onScroll = (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        // UIが開いていない、またはマウスが範囲外なら無視
+        if (!scene.isCraftingOpen) return;
+        
+        if (pointer.x >= UI_X && pointer.x <= UI_X + UI_W &&
+            pointer.y >= UI_Y && pointer.y <= UI_Y + UI_H) {
+            
+            const contentH = listContainer.contentHeight;
+            // 内容が枠より少なければスクロール不要
+            if (contentH <= LIST_H) return;
+
+            // スクロール速度
+            listContainer.y -= deltaY * 0.5;
+
+            // 範囲制限
+            // 上限: 初期位置 (LIST_Y)
+            // 下限: コンテンツ長さ分だけ上にズレた位置
+            const minY = LIST_Y - (contentH - LIST_H + 20);
+            const maxY = LIST_Y;
+
+            listContainer.y = Phaser.Math.Clamp(listContainer.y, minY, maxY);
+        }
+    };
+
+    // イベント登録
+    scene.input.on('wheel', onScroll);
+
+
+    // --- 7. 閉じる・クリーンアップ処理 ---
+    const closeCrafting = () => {
+        scene.craftContainer.setVisible(false);
+        scene.isCraftingOpen = false;
+        
+        // ★重要: これをしないと裏でイベントが動き続けます
+        scene.input.off('wheel', onScroll); 
+    };
+
+    // シーンのプロパティとして関数を保持しておくと、Bキーイベント等からも呼べます
+    scene.closeCraftingUI = closeCrafting;
+    
+    // UIを開く時のヘルパー（イベント再登録のため）
+    scene.openCraftingUI = () => {
+        scene.craftContainer.setVisible(true);
+        scene.isCraftingOpen = true;
+        
+        // スクロール位置リセット
+        listContainer.y = LIST_Y;
+        
+        // イベントリスナーが重複しないよう一旦消して再登録
+        scene.input.off('wheel', onScroll);
+        scene.input.on('wheel', onScroll);
+    };
 }
-
 function createEquipmentUI(scene) {
     // 1. 装備画面全体のコンテナ
     scene.equipContainer = scene.add.container(100, 200); // インベントリの左隣などを想定
