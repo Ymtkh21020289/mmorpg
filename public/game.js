@@ -1646,9 +1646,20 @@ function createMerchantUI(scene) {
         if (!scene.isMerchantOpen) return;
         if (scene.isSellingMode) return; // ★重要: 売却中はリストが見えないので無視
 
-        // マウス位置チェック
+        // 1. まずイベントが発火しているか？
+        console.log("ホイール動いた！"); 
+
+        // 2. フラグはOKか？
+        if (!scene.isMerchantOpen) {
+            console.log("Openフラグが false です");
+            return;
+        }
+    
+        // 3. マウス位置判定はOKか？
         if (pointer.x >= LIST_X && pointer.x <= LIST_X + LIST_W &&
             pointer.y >= LIST_Y && pointer.y <= LIST_Y + LIST_H) {
+            
+            console.log("範囲内です。スクロールさせます");
             
             const contentH = listContainer.contentHeight;
             if (contentH <= LIST_H) return;
@@ -1661,6 +1672,8 @@ function createMerchantUI(scene) {
             const maxY = initialY;
             
             listContainer.y = Phaser.Math.Clamp(listContainer.y, minY, maxY);
+        } else {
+            console.log("範囲外判定されています", pointer.x, pointer.y);
         }
     };
 
@@ -1715,7 +1728,7 @@ function createCraftingUI(scene) {
     scene.craftContainer.setVisible(false);
 
     // 背景
-    const bg = scene.add.rectangle(UI_X + UI_W / 2, UI_Y + UI_H / 2, UI_W, UI_H, 0x000000, 0.9);
+    const bg = scene.add.rectangle(UI_X + UI_W / 2, UI_Y + UI_H / 2, UI_W, UI_H, 0x000000, 0.9).setScrollFactor(0);
     bg.setStrokeStyle(4, 0xff4400); // 鍛冶屋らしい赤枠
     bg.setInteractive(); // 裏クリック防止
     scene.craftContainer.add(bg);
@@ -1730,6 +1743,7 @@ function createCraftingUI(scene) {
     // 閉じるボタン（テキストではなくボタン化して親切に）
     const closeBtn = scene.add.text(UI_X + UI_W / 2, UI_Y + UI_H - 20, '閉じる (B)', { fontSize: '14px', fill: '#aaa' })
         .setOrigin(0.5)
+        .setScrollFactor(0)
         .setInteractive({ useHandCursor: true });
     
     // 閉じる処理の登録（後で定義するcleanupを呼ぶ）
