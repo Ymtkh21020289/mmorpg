@@ -1893,85 +1893,181 @@ function updateEquipmentDisplay(scene, equipmentData) {
 function createMenuUI(scene) {
     scene.isMenuOpen = false;
 
+    // --- 設定値 ---
+    const MENU_X = 400;
+    const MENU_Y = 300;
+    const MENU_W = 300;
+    const MENU_H = 400;
+    
+    // スクロールエリアの設定（タイトルや下の余白を除いた範囲）
+    const SCROLL_X = MENU_X - MENU_W / 2; // 左端
+    const SCROLL_Y = MENU_Y - 140;         // 上端（タイトルの下あたり）
+    const SCROLL_W = MENU_W;
+    const SCROLL_H = 280;                  // 表示する高さ
+
     // --- 1. メニュー全体の親コンテナ ---
-    // 画面中央に配置
-    scene.menuContainer = scene.add.container(400, 300).setScrollFactor(0).setDepth(2000);
+    scene.menuContainer = scene.add.container(MENU_X, MENU_Y).setScrollFactor(0).setDepth(2000);
     scene.menuContainer.setVisible(false);
 
-    // 背景（共通）
-    const bg = scene.add.rectangle(0, 0, 300, 400, 0x000000, 0.9);
-    bg.setStrokeStyle(4, 0xffffff); // 白い枠
-    bg.setInteractive(); // クリック透過防止
+    // 背景
+    const bg = scene.add.rectangle(0, 0, MENU_W, MENU_H, 0x000000, 0.9);
+    bg.setStrokeStyle(4, 0xffffff);
+    bg.setInteractive(); 
     scene.menuContainer.add(bg);
 
-    // タイトル（共通）
+    // タイトル
     const title = scene.add.text(0, -170, 'MAIN MENU', { fontSize: '24px', fill: '#fff', fontStyle: 'bold' }).setOrigin(0.5);
     scene.menuContainer.add(title);
 
 
-    // --- 2. メインメニュー（ボタン一覧）のコンテナ ---
+    // --- 2. メインメニュー（スクロール対応） ---
     scene.menuMain = scene.add.container(0, 0);
     scene.menuContainer.add(scene.menuMain);
 
-    // ボタンを作るヘルパー関数（今後ボタンが増えるので関数化）
-    const createMenuButton = (y, text, callback) => {
-        const btnBg = scene.add.rectangle(0, y, 200, 40, 0x333333).setInteractive({ useHandCursor: true }).setScrollFactor(0);
-        const btnText = scene.add.text(0, y, text, { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+    // ★リスト用コンテナを作成（親コンテナの中心(0,0)からの相対位置ではなく、マスクに合わせるため左上基準で配置）
+    // 親が(400,300)なので、そこから少しずらして配置
+    const listContainer = scene.add.container(0, -120); 
+    scene.menuMain.add(listContainer);
+
+    // ボタン生成ヘルパー（Y座標は自動計算するので引数から削除）
+    const createMenuButton = (text, callback, parentContainer, yOffset) => {
+        const btnBg = scene.add.rectangle(0, yOffset, 220, 45, 0x333333).setInteractive({ useHandCursor: true });
+        const btnText = scene.add.text(0, yOffset, text, { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
         
         btnBg.on('pointerdown', callback);
-        
-        // ホバー効果
         btnBg.on('pointerover', () => btnBg.setFillStyle(0x555555));
         btnBg.on('pointerout', () => btnBg.setFillStyle(0x333333));
 
-        return [btnBg, btnText];
+        parentContainer.add([btnBg, btnText]);
     };
 
-    // --- ボタン配置 ---
-    // [ステータス]
-    const btnAssignment = createMenuButton(-120, 'アイテム受け渡し', () => {
-        scene.menuMain.setVisible(false); 
+    // ★ボタンの定義データ（ここに追加していけば自動でスクロールします）
+    const menuItems = [
+        {
+            text: 'アイテム譲渡',
+            callback: () => {
+                // UIを閉じてから処理
+                closeMenu(); 
+                openPlayerSelection(scene, 'アイテムを送る相手を選択', (targetId, targetName) => {
+                    openTransferInventory(scene, targetId, targetName);
+                });
+            }
+        },
+        {
+            text: '送金する',
+            callback: () => {
+                closeMenu();
+                createGoldTransferButton(scene); // ※もしくは直接処理を呼ぶ
+                // ここは既存のロジックに合わせて調整してください
+            }
+        },
+        {
+            text: 'ステータス',
+            callback: () => {
+                scene.menuMain.setVisible(false);
+                scene.menuStatus.setVisible(true);
+                updateMenuStats(scene);
+            }
+        },
+        {
+            text: 'スタック脱出 (自殺)',
+            callback: () => {
+                scene.menuMain.setVisible(false);
+                scene.menuSuicide.setVisible(true);
+            }
+        },
+        // --- テスト用に項目を増やしてみる ---
+        { text: 'スキル (未実装)', callback: () => console.log('Skill') },
+        { text: 'クエスト (未実装)', callback: () => console.log('Quest') },
+        { text: '設定 (未実装)', callback: () => console.log('Config') },
+        { text: 'ログアウト (未実装)', callback: () => console.log('Logout') },
+        
+        {
+            text: '閉じる',
+            callback: () => {
+                closeMenu();
+            }
+        }
+    ];
+
+    // ★ループでボタン配置
+    let currentY = 0;
+    const GAP = 55; // ボタンの間隔
+
+    menuItems.forEach(item => {
+        createMenuButton(item.text, item.callback, listContainer, currentY);
+        currentY += GAP;
+    });
+
+    // コンテンツの高さを保存
+    listContainer.contentHeight = currentY;
+
+    // --- マスク（切り抜き）設定 ---
+    const shape = scene.make.graphics();
+    shape.fillStyle(0xffffff);
+    // マスクの座標は「画面上の絶対位置」で指定
+    shape.fillRect(SCROLL_X, SCROLL_Y, SCROLL_W, SCROLL_H);
+    shape.setScrollFactor(0); // ★重要
+    const mask = shape.createGeometryMask();
+    listContainer.setMask(mask);
+
+    // --- スクロールイベント ---
+    scene.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        // メニューが開いていて、メイン画面が表示されている時だけ
+        if (!scene.isMenuOpen || !scene.menuMain.visible) return;
+
+        // マウスがメニュー範囲内にあるか
+        if (pointer.x >= SCROLL_X && pointer.x <= SCROLL_X + SCROLL_W &&
+            pointer.y >= SCROLL_Y && pointer.y <= SCROLL_Y + SCROLL_H) {
+            
+            const contentH = listContainer.contentHeight;
+            // コンテンツが枠より小さければスクロールしない
+            if (contentH < SCROLL_H) return;
+
+            listContainer.y -= deltaY * 0.5;
+
+            // 範囲制限
+            // 上限: 初期位置 (-120あたり)
+            // 下限: コンテンツ分だけ上に上がった位置
+            const initialY = -120;
+            const minY = initialY - (contentH - SCROLL_H + 20); // 20は下部余白
+            const maxY = initialY;
+            
+            listContainer.y = Phaser.Math.Clamp(listContainer.y, minY, maxY);
+        }
+    });
+
+    // メニューを閉じる共通処理
+    const closeMenu = () => {
         scene.menuContainer.setVisible(false);
         scene.isMenuOpen = false;
-        openPlayerSelection(scene, 'アイテムを送る相手を選択', (targetId, targetName) => {
-            openTransferInventory(scene, targetId, targetName);
-        });
-    });
-    
-    const btnStatus = createMenuButton(-50, 'ステータス', () => {
-        scene.menuMain.setVisible(false);   // メインを隠す
-        scene.menuStatus.setVisible(true);  // ステータスを出す
-        updateMenuStats(scene);             // 数値を更新
-    });
-
-    const btnUnstuck = createMenuButton(20, 'スタック脱出 (自殺)', () => {
-        scene.menuMain.setVisible(false);
-        scene.menuSuicide.setVisible(true); // 確認画面へ
-    });
-
-    // [閉じる] (位置: 150 -> 90 に少し詰めました)
-    const btnClose = createMenuButton(90, '閉じる', () => {
-        scene.menuContainer.setVisible(false);
-        scene.isMenuOpen = false;
-    });
-
-    // 将来ここに「スキル」「クエスト」などを追加できます
-    // createMenuButton(0, 'スキル', ...); 
-
-    scene.menuMain.add([...btnAssignment, ...btnStatus, ...btnUnstuck, ...btnClose]);
+        // 次回開いたときのためにスクロール位置をリセットしたければここで
+        listContainer.y = -120;
+    };
 
 
-    // --- 3. ステータス画面のコンテナ ---
-    scene.menuStatus = scene.add.container(0, 0).setScrollFactor(0);
-    scene.menuStatus.setVisible(false); // 最初は隠す
+    // --- 3. ステータス画面 ---
+    // (ここはボタンが少ないのでスクロール無しで実装します)
+    scene.menuStatus = scene.add.container(0, 0);
+    scene.menuStatus.setVisible(false);
     scene.menuContainer.add(scene.menuStatus);
 
-    // ステータス表示用テキスト（更新するために参照を持っておく）
     scene.statusText = scene.add.text(0, -20, '', { 
         fontSize: '16px', fill: '#fff', align: 'left', lineSpacing: 10 
     }).setOrigin(0.5);
     scene.menuStatus.add(scene.statusText);
 
+    // ステータス画面の「戻る」ボタン
+    const btnBack = scene.add.rectangle(0, 150, 200, 40, 0x333333).setInteractive({ useHandCursor: true });
+    const btnBackText = scene.add.text(0, 150, '戻る', { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+    btnBack.on('pointerdown', () => {
+        scene.menuStatus.setVisible(false);
+        scene.menuMain.setVisible(true);
+    });
+    scene.menuStatus.add([btnBack, btnBackText]);
+
+
+    // --- 4. 自殺確認画面 ---
     scene.menuSuicide = scene.add.container(0, 0);
     scene.menuSuicide.setVisible(false);
     scene.menuContainer.add(scene.menuSuicide);
@@ -1981,31 +2077,23 @@ function createMenuUI(scene) {
     }).setOrigin(0.5);
     scene.menuSuicide.add(suicideWarnText);
 
-    const btnDieYes = createMenuButton(20, '実行する', () => {
-        console.log("さようなら...");
-        scene.socket.emit('forceRespawn'); // サーバーに死亡通知
-        
-        scene.menuContainer.setVisible(false);
-        scene.isMenuOpen = false;
+    // はい
+    const btnDieYes = scene.add.rectangle(0, 40, 200, 40, 0xaa0000).setInteractive({ useHandCursor: true });
+    const txtDieYes = scene.add.text(0, 40, '実行する', { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+    btnDieYes.on('pointerdown', () => {
+        scene.socket.emit('forceRespawn');
+        closeMenu();
     });
-    // 少し色を赤くして危険な感じにする
-    btnDieYes[0].setFillStyle(0xaa0000); 
 
-    // [いいえ、戻ります] ボタン
-    const btnDieNo = createMenuButton(90, 'やめる', () => {
+    // いいえ
+    const btnDieNo = scene.add.rectangle(0, 100, 200, 40, 0x333333).setInteractive({ useHandCursor: true });
+    const txtDieNo = scene.add.text(0, 100, 'やめる', { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+    btnDieNo.on('pointerdown', () => {
         scene.menuSuicide.setVisible(false);
-        scene.menuMain.setVisible(true); // メインに戻る
+        scene.menuMain.setVisible(true);
     });
 
-    scene.menuSuicide.add([...btnDieYes, ...btnDieNo]);
-
-    // [戻る] ボタン
-    const btnBack = createMenuButton(150, '戻る', () => {
-        scene.menuStatus.setVisible(false); // ステータスを隠す
-        scene.menuMain.setVisible(true);    // メインメニューに戻る
-    });
-    scene.menuStatus.setScrollFactor(0);
-    scene.menuStatus.add(btnBack);
+    scene.menuSuicide.add([btnDieYes, txtDieYes, btnDieNo, txtDieNo]);
 }
 
 function updateMenuStats(scene) {
