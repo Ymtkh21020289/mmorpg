@@ -1642,10 +1642,6 @@ function createMerchantUI(scene) {
 
     // --- 7. スクロール制御 ---
     const onScroll = (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-        // UIが開いていない、または「売却モード中」ならスクロールしない
-        if (!scene.isMerchantOpen) return;
-        if (scene.isSellingMode) return; // ★重要: 売却中はリストが見えないので無視
-
         // 1. まずイベントが発火しているか？
         console.log("ホイール動いた！"); 
 
@@ -1654,6 +1650,9 @@ function createMerchantUI(scene) {
             console.log("Openフラグが false です");
             return;
         }
+        // UIが開いていない、または「売却モード中」ならスクロールしない
+        if (!scene.isMerchantOpen) return;
+        if (scene.isSellingMode) return; // ★重要: 売却中はリストが見えないので無視
     
         // 3. マウス位置判定はOKか？
         if (pointer.x >= LIST_X && pointer.x <= LIST_X + LIST_W &&
