@@ -1526,109 +1526,6 @@ function handleSlotClick(scene, index) {
     }
 }
 
-function createShopUI(scene) {
-    scene.isShopOpen = false;
-    
-    // 背景（画面中央）
-    scene.shopContainer = scene.add.container(150, 100).setScrollFactor(0).setDepth(200);
-    scene.shopContainer.setVisible(false);
-
-    // 2. 「売却モードのときに消したいもの」をまとめるコンテナを作る
-    scene.shopContent = scene.add.container(0, 0);
-    scene.shopContainer.add(scene.shopContent);
-
-    const bg = scene.add.rectangle(250, 200, 500, 400, 0x000000, 0.9);
-    bg.setStrokeStyle(4, 0x884400); // 茶色の枠
-    bg.setInteractive(); // クリックが後ろに抜けないように
-    // ★追加：背景の当たり判定を画面固定にする
-    bg.setScrollFactor(0);
-    scene.shopContent.add(bg);
-
-    const title = scene.add.text(250, 30, '=== 鍛冶屋 (Bキーで閉じる) ===', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
-    scene.shopContent.add(title);
-
-    scene.isSellingMode = false; // 初期状態はOFF
-
-    // ボタンの背景
-    const sellBtn = scene.add.rectangle(250, 360, 200, 40, 0xaa0000);
-    sellBtn.setScrollFactor(0); // 画面固定！
-    sellBtn.setInteractive({ useHandCursor: true });
-    
-    // ボタンの文字
-    const sellText = scene.add.text(250, 360, '売却モード: OFF', { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
-
-    // クリックイベント
-    sellBtn.on('pointerdown', () => {
-        scene.isSellingMode = !scene.isSellingMode; // ON/OFF切り替え
-
-        if (scene.isSellingMode) {
-            sellBtn.setFillStyle(0xff0000, 1); // ONなら明るい赤
-            sellText.setText('売却モード: ON (アイテムをクリック)');
-            scene.shopContent.setVisible(false)
-        } else {
-            sellBtn.setFillStyle(0xaa0000, 1); // OFFなら暗い赤
-            sellText.setText('売却モード: OFF');
-            scene.shopContent.setVisible(true);
-        }
-    });
-
-    scene.shopContainer.add([sellBtn, sellText]);
-
-    // --- 左側：ショップ（購入） ---
-    scene.shopContent.add(scene.add.text(50, 60, '【購入】', { fill: '#00ff00' }));
-    
-    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring']; // 売っているものリスト
-    
-    shopItems.forEach((id, index) => {
-        const item = ITEMS[id];
-        const y = 100 + index * 40;
-        
-        // ボタン背景
-        const btn = scene.add.rectangle(120, y, 140, 30, 0x333333).setInteractive({ useHandCursor: true });
-        const text = scene.add.text(120, y, `${item.name} (${item.price}G)`, { fontSize: '12px' }).setOrigin(0.5);
-
-        btn.setScrollFactor(0);
-        
-        btn.on('pointerdown', () => {
-            scene.socket.emit('buyItem', id);
-        });
-
-        scene.shopContent.add([btn, text]);
-    });
-
-
-    // --- 右側：クラフト（作成） ---
-    scene.shopContent.add(scene.add.text(300, 60, '【クラフト】', { fill: '#00ffff' }));
-
-    RECIPES.forEach((recipe, index) => {
-        const resultItem = ITEMS[recipe.id];
-        const y = 100 + index * 60; // 少し広めに
-
-        // レシピの説明文を作成
-        let reqText = '';
-        for (const [matId, count] of Object.entries(recipe.materials)) {
-            const matName = ITEMS[matId] ? ITEMS[matId].name : matId;
-            reqText += `${matName}x${count} `;
-        }
-
-        // ボタン背景
-        const btn = scene.add.rectangle(370, y, 240, 50, 0x442200).setInteractive({ useHandCursor: true });
-
-        btn.setScrollFactor(0);
-        
-        // 商品名
-        const nameText = scene.add.text(370, y - 10, `作る: ${resultItem.name}`, { fontSize: '14px', fill: '#ffaa00' }).setOrigin(0.5);
-        // 素材表示
-        const matText = scene.add.text(370, y + 10, `必要: ${reqText}\n費用: ${recipe.cost}G`, { fontSize: '10px', fill: '#ccc' }).setOrigin(0.5);
-
-        btn.on('pointerdown', () => {
-            scene.socket.emit('craftItem', index);
-        });
-
-        scene.shopContent.add([btn, nameText, matText]);
-    });
-}
-
 function createMerchantUI(scene) {
     scene.isMerchantOpen = false;
     scene.isSellingMode = false;
@@ -1679,7 +1576,7 @@ function createMerchantUI(scene) {
     const itemHeight = 45;
     
     // 仮の商品データ
-    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring', 'iron_sword', 'magic_stone']; 
+    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring', 'wooden_axe', 'slime_gel']; 
     
     shopItems.forEach((id) => {
         const item = ITEMS[id]; 
