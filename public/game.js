@@ -1957,8 +1957,31 @@ function createMenuUI(scene) {
             text: '送金する',
             callback: () => {
                 closeMenu();
-                createGoldTransferButton(scene); // ※もしくは直接処理を呼ぶ
-                // ここは既存のロジックに合わせて調整してください
+                openPlayerSelection(scene, '誰に送金しますか？', (targetId, targetName) => {
+                    // --- コールバック: プレイヤーが選ばれた後の処理 ---
+            
+                    // 金額入力ダイアログ (ブラウザ標準)
+                    const input = prompt(`${targetName} さんにいくら送りますか？\n(所持金: ${scene.myPlayer.gold} G)`, "0");
+            
+                    if (input === null) return; // キャンセル
+
+                    const amount = parseInt(input);
+                    if (isNaN(amount) || amount <= 0) {
+                        alert("金額が不正です。");
+                        return;
+                    }
+
+                    if (amount > scene.myPlayer.gold) {
+                        alert("所持金が足りません！");
+                        return;
+                    }
+
+                    // サーバーへ送信
+                    scene.socket.emit('transferGold', {
+                        targetId: targetId,
+                        amount: amount
+                    });
+                });
             }
         },
         {
