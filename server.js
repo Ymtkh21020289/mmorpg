@@ -62,6 +62,10 @@ const playerSchema = new mongoose.Schema({
         default: createEmptyInventory // 関数を渡すと作成時に実行される
     },
 
+    storage: {
+        type: Array,
+        default: []
+    },
     // 装備
     equipment: {
         type: Object,
