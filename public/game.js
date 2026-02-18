@@ -810,11 +810,11 @@ function create() {
     });
 
     createWarehouseUI(this);
-    this.myPlayer.storage = []; 
+    this.mystorage = []; 
 
     // サーバーからの更新通知を受け取る
     this.socket.on('updateStorage', (storageData) => {
-        this.myPlayer.storage = storageData;
+        this.mystorage = storageData;
     
         // もし倉庫画面を開いていたら、リストを再描画する
         if (this.isWarehouseOpen) {
@@ -2924,11 +2924,11 @@ function createWarehouseUI(scene) {
 
         if (scene.warehouseMode === 'deposit') {
             // インベントリを表示
-            items = scene.myPlayer.inventory || [];
+            items = scene.myInventory || [];
             emptyMessage = "預けるものがありません";
         } else {
             // 倉庫を表示
-            items = scene.myPlayer.storage || [];
+            items = scene.mystorage || [];
             emptyMessage = "倉庫は空っぽです";
         }
 
