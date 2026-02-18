@@ -22,6 +22,14 @@ const npcs = {
         type: 'identify',
         color: 0x00ff00,       // 緑色（味方っぽい色）
         radius: 30             // 当たり判定の大きさ
+    },
+    'werehouse': { 
+        x: 304, y: 48,        // 配置座標
+        mapId: 'town',        // 配置マップ
+        name: '倉庫番',
+        type: 'werehouse',
+        color: 0x00ff00,       // 緑色（味方っぽい色）
+        radius: 30             // 当たり判定の大きさ
     }
 };
 
