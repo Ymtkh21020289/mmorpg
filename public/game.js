@@ -2951,10 +2951,25 @@ function createWarehouseUI(scene) {
 
             // クリックイベント
             btn.on('pointerdown', () => {
-                if (scene.warehouseMode === 'deposit') {
-                    scene.socket.emit('depositItem', index);
+                let amount = 1;
+
+                // 素材なら個数指定
+                if (baseData.type === 'material') {
+                    const input = prompt(`「${info.name}」をいくつ送りますか？ (所持: ${itemData.count})`, "1");
+                    if (input === null) return; 
+                    amount = parseInt(input);
+                
+                    if (isNaN(amount) || amount <= 0 || amount > itemData.count) {
+                        alert("無効な数値です");
+                        return;
+                    }
                 } else {
-                    scene.socket.emit('withdrawItem', index);
+                    if (!confirm(`「${info.name}」を本当に送りますか？`)) return;
+                }
+                if (scene.warehouseMode === 'deposit') {
+                    scene.socket.emit('depositItem', {index: index, amount: amount});
+                } else {
+                    scene.socket.emit('withdrawItem', {index: index, amount: amount});
                 }
                 // ※クリック後のリスト更新はサーバーからの socket.on('updateStorage/Inventory') で行われます
             });
