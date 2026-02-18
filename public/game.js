@@ -2941,9 +2941,9 @@ function createWarehouseUI(scene) {
         let currentY = 0;
         const itemHeight = 50;
 
-        items.forEach((itemData, index) => {
+        items.forEach((item, index) => {
             // アイテムデータ取得（IDしか入っていない場合を考慮してITEMS辞書から引く）
-            const info = ITEMS[itemData.id];
+            const info = ITEMS[item.id];
             if (!info) return;
 
             // ボタン作成
@@ -2963,12 +2963,12 @@ function createWarehouseUI(scene) {
                 let amount = 1;
 
                 // 素材なら個数指定
-                if (baseData.type === 'material') {
-                    const input = prompt(`「${info.name}」をいくつ送りますか？ (所持: ${itemData.count})`, "1");
+                if (info.type === 'material') {
+                    const input = prompt(`「${info.name}」をいくつ送りますか？ (所持: ${item.count})`, "1");
                     if (input === null) return; 
                     amount = parseInt(input);
                 
-                    if (isNaN(amount) || amount <= 0 || amount > itemData.count) {
+                    if (isNaN(amount) || amount <= 0 || amount > item.count) {
                         alert("無効な数値です");
                         return;
                     }
