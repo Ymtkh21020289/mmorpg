@@ -806,11 +806,24 @@ function create() {
             // createExplosionEffect(this, data.x, data.y); // 別途関数が必要ですが
         });
     });
+
+    createWarehouseUI(this);
+    this.myPlayer.storage = []; 
+
+    // サーバーからの更新通知を受け取る
+    this.socket.on('updateStorage', (storageData) => {
+        this.myPlayer.storage = storageData;
+    
+        // もし倉庫画面を開いていたら、リストを再描画する
+        if (this.isWarehouseOpen) {
+            this.refreshWarehouseList(); 
+        }
+    });
 }
 
 function update() {
     // 既存のチェックに追加： isTyping が true なら動かない
-    if (!this.player || !mapReady || this.isTyping || this.isShopOpen) return;
+    if (!this.player || !mapReady || this.isTyping || this.isMerchantOpen || this.isCraftingOpen || this.isAppraiserOpen || this.isWarehouseOpen) return;
 
     const speed = 200;
     this.player.body.setVelocity(0);
@@ -998,6 +1011,8 @@ function update() {
                             this.appraiserContainer.setVisible(true);
                             this.appraiserList.setVisible(true);
                             updateAppraiserList(this);
+                        }else if (enemy.getData('type') === 'warehouse' && !this.isWarehouseOpen) {
+                            this.openWarehouseUI();
                         }
                     }
                 }
@@ -2806,4 +2821,202 @@ function createGoldTransferButton(scene) {
             });
         });
     });
+}
+
+function createWarehouseUI(scene) {
+    scene.isWarehouseOpen = false;
+    scene.warehouseMode = 'deposit'; // 'deposit'(預ける) か 'withdraw'(引き出す)
+
+    // --- 1. 設定値 ---
+    const UI_X = 100;
+    const UI_Y = 50;
+    const UI_W = 600;
+    const UI_H = 500;
+    const LIST_Y_OFFSET = 120; // タブの下
+    const LIST_H = 340;        // リストの表示高さ
+
+    // --- 2. 親コンテナ ---
+    scene.warehouseContainer = scene.add.container(UI_X, UI_Y).setScrollFactor(0).setDepth(200);
+    scene.warehouseContainer.setVisible(false);
+
+    // 背景
+    const bg = scene.add.rectangle(UI_W/2, UI_H/2, UI_W, UI_H, 0x000000, 0.9)
+        .setStrokeStyle(4, 0x4444ff) // 青っぽい枠（倉庫感）
+        .setInteractive()
+        .setScrollFactor(0);
+    scene.warehouseContainer.add(bg);
+
+    // タイトル
+    const title = scene.add.text(UI_W/2, 30, '=== 巨大倉庫 ===', { fontSize: '24px', fill: '#aaaaff', fontStyle: 'bold' }).setOrigin(0.5);
+    scene.warehouseContainer.add(title);
+
+    // 閉じるボタン
+    const closeBtn = scene.add.text(UI_W/2, UI_H - 20, '閉じる (B)', { fontSize: '14px', fill: '#aaa' })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerdown', () => scene.closeWarehouseUI());
+    scene.warehouseContainer.add(closeBtn);
+
+
+    // --- 3. タブ切り替えボタン ---
+    const tabContainer = scene.add.container(0, 0);
+    scene.warehouseContainer.add(tabContainer);
+
+    // [預ける] タブ
+    const tabDeposit = scene.add.rectangle(UI_W/4, 80, 280, 40, 0x333333).setInteractive({ useHandCursor: true }).setScrollFactor(0);
+    const txtDeposit = scene.add.text(UI_W/4, 80, '預ける (所持品)', { fontSize: '18px', fill: '#fff' }).setOrigin(0.5);
+    
+    // [引き出す] タブ
+    const tabWithdraw = scene.add.rectangle(UI_W*3/4, 80, 280, 40, 0x111111).setInteractive({ useHandCursor: true }).setScrollFactor(0);
+    const txtWithdraw = scene.add.text(UI_W*3/4, 80, '引き出す (倉庫)', { fontSize: '18px', fill: '#888' }).setOrigin(0.5);
+
+    tabContainer.add([tabDeposit, txtDeposit, tabWithdraw, txtWithdraw]);
+
+    // タブクリックイベント
+    tabDeposit.on('pointerdown', () => {
+        scene.warehouseMode = 'deposit';
+        updateTabs();
+        scene.refreshWarehouseList(); // リスト更新
+    });
+
+    tabWithdraw.on('pointerdown', () => {
+        scene.warehouseMode = 'withdraw';
+        updateTabs();
+        scene.refreshWarehouseList(); // リスト更新
+    });
+
+    // タブの色を更新する関数
+    const updateTabs = () => {
+        if (scene.warehouseMode === 'deposit') {
+            tabDeposit.setFillStyle(0x4444ff); // 青（アクティブ）
+            txtDeposit.setFill('#ffffff');
+            tabWithdraw.setFillStyle(0x111111); // 暗い（非アクティブ）
+            txtWithdraw.setFill('#888888');
+        } else {
+            tabDeposit.setFillStyle(0x111111);
+            txtDeposit.setFill('#888888');
+            tabWithdraw.setFillStyle(0xff4444); // 赤（アクティブ）
+            txtWithdraw.setFill('#ffffff');
+        }
+    };
+
+
+    // --- 4. リスト表示エリア（スクロール対応） ---
+    const listContainer = scene.add.container(0, LIST_Y_OFFSET);
+    scene.warehouseContainer.add(listContainer);
+
+    // リスト描画関数（重要：モードによって中身を変える）
+    scene.refreshWarehouseList = () => {
+        listContainer.removeAll(true); // 前の中身を消す
+        listContainer.y = LIST_Y_OFFSET; // スクロール位置リセット
+
+        let items = [];
+        let emptyMessage = "";
+
+        if (scene.warehouseMode === 'deposit') {
+            // インベントリを表示
+            items = scene.myPlayer.inventory || [];
+            emptyMessage = "預けるものがありません";
+        } else {
+            // 倉庫を表示
+            items = scene.myPlayer.storage || [];
+            emptyMessage = "倉庫は空っぽです";
+        }
+
+        if (items.length === 0) {
+            listContainer.add(scene.add.text(UI_W/2, 50, emptyMessage, { color: '#888' }).setOrigin(0.5));
+            listContainer.contentHeight = 0;
+            return;
+        }
+
+        let currentY = 0;
+        const itemHeight = 50;
+
+        items.forEach((itemData, index) => {
+            // アイテムデータ取得（IDしか入っていない場合を考慮してITEMS辞書から引く）
+            const info = ITEMS[itemData.id];
+            if (!info) return;
+
+            // ボタン作成
+            const btnColor = (scene.warehouseMode === 'deposit') ? 0x222244 : 0x442222;
+            const btn = scene.add.rectangle(UI_W/2, currentY + itemHeight/2, 500, 40, btnColor)
+                .setScrollFactor(0) // ★忘れずに！
+                .setInteractive({ useHandCursor: true });
+
+            const textStr = (scene.warehouseMode === 'deposit') 
+                ? `預ける: ${info.name}` 
+                : `引き出す: ${info.name}`;
+            
+            const text = scene.add.text(UI_W/2, currentY + itemHeight/2, textStr, { fontSize: '16px', fill: '#fff' }).setOrigin(0.5);
+
+            // クリックイベント
+            btn.on('pointerdown', () => {
+                if (scene.warehouseMode === 'deposit') {
+                    scene.socket.emit('depositItem', index);
+                } else {
+                    scene.socket.emit('withdrawItem', index);
+                }
+                // ※クリック後のリスト更新はサーバーからの socket.on('updateStorage/Inventory') で行われます
+            });
+
+            // ホバー
+            btn.on('pointerover', () => btn.setFillStyle(0x666666));
+            btn.on('pointerout', () => btn.setFillStyle(btnColor));
+
+            listContainer.add([btn, text]);
+            currentY += itemHeight + 5;
+        });
+
+        listContainer.contentHeight = currentY;
+    };
+
+
+    // --- 5. マスク設定 ---
+    const shape = scene.make.graphics();
+    shape.fillStyle(0xffffff);
+    // 画面絶対座標
+    shape.fillRect(UI_X, UI_Y + LIST_Y_OFFSET, UI_W, LIST_H);
+    shape.setScrollFactor(0);
+    const mask = shape.createGeometryMask();
+    listContainer.setMask(mask);
+
+
+    // --- 6. スクロール制御 ---
+    const onScroll = (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        if (!scene.isWarehouseOpen) return;
+
+        // マウス位置判定
+        if (pointer.x >= UI_X && pointer.x <= UI_X + UI_W &&
+            pointer.y >= UI_Y + LIST_Y_OFFSET && pointer.y <= UI_Y + LIST_H + LIST_Y_OFFSET) {
+            
+            const contentH = listContainer.contentHeight;
+            if (contentH <= LIST_H) return;
+
+            listContainer.y -= deltaY * 0.5;
+
+            const minY = LIST_Y_OFFSET - (contentH - LIST_H + 20);
+            const maxY = LIST_Y_OFFSET;
+            
+            listContainer.y = Phaser.Math.Clamp(listContainer.y, minY, maxY);
+        }
+    };
+
+
+    // --- 7. 開閉ヘルパー ---
+    scene.closeWarehouseUI = () => {
+        scene.warehouseContainer.setVisible(false);
+        scene.isWarehouseOpen = false;
+        scene.input.off('wheel', onScroll);
+    };
+
+    scene.openWarehouseUI = () => {
+        scene.warehouseContainer.setVisible(true);
+        scene.isWarehouseOpen = true;
+        scene.warehouseMode = 'deposit'; // 最初は「預ける」モード
+        updateTabs();
+        scene.refreshWarehouseList();
+        
+        scene.input.off('wheel', onScroll);
+        scene.input.on('wheel', onScroll);
+    };
 }
