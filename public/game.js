@@ -2942,6 +2942,7 @@ function createWarehouseUI(scene) {
         const itemHeight = 50;
 
         items.forEach((item, index) => {
+            if(!item) return;
             // アイテムデータ取得（IDしか入っていない場合を考慮してITEMS辞書から引く）
             const info = ITEMS[item.id];
             if (!info) return;
