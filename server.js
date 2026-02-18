@@ -735,6 +735,89 @@ io.on('connection', (socket) => {
         socket.emit('systemMessage', `${receiver.username} に ${amount} G 送金しました。`);
         io.to(receiver.id).emit('systemMessage', `${sender.username} から ${amount} G 受け取りました！`);
     });
+    
+    // --- 倉庫：預ける (Inventory -> Storage) ---
+    socket.on('depositItem', async (data) => {
+        const player = players[socket.id];
+        if (!player) return;
+        const item = player.inventory[data.index];
+        if (!item) return;
+    
+        // インデックスが有効か確認
+        if (data.index < 0 || data.index >= 30) return;
+    
+        // 所持数チェック
+        if (!item.count || item.count < data.amount) {
+            socket.emit('systemMessage', '数が足りません。');
+            return;
+        }
+
+        // 送信者から減らす
+        item.count -= data.amount;
+        if (item.count <= 0) {
+            player.inventory[data.index] = null; // 0になったら消す
+        }
+
+        // 受信者に追加する（既存スタックがあれば合算）
+        const existingItem = player.storage.find(i => i.id === item.id);
+        if (existingItem) {
+            existingItem.count = (existingItem.count || 1) + amount;
+        } else {
+            player.storage.push(item); // 倉庫に追加
+        }
+    
+        // クライアントに通知（インベントリと倉庫の両方を更新）
+        socket.emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
+        socket.emit('updateStorage', player.storage);
+        socket.emit('systemMessage', `${ITEMS[item.id].name} を預けました。`);
+    });
+    
+    // --- 倉庫：引き出す (Storage -> Inventory) ---
+    socket.on('withdrawItem', async (data) => {
+        const player = players[socket.id];
+        if (!player) return;
+        const item = player.storage[data.index];
+        if (!item) return;
+    
+        // インデックス確認
+        if (data.index < 0 || data.index >= player.storage.length) return;
+        // 所持数チェック
+        if (!item.count || item.count < amount) {
+            socket.emit('systemMessage', '数が足りません。');
+            return;
+        }
+
+            // 送信者から減らす
+        item.count -= amount;
+        if (item.count <= 0) {
+            player.storage.splice(data.index, 1)[0]; // 0になったら消す
+        }
+
+        // 受信者に追加する（既存スタックがあれば合算）
+        const existingItem = player.inventory.find(i => i.id === item.id);
+        if (existingItem) {
+            existingItem.count = (existingItem.count || 1) + amount;
+        } else {
+            const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
+        
+            if (emptyIndex !== -1) {
+                receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: amount, isUnidentified: item.isUnidentified };
+            }else {
+                socket.emit('systemMessage', 'インベントリがいっぱいです！');
+                return;
+            }
+        }
+    
+        // アイテムを移動
+        const item = player.storage.splice(index, 1)[0]; // 倉庫から削除
+    
+        await savePlayer(player); // 保存
+
+        // クライアントに通知
+        socket.emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
+        socket.emit('updateStorage', player.storage);
+        socket.emit('systemMessage', `${ITEMS[item.id].name} を引き出しました。`);
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
@@ -1227,6 +1310,7 @@ async function savePlayer(player) {
         // --- 所持品・装備 ---
         gold: player.gold,
         inventory: player.inventory, // 配列の中身ごと保存されます
+        storage: player.storage,
         equipment: player.equipment  // オブジェクトの中身ごと保存されます
     };
 
