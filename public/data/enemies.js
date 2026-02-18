@@ -32,13 +32,26 @@ const ENEMY_TYPES = {
         hp: 75,  
         maxHp: 75,  
         exp: 10, 
-        speed: 3, 
+        speed: 1, 
         attackRange: 80,
-        attackRadius: 100,
-        attackAngle: Math.PI / 2, // 狭いけど長い（45度）
+        attackRadius: 120,
+        attackAngle: Math.PI / 2,
         damage: 20,
         chargeTime: 1000,
         cooldown: 2000,
+        respawnType: 'group' 
+    },
+    golem:   {
+        hp: 200,  
+        maxHp: 200,  
+        exp: 20, 
+        speed: 3, 
+        attackRange: 80,
+        attackRadius: 100,
+        attackAngle: Math.PI,
+        damage: 30,
+        chargeTime: 1000,
+        cooldown: 4000,
         respawnType: 'group' 
     }
 };
