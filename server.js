@@ -801,20 +801,20 @@ io.on('connection', (socket) => {
             if (existingItem) {
                 existingItem.count = (existingItem.count || 1) + data.amount;
             } else {
-                const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
+                const emptyIndex = player.inventory.findIndex(slot => slot === null);
             
                 if (emptyIndex !== -1) {
-                    receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified };
+                    player.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified };
                 }else {
                     socket.emit('systemMessage', 'インベントリがいっぱいです！');
                     return;
                 }
             }
         }else {
-            const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
+            const emptyIndex = player.inventory.findIndex(slot => slot === null);
             
             if (emptyIndex !== -1) {
-                receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified };
+                player.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified };
             }else {
                 socket.emit('systemMessage', 'インベントリがいっぱいです！');
                 return;
