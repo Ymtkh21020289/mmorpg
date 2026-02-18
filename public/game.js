@@ -2983,10 +2983,19 @@ function createWarehouseUI(scene) {
                 }
                 // ※クリック後のリスト更新はサーバーからの socket.on('updateStorage/Inventory') で行われます
             });
+            // B. ホバーでツールチップ表示
+            btn.on('pointerover', () => {
+                const pointer = scene.input.activePointer;
+                showTooltip(item, pointer.x, pointer.y);
+                btn.setFillStyle(0x666666); // ハイライト
+            });
 
-            // ホバー
-            btn.on('pointerover', () => btn.setFillStyle(0x666666));
-            btn.on('pointerout', () => btn.setFillStyle(btnColor));
+            // C. ホバー解除で非表示
+            btn.on('pointerout', () => {
+                const tooltip = document.getElementById('game-tooltip');
+                if (tooltip) tooltip.style.display = 'none';
+                btn.setFillStyle(0x222222); // 元の色
+            });
 
             listContainer.add([btn, text]);
             currentY += itemHeight + 5;
