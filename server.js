@@ -808,8 +808,6 @@ io.on('connection', (socket) => {
             }
         }
     
-        player.storage.splice(index, 1)[0]; // 倉庫から削除
-    
         await savePlayer(player); // 保存
 
         // クライアントに通知
