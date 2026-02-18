@@ -758,12 +758,15 @@ io.on('connection', (socket) => {
             player.inventory[data.index] = null; // 0になったら消す
         }
 
+        const isMaterial = (baseData.type === 'material');
         // 受信者に追加する（既存スタックがあれば合算）
-        const existingItem = player.storage.find(i => i.id === item.id);
-        if (existingItem) {
-            existingItem.count = (existingItem.count || 1) + data.amount;
-        } else {
-            player.storage.push({ id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified }); // 倉庫に追加
+        if (ismaterial){
+            const existingItem = player.storage.find(i => i.id === item.id);
+            if (existingItem) {
+                existingItem.count = (existingItem.count || 1) + data.amount;
+            } else {
+                player.storage.push({ id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified }); // 倉庫に追加
+            }
         }
     
         // クライアントに通知（インベントリと倉庫の両方を更新）
@@ -794,12 +797,24 @@ io.on('connection', (socket) => {
         }
 
         // 受信者に追加する（既存スタックがあれば合算）
-        const existingItem = player.inventory.find(i => i.id === item.id);
-        if (existingItem) {
-            existingItem.count = (existingItem.count || 1) + data.amount;
-        } else {
+        const isMaterial = (baseData.type === 'material');
+        if (isMaterial) {
+            const existingItem = player.inventory.find(i => i.id === item.id);
+            if (existingItem) {
+                existingItem.count = (existingItem.count || 1) + data.amount;
+            } else {
+                const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
+            
+                if (emptyIndex !== -1) {
+                    receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified };
+                }else {
+                    socket.emit('systemMessage', 'インベントリがいっぱいです！');
+                    return;
+                }
+            }
+        }else {
             const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
-        
+            
             if (emptyIndex !== -1) {
                 receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified };
             }else {
