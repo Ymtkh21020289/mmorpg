@@ -796,7 +796,7 @@ io.on('connection', (socket) => {
         // 受信者に追加する（既存スタックがあれば合算）
         const existingItem = player.inventory.find(i => i.id === item.id);
         if (existingItem) {
-            existingItem.count = (existingItem.count || 1) + amount;
+            existingItem.count = (existingItem.count || 1) + data.amount;
         } else {
             const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
         
