@@ -829,6 +829,9 @@ function update() {
     if (this.isCraftingOpen) console.log('鍛冶屋を開いています');
     if (this.isAppraiserOpen) console.log('鑑定士を開いています');
     if (this.isWarehouseOpen) console.log('倉庫を開いています');
+    if (!this.player) console.log('プレイヤーが存在しません');
+    if (!mapReady) console.log('マップの読み込みが完了していません');
+    if (this.isTyping) console.log('チャット画面を開いています');
     if (!this.player || !mapReady || this.isTyping || this.isMerchantOpen || this.isCraftingOpen || this.isAppraiserOpen || this.isWarehouseOpen) return;
 
     const speed = 200;
