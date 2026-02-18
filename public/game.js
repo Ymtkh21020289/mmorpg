@@ -471,6 +471,8 @@ function create() {
             this.isAppraiserOpen = false;
             this.appraiserContainer.setVisible(false);
             this.appraiserList.setVisible(false);
+        }else if (this.isWarehouseOpen) {
+            this.closeWarehouseUI();
         }
     });
 
