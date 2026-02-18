@@ -2986,7 +2986,7 @@ function createWarehouseUI(scene) {
             // B. ホバーでツールチップ表示
             btn.on('pointerover', () => {
                 const pointer = scene.input.activePointer;
-                showTooltip(item, pointer.x, pointer.y);
+                showTooltip(item, 320, pointer.y);
                 btn.setFillStyle(0x666666); // ハイライト
             });
 
