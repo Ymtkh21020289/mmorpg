@@ -825,6 +825,10 @@ function create() {
 
 function update() {
     // 既存のチェックに追加： isTyping が true なら動かない
+    if (this.isMerchantOpen) console.log('ショップを開いています');
+    if (this.isCraftingOpen) console.log('鍛冶屋を開いています');
+    if (this.isAppraiserOpen) console.log('鑑定士を開いています');
+    if (this.isWarehouseOpen) console.log('倉庫を開いています');
     if (!this.player || !mapReady || this.isTyping || this.isMerchantOpen || this.isCraftingOpen || this.isAppraiserOpen || this.isWarehouseOpen) return;
 
     const speed = 200;
