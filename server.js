@@ -201,6 +201,7 @@ io.on('connection', (socket) => {
                 mp: player.mp, maxMp: player.maxMp // ★MPも含める
             });
         socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
+        socket.emit('updateStorage', player.storage);
         socket.emit('equipmentUpdate', player.equipment);
 
         // ★ 'town' 部屋にいる人たちだけに、新入り情報を送る
