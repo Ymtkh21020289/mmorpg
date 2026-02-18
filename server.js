@@ -761,9 +761,9 @@ io.on('connection', (socket) => {
         // 受信者に追加する（既存スタックがあれば合算）
         const existingItem = player.storage.find(i => i.id === item.id);
         if (existingItem) {
-            existingItem.count = (existingItem.count || 1) + amount;
+            existingItem.count = (existingItem.count || 1) + data.amount;
         } else {
-            player.storage.push(item); // 倉庫に追加
+            player.storage.push({ id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified }); // 倉庫に追加
         }
     
         // クライアントに通知（インベントリと倉庫の両方を更新）
