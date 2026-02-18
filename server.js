@@ -808,8 +808,7 @@ io.on('connection', (socket) => {
             }
         }
     
-        // アイテムを移動
-        const item = player.storage.splice(index, 1)[0]; // 倉庫から削除
+        player.storage.splice(index, 1)[0]; // 倉庫から削除
     
         await savePlayer(player); // 保存
 
