@@ -782,13 +782,13 @@ io.on('connection', (socket) => {
         // インデックス確認
         if (data.index < 0 || data.index >= player.storage.length) return;
         // 所持数チェック
-        if (!item.count || item.count < amount) {
+        if (!item.count || item.count < data.amount) {
             socket.emit('systemMessage', '数が足りません。');
             return;
         }
 
             // 送信者から減らす
-        item.count -= amount;
+        item.count -= data.amount;
         if (item.count <= 0) {
             player.storage.splice(data.index, 1)[0]; // 0になったら消す
         }
@@ -801,7 +801,7 @@ io.on('connection', (socket) => {
             const emptyIndex = receiver.inventory.findIndex(slot => slot === null);
         
             if (emptyIndex !== -1) {
-                receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: amount, isUnidentified: item.isUnidentified };
+                receiver.inventory[emptyIndex] = { id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified };
             }else {
                 socket.emit('systemMessage', 'インベントリがいっぱいです！');
                 return;
