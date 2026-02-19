@@ -25,6 +25,7 @@ function preload() {
     this.load.image('tiles', 'assets/tiles.png');
     this.load.image('slimeSprite', 'assets/slime.png');
     this.load.image('wolfSprite', 'assets/wolf.png');
+    this.load.image('golemSprite', 'assets/golem.png');
     // プレイヤー画像がない場合の生成処理はcreate内で行うのでここでは不要
     this.load.spritesheet('playerSprite', 'assets/player.png', { 
         frameWidth: 32,  // キャラクター1体の幅
@@ -1199,6 +1200,11 @@ function createEnemy(scene, enemyInfo) {
     const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, textureKey);
     enemy.id = enemyInfo.id
     switch (enemyInfo.spriteKey) {
+        case 'wolfSprite':
+            enemy.setDisplaySize(48, 48);
+            enemy.body.setSize(48, 48); // 当たり判定
+            break;
+
         case 'wolfSprite':
             enemy.setDisplaySize(48, 48);
             enemy.body.setSize(48, 48); // 当たり判定
