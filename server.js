@@ -1090,7 +1090,7 @@ function handleEnemyDeath(enemy, player) {
             inventory: player.inventory, 
             gold: player.gold 
         });
-    } (enemy.respownType === 'boss') {
+    }else if (enemy.respownType === 'boss') {
         const targetSpawnerIndex = enemy.spawnerIndex;
         const spawner = spawners[targetSpawnerIndex];
         const table = DROP_TABLE[spawner.type];
