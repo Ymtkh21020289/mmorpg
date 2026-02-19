@@ -1583,7 +1583,7 @@ function bossAttack8Way(boss) {
         
         // 既存の弾丸生成ロジックを利用
         const projectileId =`boss_atk_${Date.now()}_${deg}`
-        const projectile[projectileId] = {
+        projectiles[projectileId] = {
             id: projectileId,
             ownerId: boss.id, // ダメージ計算で「敵の攻撃」と判定させるため
             ownerType: 'enemy',
