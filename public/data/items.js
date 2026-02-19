@@ -58,6 +58,11 @@ const RECIPES = [
         id: 'ancient_wand',
         materials: { 'golem_heart': 1, 'magic_stone': 10 },
         cost: 100
+    },
+    {
+        id: 'golem_heart',
+        materials: { 'wolf_heart': 5, 'magic_stone': 10 },
+        cost: 1000
     }
 ];
 
