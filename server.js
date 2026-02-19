@@ -109,8 +109,8 @@ const spawners = [
     { type: 'wolf',    x: 538, y: 538, count: 3, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
     { type: 'wolf',    x: 538, y: 272, count: 3, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
     { type: 'slime',    x: 1024, y: 256, count: 4, radius: 96, room: '1021', spriteKey: 'slimeSprite'},
-    { type: 'slime',    x: 1024, y: 512, count: 6, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
-    { type: 'golem',    x: 1024, y: 2048, count: 1, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
+    { type: 'slime',    x: 752, y: 512, count: 6, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
+    { type: 'golem',    x: 400, y: 1200, count: 1, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
 ];
 
 const mitigation = 300;
