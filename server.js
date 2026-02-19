@@ -786,10 +786,17 @@ io.on('connection', (socket) => {
 
         // 受信者に追加する（既存スタックがあれば合算）
 
-        const existingItem = player.storage.find(i => i.id === item.id);
-        if (existingItem) {
-            existingItem.count = (existingItem.count || 1) + data.amount;
-        } else {
+        // 受信者に追加する（既存スタックがあれば合算）
+        const isMaterial = (item.type === 'material');
+        if (isMaterial) {
+            const existingItem = player.storage.find(i => i.id === item.id);
+            if (existingItem) {
+                existingItem.count = (existingItem.count || 1) + data.amount;
+            } else {
+                player.storage.push({ id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified }); // 倉庫に追加
+                }
+            }
+        }else {
             player.storage.push({ id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified }); // 倉庫に追加
         }
     
@@ -812,12 +819,6 @@ io.on('connection', (socket) => {
         if (!item.count || item.count < data.amount) {
             socket.emit('systemMessage', '数が足りません。');
             return;
-        }
-
-            // 送信者から減らす
-        item.count -= data.amount;
-        if (item.count <= 0) {
-            player.storage.splice(data.index, 1)[0]; // 0になったら消す
         }
 
         // 受信者に追加する（既存スタックがあれば合算）
@@ -846,7 +847,13 @@ io.on('connection', (socket) => {
                 return;
             }
         }
-    
+
+            // 送信者から減らす
+        item.count -= data.amount;
+        if (item.count <= 0) {
+            player.storage.splice(data.index, 1)[0]; // 0になったら消す
+        }
+        
         await savePlayer(player); // 保存
 
         // クライアントに通知
