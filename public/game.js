@@ -1205,9 +1205,9 @@ function createEnemy(scene, enemyInfo) {
             enemy.body.setSize(48, 48); // 当たり判定
             break;
 
-        case 'wolfSprite':
-            enemy.setDisplaySize(48, 48);
-            enemy.body.setSize(48, 48); // 当たり判定
+        case 'golemSprite':
+            enemy.setDisplaySize(64, 64);
+            enemy.body.setSize(64, 64); // 当たり判定
             break;
             
         case 'bossSprite':
