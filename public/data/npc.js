@@ -24,7 +24,7 @@ const npcs = {
         radius: 30             // 当たり判定の大きさ
     },
     'werehouse': { 
-        x: 304, y: 48,        // 配置座標
+        x: 160, y: 496,        // 配置座標
         mapId: 'town',        // 配置マップ
         name: '倉庫番',
         type: 'warehouse',
