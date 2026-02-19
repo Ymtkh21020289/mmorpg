@@ -117,17 +117,14 @@ const mitigation = 300;
 
 const BOSS_CONFIG = {
     roomId: 'boss1',
-    // ボス部屋の範囲（この中に入るとボスが出る）
     area: { minX: 3000, maxX: 4000, minY: 3000, maxY: 4000 }, 
     // ボス出現位置
     spawn: { x: 3500, y: 3500 },
     // 討伐後のワープ先（街など）
     warpTarget: { x: 400, y: 300 },
     // ステータス
-    hp: 5000,
-    exp: 5000,
-    gold: 1000,
-    dropItem: 'legendary_sword' // 確定ドロップ品ID
+    hp: 1000,
+    exp: 360,
 };
 
 // ボスの状態管理
