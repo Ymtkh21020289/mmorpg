@@ -794,7 +794,6 @@ io.on('connection', (socket) => {
                 existingItem.count = (existingItem.count || 1) + data.amount;
             } else {
                 player.storage.push({ id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified }); // 倉庫に追加
-                }
             }
         }else {
             player.storage.push({ id: item.id, rank: item.rank, stats: item.stats, count: data.amount, isUnidentified: item.isUnidentified }); // 倉庫に追加
