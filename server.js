@@ -90,7 +90,9 @@ let projectileIdCounter = 0; // ID採番用
 const DROP_TABLE = {
     'kakashi': { items: [{ id: 'wood', rate: 1}] },
     'slime': { money: 4, items: [{ id: 'slime_gel', rate: 0.2 }, { id: 'dagger', rate: 0.02 }, { id: 'magic_stone', rate: 0.05 }, { id: 'slime_heart', rate: 0.005}] },
-    'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.2  }, { id: 'wolf_crow', rate: 0.1 }, { id: 'sword', rate: 0.02 }, { id: 'magic_stone', rate: 0.05 }, { id: 'wolf_heart', rate: 0.005}] },
+    'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.2 }, { id: 'wolf_crow', rate: 0.1 }, { id: 'sword', rate: 0.02 }, { id: 'magic_stone', rate: 0.05 }, { id: 'wolf_heart', rate: 0.005}] },
+    'golem': { money: 20, items: [{ id: 'stone', rate: 0.2 }, { id: 'golem_core', rate: 0.1}, { id: 'spear', rate: 0.02}, { id: 'golem_heart', rate: 0.005}] },
+    'kingSlime': { money: 500, items: [{ id: 'slime_gel', rate: 0.99 }, { id: 'slime_sword', rate: 0.01 }, { id: 'magic_stone', rate: 0.5 }, { id: 'kingSlime_heart', rate: 0.005}]}
 };
 
 // 現在の敵リスト（初期状態は空にして、関数で生み出す）
@@ -107,10 +109,34 @@ const spawners = [
     { type: 'wolf',    x: 538, y: 538, count: 3, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
     { type: 'wolf',    x: 538, y: 272, count: 3, radius: 80, room: '1021', spriteKey: 'wolfSprite'},
     { type: 'slime',    x: 1024, y: 256, count: 4, radius: 96, room: '1021', spriteKey: 'slimeSprite'},
-    { type: 'slime',    x: 1024, y: 512, count: 6, radius: 128, room: '1021', spriteKey: 'slimeSprite'}
+    { type: 'slime',    x: 1024, y: 512, count: 6, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
+    { type: 'golem',    x: 1024, y: 2048, count: 1, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
 ];
 
 const mitigation = 300;
+
+const BOSS_CONFIG = {
+    roomId: 'boss1',
+    // ボス部屋の範囲（この中に入るとボスが出る）
+    area: { minX: 3000, maxX: 4000, minY: 3000, maxY: 4000 }, 
+    // ボス出現位置
+    spawn: { x: 3500, y: 3500 },
+    // 討伐後のワープ先（街など）
+    warpTarget: { x: 400, y: 300 },
+    // ステータス
+    hp: 5000,
+    exp: 5000,
+    gold: 1000,
+    dropItem: 'legendary_sword' // 確定ドロップ品ID
+};
+
+// ボスの状態管理
+let bossState = {
+    active: false,    // 存在するか
+    id: null,         // enemiesオブジェクト内のキー
+    cooldown: false,  // 討伐直後のクールダウン中か
+    warpTimer: null   // ワープまでのタイマー
+};
 
 // --- 関数：群れをスポーンさせる ---
 function spawnGroup(spawner) {
@@ -238,6 +264,7 @@ io.on('connection', (socket) => {
             projectiles[id] = {
                 id: id,
                 ownerId: socket.id, // 誰が撃ったか
+                ownerType: 'player',
                 x: player.x,
                 y: player.y,
                 angle: data.angle,
@@ -962,36 +989,66 @@ setInterval(() => {
         }
 
         // 当たり判定（その部屋にいる敵のみ）
-        Object.keys(enemies).forEach((enemyId) => {
-            const enemy = enemies[enemyId];
-            if (enemy.room !== p.room || enemy.isDead) return;
-
-            // 距離判定（当たり判定サイズ: 30px）
-            const dist = Math.sqrt((p.x - enemy.x) ** 2 + (p.y - enemy.y) ** 2);
-            
-            if (dist < 30) {
-                // 命中！
-                delete projectiles[id]; // 弾は消える
-
-                // ダメージ計算（魔法攻撃力はとりあえず固定20 + レベル補正などにしてもOK）
-                const damage = p.damage;
-                enemy.hp -= damage;
+        if(p.ownerType === 'player'){ 
+            Object.keys(enemies).forEach((enemyId) => {
+                const enemy = enemies[enemyId];
+                if (enemy.room !== p.room || enemy.isDead) return;
+    
+                // 距離判定（当たり判定サイズ: 30px）
+                const dist = Math.sqrt((p.x - enemy.x) ** 2 + (p.y - enemy.y) ** 2);
                 
-                // ダメージ通知
-                io.emit('enemyDamaged', { enemyId: enemyId, damage: damage });
-
-                if (enemy.hp <= 0) {
-                    const owner = players[p.ownerId];
-                    if (owner) {
-                        // ★ここも関数を呼ぶだけで、群れの再湧きも完璧に動きます！
-                        handleEnemyDeath(enemy, owner);
+                if (dist < 30) {
+                    // 命中！
+                    delete projectiles[id]; // 弾は消える
+    
+                    // ダメージ計算（魔法攻撃力はとりあえず固定20 + レベル補正などにしてもOK）
+                    const damage = p.damage;
+                    enemy.hp -= damage;
+                    
+                    // ダメージ通知
+                    io.emit('enemyDamaged', { enemyId: enemyId, damage: damage });
+    
+                    if (enemy.hp <= 0) {
+                        const owner = players[p.ownerId];
+                        if (owner) {
+                            // ★ここも関数を呼ぶだけで、群れの再湧きも完璧に動きます！
+                            handleEnemyDeath(enemy, owner);
+                        }
+                    } else {
+                        // 生きていれば更新通知
+                        io.emit('updateEnemy', enemy);
                     }
-                } else {
-                    // 生きていれば更新通知
-                    io.emit('updateEnemy', enemy);
                 }
-            }
-        });
+            });
+        } else {
+            Object.keys(players).forEach((id) => {
+                const player = players[id];
+                if (player.room !== p.room ) return;
+    
+                // 距離判定（当たり判定サイズ: 30px）
+                const dist = Math.sqrt((p.x - player.x) ** 2 + (p.y - player.y) ** 2);
+                
+                if (dist < 30) {
+                    delete projectiles[id];
+                    const damage = p.damage;
+                    const damage1 = player.totalDef / (mitigation + player.totalDef);
+                    player.hp -= Math.floor(Math.max(damage * (1 - damage1), 0));
+                    player.lastDamageTime = now;
+                    // 死亡判定などはここに記述
+                    if (player.hp <= 0) {
+                        // リスポーン処理など
+                        player.hp = player.maxHp;
+                        player.x = 48; player.y = 80; // 仮のリスポーン
+                        io.emit('playerRespawn', player);
+                    } else {
+                        io.emit('playerDamaged', { 
+                            playerId: player.playerId, 
+                            hp: player.hp 
+                        });
+                    }
+                }
+            });
+        }
     });
 
     // 弾の位置情報を全員に送信
@@ -1035,6 +1092,36 @@ function handleEnemyDeath(enemy, player) {
         io.to(player.playerId).emit('inventoryUpdate', { 
             inventory: player.inventory, 
             gold: player.gold 
+        });
+    } (enemy.respownType === 'boss') {
+        const targetSpawnerIndex = enemy.spawnerIndex;
+        const spawner = spawners[targetSpawnerIndex];
+        const table = DROP_TABLE[spawner.type];
+        const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
+        const playerRoom = player.room 
+        players.forEach(id => {
+            const playerInRoom = players[id]
+            if (playerInRoom === playerRoom ) return;
+            playerInRoom.gold += moneyEarned;
+            table.items.forEach(drop => {
+                if (Math.random() < drop.rate) { // 確率判定
+                    addItemToInventory(playerInRoom, drop.id, 1);
+                }
+            });
+            io.to(playerInRoom.playerId).emit('inventoryUpdate', { 
+                inventory: playerInRoom.inventory, 
+                gold: playerInRoom.gold 
+            });
+            if (playerInRoom.exp >= playerInRoom.maxExp) {
+                playerInRoom.level++;
+                playerInRoom.exp = 0;
+                playerInRoom.maxExp = Math.floor( 10 * (playerInRoom.level ** 2) + (playerInRoom.level * 120) + 400);
+                playerInRoom.hp = playerInRoom.maxHp;
+                playerInRoom.mp = playerInRoom.maxMp;
+                updatePlayerStats(playerInRoom);
+                io.emit('playerLevelUp', { playerId: playerInRoom.playerId, level: playerInRoom.level });
+            }
+            return;
         });
     }
 
@@ -1428,4 +1515,88 @@ function createItemInstance(itemId, fixedRankId = null, isUnidentified = false) 
     }
 
     return itemInstance;
+}
+
+function updateBossState() {
+    // 1. プレイヤーがボス部屋にいるかチェック
+    const playersInRoom = getPlayersInBossRoom();
+
+    // クールダウン中（討伐直後）なら何もしない
+    if (bossState.cooldown) return;
+
+    // 2. ボスがいない & プレイヤーがいる -> スポーンさせる
+    if (!bossState.active && playersInRoom.length > 0) {
+        spawnBoss();
+    }
+
+    // 3. ボスがいる場合 -> 攻撃AI処理
+    if (bossState.active && bossState.id) {
+        const boss = enemies[bossState.id];
+        if (boss) {
+            // 例: 3秒ごとに特殊攻撃（8方向弾）
+            const now = Date.now();
+            if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
+                bossAttack8Way(boss);
+                boss.lastAttackTime = now;
+            }
+        } else {
+            // バグ対策: enemiesから消えていたらstateもリセット
+            bossState.active = false;
+        }
+    }
+}
+
+// --- B. プレイヤー検出ヘルパー ---
+function getPlayersInBossRoom() {
+    return Object.values(players).filter(p => 
+        p.room === BOSS_CONFIG.roomId
+    );
+}
+
+// --- C. ボス召喚 ---
+function spawnBoss() {
+    const id = 'boss_' + Date.now();
+    enemies[id] = {
+        id: id,
+        room: 'boss1',
+        type: 'boss', // クライアント側で巨大描画するための識別子
+        x: BOSS_CONFIG.spawn.x,
+        y: BOSS_CONFIG.spawn.y,
+        hp: BOSS_CONFIG.hp,
+        maxHp: BOSS_CONFIG.hp,
+        isDead: false
+    };
+    
+    bossState.active = true;
+    bossState.id = id;
+
+    // クライアントに通知（ボスの出現演出などがあればここでemit）
+    io.emit('systemMessage', '【警告】ボスエリアに侵入者が確認されました。ボスが出現します！');
+    io.emit('updateEnemies', enemies);
+}
+
+// --- D. ボス攻撃（八方向弾） ---
+function bossAttack8Way(boss) {
+    // 8方向の角度
+    const angles = [0, 45, 90, 135, 180, 225, 270, 315];
+    
+    angles.forEach(deg => {
+        const rad = deg * (Math.PI / 180);
+        const speed = 5; // 弾速
+        
+        // 既存の弾丸生成ロジックを利用
+        const projectileId =`boss_atk_${Date.now()}_${deg}`
+        const projectile[projectileId] = {
+            id: projectileId,
+            ownerId: boss.id, // ダメージ計算で「敵の攻撃」と判定させるため
+            ownerType: 'enemy',
+            angle: rad,
+            x: boss.x,
+            y: boss.y,
+            room: boss.room,
+            speed: speed,
+            damage: 50, // ボスの攻撃力
+            timeLeft: 2000 // 弾の消滅時間
+        };
+    });
 }
