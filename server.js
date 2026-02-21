@@ -1649,7 +1649,8 @@ function spawnBoss() {
         maxHp: BOSS_CONFIG.hp,
         exp: BOSS_CONFIG.exp,
         isDead: false,
-        name: 'kingSlime'
+        name: 'kingSlime',
+        respawnType: 'boss'
     };
     
     bossState.active = true;
