@@ -1223,7 +1223,6 @@ function handleEnemyDeath(enemy, player) {
                     // クライアント側で「マップ切り替え処理」をするためのイベント
                     io.to(player.id).emit('mapChanged', { room: BOSS_CONFIG.warpTarget.map, players: roomPlayers, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
                     io.to(player.id).emit('currentNPCs', npcs);
-                    io.to(player.id).emit('currentPlayers', players);
                     console.log(`${player.id}はボスを討伐したためダンジョン前に強制送還されました。`);
                 }
                 savePlayer(player);
