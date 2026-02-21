@@ -1242,7 +1242,6 @@ function handleEnemyDeath(enemy, player) {
     
             // ボスのクールダウン解除（部屋から人がいなくなったら湧くように）
             bossState.cooldown = false;
-            bossState.id = null;
     
         }, 10000); // 10000ms = 10秒
     }
@@ -1598,6 +1597,7 @@ function updateBossState() {
         if (bossState.id && enemies[bossState.id]) {
             console.log('部屋にプレイヤーが存在しないためボスを消しました。');
             delete enemies[bossState.id]; // ボスを削除
+            bossState.id = null;
         }
         bossState.active = false;
         bossState.id = null;
