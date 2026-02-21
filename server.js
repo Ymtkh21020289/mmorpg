@@ -111,7 +111,14 @@ const spawners = [
     { type: 'slime',    x: 1024, y: 256, count: 4, radius: 96, room: '1021', spriteKey: 'slimeSprite'},
     { type: 'slime',    x: 752, y: 512, count: 6, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
     { type: 'golem',    x: 400, y: 1200, count: 1, radius: 128, room: '1022', spriteKey: 'golemSprite'},
-    { type: 'golem',    x: 300, y: 600, count: 2, radius: 128, room: '1023', spriteKey: 'golemSprite'}
+    { type: 'golem',    x: 300, y: 600, count: 2, radius: 128, room: '1100', spriteKey: 'golemSprite'},
+    { type: 'slime',    x: 1200, y: 3120, count: 4, radius: 128, room: '1100', spriteKey: 'slimeSprite'},
+    { type: 'slime',    x: 720, y: 2640, count: 5, radius: 128, room: '1100', spriteKey: 'slimeSprite'},
+    { type: 'slime',    x: 240, y: 2160, count: 5, radius: 128, room: '1100', spriteKey: 'slimeSprite'},
+    { type: 'slime',    x: 1200, y: 1680, count: 4, radius: 128, room: '1100', spriteKey: 'slimeSprite'},
+    { type: 'slime',    x: 1680, y: 2640, count: 4, radius: 128, room: '1100', spriteKey: 'slimeSprite'},
+    { type: 'slime',    x: 2640, y: 2160, count: 5, radius: 128, room: '1100', spriteKey: 'slimeSprite'},
+    { type: 'slime',    x: 2160, y: 720, count: 6, radius: 128, room: '1100', spriteKey: 'slimeSprite'}
 ];
 
 const mitigation = 300;
