@@ -162,8 +162,9 @@ function create() {
     // --- Socket イベント ---
     this.createMap("town");
 
-    this.socket.on('changedArea', (data) => {
-        self.socket.emit('changeArea', {mapId: data.mapId, x: data.x, y: data.y } );
+    this.socket.on('changedArea', () => {
+        self.isChangingMap = true;
+        self.currentRoomName = portal.targetMap;
     });
     
     this.socket.on('currentPlayers', function (players) {
