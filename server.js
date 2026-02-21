@@ -1182,7 +1182,8 @@ function handleEnemyDeath(enemy, player) {
             }, 10000);
         }
     } else {
-        console.log('ボス討伐完了！')
+        console.log('ボス討伐完了！');
+        io.emit('removeEnemy', enemy.id);
         delete enemies[enemy.id];
         setTimeout(async () => {
             // 10秒後、まだ部屋に残っているプレイヤーを再取得してワープさせる
@@ -1192,7 +1193,7 @@ function handleEnemyDeath(enemy, player) {
                 // ワープ通知
                 const socket = io.sockets.sockets.get(player.playerId);
                 if (socket) {
-                    socket.emit('changeArea', {room: BOSS_CONFIG.warp, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
+                    socket.emit('changeArea', {mapId: BOSS_CONFIG.warp, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
                     socket.emit('systemMessage', '拠点に帰還しました。');
                 }
                 savePlayer(player);
