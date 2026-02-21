@@ -201,7 +201,7 @@ const mapData = {
             },
             {
                 x: 0, y: 1472, width: 32, height: 64, 
-                targetMap: '1023', targetX: 48, targetY: 112
+                targetMap: '1023', targetX: 1104, targetY: 736
             }
         ]
     },
@@ -236,12 +236,12 @@ const mapData = {
         ],
         portals: [
             {
-                x: 0, y: 96, width: 32, height: 64, 
-                targetMap: '1021', targetX: 1168, targetY: 112
+                x: 1120, y: 704, width: 32, height: 64, 
+                targetMap: '1021', targetX: 48, targetY: 1472
             },
             {
-                x: 0, y: 1472, width: 32, height: 64, 
-                targetMap: '1023', targetX: 1168, targetY: 112
+                x: 544, y: 352, width: 64, height: 32, 
+                targetMap: '1023', targetX: 48, targetY: 112
             }
         ]
     }
