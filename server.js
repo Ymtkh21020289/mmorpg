@@ -121,7 +121,7 @@ const BOSS_CONFIG = {
     // ボス出現位置
     spawn: { x: 480, y: 480 },
     // 討伐後のワープ先（街など）
-    warpTarget: { map: "1023", x: 400, y: 300 },
+    warpTarget: { map: "1023", x: 576, y: 400 },
     // ステータス
     hp: 1000,
     exp: 360,
