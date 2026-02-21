@@ -877,98 +877,100 @@ setInterval(() => {
         const stats = ENEMY_TYPES[enemy.type] || ENEMY_TYPES['slime']; // デフォルトはスライム
         if (enemy.isDead) return;
         // 初期化（もしstateがなければ）
-        if (!enemy.state) {
+        if (!enemy.state && enemy.type !== 'boss') {
             enemy.state = 'moving';
             enemy.timer = 0;
         }
         const now = Date.now();
         // 1. 一番近くにいるプレイヤーを探す
-        if (enemy.state === 'moving') {
-            let target = null;
-            let nearestPlayer = null;
-            let minDistance = 999999;
-
-            Object.keys(players).forEach((id) => {
-                const player = players[id];
-                // 同じ部屋のプレイヤーのみ対象
-                if (player.room === enemy.room) {
-                    const dx = player.x - enemy.x;
-                    const dy = player.y - enemy.y;
-                    const dist = Math.sqrt( dx ** 2 + dy ** 2);
-                    if (dist < minDistance) {
-                        minDistance = dist;
-                        nearestPlayer = player;
-                        target = { player, dist, dx, dy };
+        if(enemy.type !== 'boss'){
+            if (enemy.state === 'moving') {
+                let target = null;
+                let nearestPlayer = null;
+                let minDistance = 999999;
+    
+                Object.keys(players).forEach((id) => {
+                    const player = players[id];
+                    // 同じ部屋のプレイヤーのみ対象
+                    if (player.room === enemy.room) {
+                        const dx = player.x - enemy.x;
+                        const dy = player.y - enemy.y;
+                        const dist = Math.sqrt( dx ** 2 + dy ** 2);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            nearestPlayer = player;
+                            target = { player, dist, dx, dy };
+                        }
+                    }
+                });
+    
+                // ★修正：プレイヤーが見つかった場合のみ処理を実行（これでエラーが消えます）
+                if (nearestPlayer) {
+                
+                    // A. 移動処理（距離が300より近いなら追いかける）
+                    if ( 300 > minDistance ) {
+                        if ( minDistance <= stats.attackRange) {
+                            // ★詠唱開始（足を止める）
+                            enemy.state = 'charging';
+                            enemy.timer = now + stats.chargeTime; // 攻撃発動時刻
+                        
+                            // 攻撃方向（角度）を決定
+                            enemy.targetAngle = Math.atan2(target.dy, target.dx);
+    
+                            // クライアントに「予兆を出せ」と命令
+                            io.to(enemy.room).emit('enemyCharge', {
+                                id: enemyId,
+                                x: enemy.x,
+                                y: enemy.y,
+                                angle: enemy.targetAngle,
+                                radius: stats.attackRadius,
+                                width: stats.attackAngle,
+                                duration: stats.chargeTime
+                            });
+                        } else {
+                            const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
+                            // 移動予定の距離
+                            const moveStep = enemy.speed;
+    
+                            // ■ X方向の移動チェック
+                            // 進行方向の少し先（+15px）をチェックすることで、壁にめり込むのを防ぐ
+                            const nextX = enemy.x + Math.cos(angle) * moveStep;
+                            // 右に行くなら右側(+15)、左に行くなら左側(-15)の点を調べる
+                            const checkX = nextX + (Math.cos(angle) > 0 ? 15 : -15);
+                        
+                            if (!isMapWall(enemy.room, checkX, enemy.y)) {
+                                enemy.x = nextX; // 壁じゃないなら進む
+                            }
+    
+                            // ■ Y方向の移動チェック（Xとは独立して行う＝壁沿いを滑る）
+                            const nextY = enemy.y + Math.sin(angle) * moveStep;
+                            const checkY = nextY + (Math.sin(angle) > 0 ? 15 : -15);
+    
+                            if (!isMapWall(enemy.room, enemy.x, checkY)) {
+                                enemy.y = nextY; // 壁じゃないなら進む
+                            }
+                        } 
                     }
                 }
-            });
-
-            // ★修正：プレイヤーが見つかった場合のみ処理を実行（これでエラーが消えます）
-            if (nearestPlayer) {
-            
-                // A. 移動処理（距離が300より近いなら追いかける）
-                if ( 300 > minDistance ) {
-                    if ( minDistance <= stats.attackRange) {
-                        // ★詠唱開始（足を止める）
-                        enemy.state = 'charging';
-                        enemy.timer = now + stats.chargeTime; // 攻撃発動時刻
+            } else if (enemy.state === 'charging') {
+                if (now >= enemy.timer) {
+                    // 時間経過で攻撃発動！
+                    performEnemyAttack(enemy, stats);
                     
-                        // 攻撃方向（角度）を決定
-                        enemy.targetAngle = Math.atan2(target.dy, target.dx);
-
-                        // クライアントに「予兆を出せ」と命令
-                        io.to(enemy.room).emit('enemyCharge', {
-                            id: enemyId,
-                            x: enemy.x,
-                            y: enemy.y,
-                            angle: enemy.targetAngle,
-                            radius: stats.attackRadius,
-                            width: stats.attackAngle,
-                            duration: stats.chargeTime
-                        });
-                    } else {
-                        const angle = Math.atan2(nearestPlayer.y - enemy.y, nearestPlayer.x - enemy.x);
-                        // 移動予定の距離
-                        const moveStep = enemy.speed;
-
-                        // ■ X方向の移動チェック
-                        // 進行方向の少し先（+15px）をチェックすることで、壁にめり込むのを防ぐ
-                        const nextX = enemy.x + Math.cos(angle) * moveStep;
-                        // 右に行くなら右側(+15)、左に行くなら左側(-15)の点を調べる
-                        const checkX = nextX + (Math.cos(angle) > 0 ? 15 : -15);
-                    
-                        if (!isMapWall(enemy.room, checkX, enemy.y)) {
-                            enemy.x = nextX; // 壁じゃないなら進む
-                        }
-
-                        // ■ Y方向の移動チェック（Xとは独立して行う＝壁沿いを滑る）
-                        const nextY = enemy.y + Math.sin(angle) * moveStep;
-                        const checkY = nextY + (Math.sin(angle) > 0 ? 15 : -15);
-
-                        if (!isMapWall(enemy.room, enemy.x, checkY)) {
-                            enemy.y = nextY; // 壁じゃないなら進む
-                        }
-                    } 
+                    // クールダウンへ移行
+                    enemy.state = 'cooldown';
+                    enemy.timer = now + stats.cooldown;
                 }
             }
-        } else if (enemy.state === 'charging') {
-            if (now >= enemy.timer) {
-                // 時間経過で攻撃発動！
-                performEnemyAttack(enemy, stats);
-                
-                // クールダウンへ移行
-                enemy.state = 'cooldown';
-                enemy.timer = now + stats.cooldown;
-            }
-        }
 
-        // ■ 状態3: クールダウン（疲れて休んでいる）
-        else if (enemy.state === 'cooldown') {
-            if (now >= enemy.timer) {
-                // 休み終わり、また追いかける
-                enemy.state = 'moving';
-            }
-        }   
+            // ■ 状態3: クールダウン（疲れて休んでいる）
+            else if (enemy.state === 'cooldown') {
+                if (now >= enemy.timer) {
+                    // 休み終わり、また追いかける
+                    enemy.state = 'moving';
+                }
+            }   
+        }
         // 位置情報を全員に送信
         io.emit('updateEnemy', enemy);
     });
@@ -1568,6 +1570,7 @@ function spawnBoss() {
         y: BOSS_CONFIG.spawn.y,
         hp: BOSS_CONFIG.hp,
         maxHp: BOSS_CONFIG.hp,
+        exp: BOSS_CONFIG.exp,
         isDead: false
     };
     
