@@ -1113,11 +1113,11 @@ function handleEnemyDeath(enemy, player) {
         const targetSpawnerIndex = enemy.spawnerIndex;
         const table = DROP_TABLE[enemy.name];
         const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
-        const playerRoom = player.room 
-        players.forEach(id => {
-            const playerInRoom = players[id]
-            if (playerInRoom.room !== playerRoom ) return;
-            player.exp += expGain;
+        const playerRoom = player.room; 
+        const remainingPlayers = getPlayersInBossRoom();
+        remainingPlayers.forEach(id => {
+            const playerInRoom = players[id];
+            playerInRoom.exp += expGain;
             playerInRoom.gold += moneyEarned;
             table.items.forEach(drop => {
                 if (Math.random() < drop.rate) { // 確率判定
