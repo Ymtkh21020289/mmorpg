@@ -117,11 +117,11 @@ const mitigation = 300;
 
 const BOSS_CONFIG = {
     roomId: 'boss1',
-    area: { minX: 3000, maxX: 4000, minY: 3000, maxY: 4000 }, 
+    area: { minX: 0, maxX: 960, minY: 0, maxY: 960 }, 
     // ボス出現位置
-    spawn: { x: 3500, y: 3500 },
+    spawn: { x: 480, y: 480 },
     // 討伐後のワープ先（街など）
-    warpTarget: { x: 400, y: 300 },
+    warpTarget: { map: "1023", x: 400, y: 300 },
     // ステータス
     hp: 1000,
     exp: 360,
