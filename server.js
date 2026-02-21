@@ -1192,8 +1192,35 @@ function handleEnemyDeath(enemy, player) {
             remainingPlayers.forEach(player => {
                 const socket = io.sockets.sockets.get(player.playerId);
                 if (socket) {
-                    socket.emit('changedArea', {mapId: BOSS_CONFIG.warpTarget.map, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
-                    socket.emit('systemMessage', '拠点に帰還しました。');
+                    const currentRoom = 'boss1';
+        
+                    // 1. 今の部屋から出る
+                    socket.leave(currentRoom);
+                    // 今の部屋の人たちに「あいつ消えたよ」と伝える
+                    socket.to(currentRoom).emit('disconnectUser', player.playerId);
+            
+                    // 2. データ更新
+                    players[player.playerId].room = BOSS_CONFIG.warpTarget.map;
+                    // 座標もリセット（例：入り口にワープ）
+                    players[player.playerId].x = BOSS_CONFIG.warpTarget.x; 
+                    players[player.playerId].y = BOSS_CONFIG.warpTarget.y;
+            
+                    // 3. 新しい部屋に入る
+                    socket.join(data.mapId);
+            
+                    // 4. 新しい部屋の人たちに「新入りが来たよ」と伝える
+                    socket.to(data.mapId).emit('newPlayer', players[socket.id]);
+            
+                    // 5. 本人に「新しい部屋の現状」を伝える
+                    const roomPlayers = {};
+                    Object.keys(players).forEach(id => {
+                        if (players[id].room === data.mapId) {
+                            roomPlayers[id] = players[id];
+                        }
+                    });
+                    // クライアント側で「マップ切り替え処理」をするためのイベント
+                    socket.emit('mapChanged', { room: BOSS_CONFIG.warpTarget.map, players: roomPlayers, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
+                    socket.emit('currentNPCs', npcs);
                 }
                 savePlayer(player);
             });
