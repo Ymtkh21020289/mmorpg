@@ -30,6 +30,14 @@ const npcs = {
         type: 'warehouse',
         color: 0x00ff00,       // 緑色（味方っぽい色）
         radius: 30             // 当たり判定の大きさ
+    },
+    'guide': { 
+        x: 640, y: 416,        // 配置座標
+        mapId: '1023',        // 配置マップ
+        name: 'スライムダンジョン',
+        type: 'signboard',
+        color: 0x0000ff,       // 緑色（味方っぽい色）
+        radius: 30             // 当たり判定の大きさ
     }
 };
 
