@@ -1214,7 +1214,7 @@ function handleEnemyDeath(enemy, player) {
                     // 5. 本人に「新しい部屋の現状」を伝える
                     const roomPlayers = {};
                     Object.keys(players).forEach(id => {
-                        if (players[id].room === data.mapId) {
+                        if (players[id].room === BOSS_CONFIG.warpTarget.map) {
                             roomPlayers[id] = players[id];
                         }
                     });
