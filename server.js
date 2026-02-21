@@ -1161,7 +1161,7 @@ function handleEnemyDeath(enemy, player) {
         }, 5000);
         io.emit('updateEnemy', enemy); 
 
-    } else if (enemy.respawnType === 'growp') {
+    } else if (enemy.respawnType === 'group') {
         const targetSpawnerIndex = enemy.spawnerIndex;
         const spawner = spawners[targetSpawnerIndex];
         // B. 群れタイプ
