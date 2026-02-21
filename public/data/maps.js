@@ -375,7 +375,7 @@ const mapData = {
             },
             {
                 x: 1152, y: 0, width: 96, height: 32, 
-                targetMap: 'boss1', targetX: 48, targetY: 112
+                targetMap: 'boss1', targetX: 480, targetY: 912
             }
         ]
     },
