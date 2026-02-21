@@ -1659,6 +1659,7 @@ function spawnBoss() {
     // クライアントに通知（ボスの出現演出などがあればここでemit）
     io.emit('systemMessage', '【警告】ボスエリアに侵入者が確認されました。ボスが出現します！');
     io.emit('updateEnemies', enemies);
+    console.log(`ボスをid:${id}で召喚しました。`);
 }
 
 // --- D. ボス攻撃（八方向弾） ---
