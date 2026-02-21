@@ -1116,6 +1116,7 @@ function handleEnemyDeath(enemy, player) {
         const playerRoom = player.room; 
         const remainingPlayers = getPlayersInBossRoom();
         remainingPlayers.forEach(playerInRoom => {
+            console.log(`${playerInRoom}にアイテムを渡します。`);
             playerInRoom.exp += expGain;
             playerInRoom.gold += moneyEarned;
             table.items.forEach(drop => {
