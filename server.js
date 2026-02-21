@@ -1092,8 +1092,9 @@ setInterval(() => {
 function handleEnemyDeath(enemy, player) {
     // 1. 経験値とレベルアップ処理
     const expGain = enemy.exp;
-    player.exp += expGain;
+    
     if (enemy.respawnType === 'group') {
+        player.exp += expGain;
         const targetSpawnerIndex = enemy.spawnerIndex;
         const spawner = spawners[targetSpawnerIndex];
         const table = DROP_TABLE[spawner.type];
@@ -1115,7 +1116,8 @@ function handleEnemyDeath(enemy, player) {
         const playerRoom = player.room 
         players.forEach(id => {
             const playerInRoom = players[id]
-            if (playerInRoom === playerRoom ) return;
+            if (playerInRoom.room !== playerRoom ) return;
+            player.exp += expGain;
             playerInRoom.gold += moneyEarned;
             table.items.forEach(drop => {
                 if (Math.random() < drop.rate) { // 確率判定
