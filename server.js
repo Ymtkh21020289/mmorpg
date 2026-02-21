@@ -1596,6 +1596,7 @@ function updateBossState() {
 
     if (bossState.active && playersInRoom.length === 0) {
         if (bossState.id && enemies[bossState.id]) {
+            console.log('部屋にプレイヤーが存在しないためボスを消しました。');
             delete enemies[bossState.id]; // ボスを削除
         }
         bossState.active = false;
