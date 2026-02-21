@@ -111,6 +111,7 @@ const spawners = [
     { type: 'slime',    x: 1024, y: 256, count: 4, radius: 96, room: '1021', spriteKey: 'slimeSprite'},
     { type: 'slime',    x: 752, y: 512, count: 6, radius: 128, room: '1022', spriteKey: 'slimeSprite'},
     { type: 'golem',    x: 400, y: 1200, count: 1, radius: 128, room: '1022', spriteKey: 'golemSprite'},
+    { type: 'golem',    x: 300, y: 600, count: 2, radius: 128, room: '1023', spriteKey: 'golemSprite'}
 ];
 
 const mitigation = 300;
