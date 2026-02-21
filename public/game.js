@@ -164,7 +164,7 @@ function create() {
 
     this.socket.on('changedArea', () => {
         self.isChangingMap = true;
-        self.currentRoomName = portal.targetMap;
+        self.currentRoomName = '1023';
     });
     
     this.socket.on('currentPlayers', function (players) {
