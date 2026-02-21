@@ -1161,7 +1161,7 @@ function handleEnemyDeath(enemy, player) {
         }, 5000);
         io.emit('updateEnemy', enemy); 
 
-    } else {
+    } else (enemy.respawnType === 'growp') {
         const targetSpawnerIndex = enemy.spawnerIndex;
         const spawner = spawners[targetSpawnerIndex];
         // B. 群れタイプ
@@ -1603,7 +1603,8 @@ function bossAttack8Way(boss) {
             room: boss.room,
             speed: speed,
             damage: 50, // ボスの攻撃力
-            timeLeft: 2000 // 弾の消滅時間
+            timeLeft: 2000, // 弾の消滅時間
+            respawnType: 'boss'
         };
     });
 }
