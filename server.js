@@ -1028,6 +1028,7 @@ setInterval(() => {
         } else {
             Object.keys(players).forEach((id) => {
                 const player = players[id];
+                const now = Date.now();
                 if (player.room !== p.room ) return;
     
                 // 距離判定（当たり判定サイズ: 30px）
