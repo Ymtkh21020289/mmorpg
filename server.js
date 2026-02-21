@@ -1219,6 +1219,7 @@ function handleEnemyDeath(enemy, player) {
                         }
                     });
                     // クライアント側で「マップ切り替え処理」をするためのイベント
+                    socket.emit('changedArea');
                     socket.emit('mapChanged', { room: BOSS_CONFIG.warpTarget.map, players: roomPlayers, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
                     socket.emit('currentNPCs', npcs);
                 }
