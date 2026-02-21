@@ -1102,8 +1102,7 @@ function handleEnemyDeath(enemy, player) {
         });
     }else if (enemy.respownType === 'boss') {
         const targetSpawnerIndex = enemy.spawnerIndex;
-        const spawner = spawners[targetSpawnerIndex];
-        const table = DROP_TABLE[spawner.type];
+        const table = DROP_TABLE[enemy.name];
         const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
         const playerRoom = player.room 
         players.forEach(id => {
@@ -1182,6 +1181,30 @@ function handleEnemyDeath(enemy, player) {
                 }
             }, 10000);
         }
+    } else {
+        delete enemies[enemy.id];
+        setTimeout(async () => {
+            // 10秒後、まだ部屋に残っているプレイヤーを再取得してワープさせる
+            const remainingPlayers = getPlayersInBossRoom();
+            
+            remainingPlayers.forEach(player => {
+                // ワープ通知
+                const socket = io.sockets.sockets.get(player.playerId);
+                if (socket) {
+                    socket.emit('changeArea', {room: BOSS_CONFIG.warp, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
+                    socket.emit('systemMessage', '拠点に帰還しました。');
+                }
+                savePlayer(player);
+            });
+            
+            // 全員の位置情報を更新
+            io.emit('currentPlayers', players);
+    
+            // ボスのクールダウン解除（部屋から人がいなくなったら湧くように）
+            bossState.cooldown = false;
+            bossState.id = null;
+    
+        }, 10000); // 10000ms = 10秒
     }
 }
 
@@ -1572,7 +1595,8 @@ function spawnBoss() {
         hp: BOSS_CONFIG.hp,
         maxHp: BOSS_CONFIG.hp,
         exp: BOSS_CONFIG.exp,
-        isDead: false
+        isDead: false,
+        name: 'kingSlime'
     };
     
     bossState.active = true;
