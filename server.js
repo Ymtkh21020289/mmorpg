@@ -1115,8 +1115,7 @@ function handleEnemyDeath(enemy, player) {
         const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
         const playerRoom = player.room; 
         const remainingPlayers = getPlayersInBossRoom();
-        remainingPlayers.forEach(id => {
-            const playerInRoom = players[id];
+        remainingPlayers.forEach(playerInRoom => {
             playerInRoom.exp += expGain;
             playerInRoom.gold += moneyEarned;
             table.items.forEach(drop => {
