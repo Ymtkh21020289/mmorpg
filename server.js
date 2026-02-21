@@ -352,7 +352,6 @@ io.on('connection', (socket) => {
                 roomPlayers[id] = players[id];
             }
         });
-        updateBossState()
         // クライアント側で「マップ切り替え処理」をするためのイベント
         socket.emit('mapChanged', { room: data.mapId, players: roomPlayers, x: data.x, y: data.y });
         socket.emit('currentNPCs', npcs);
@@ -1060,6 +1059,7 @@ setInterval(() => {
     // 弾の位置情報を全員に送信
     io.emit('updateProjectiles', projectiles);
 
+    updateBossState()
 }, 50); // 50ミリ秒間隔
 
 
