@@ -1206,10 +1206,10 @@ function handleEnemyDeath(enemy, player) {
                     players[player.playerId].y = BOSS_CONFIG.warpTarget.y;
             
                     // 3. 新しい部屋に入る
-                    socket.join(data.mapId);
+                    socket.join(BOSS_CONFIG.warpTarget.map);
             
                     // 4. 新しい部屋の人たちに「新入りが来たよ」と伝える
-                    socket.to(data.mapId).emit('newPlayer', players[socket.id]);
+                    socket.to(BOSS_CONFIG.warpTarget.map).emit('newPlayer', players[socket.id]);
             
                     // 5. 本人に「新しい部屋の現状」を伝える
                     const roomPlayers = {};
