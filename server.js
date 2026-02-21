@@ -1594,7 +1594,7 @@ function updateBossState() {
     // クールダウン中（討伐直後）なら何もしない
     if (bossState.cooldown) return;
 
-    if (bossState.active && playersInRoom.length === 0) {
+    if (playersInRoom.length === 0) {
         if (bossState.id && enemies[bossState.id]) {
             console.log('部屋にプレイヤーが存在しないためボスを消しました。');
             delete enemies[bossState.id]; // ボスを削除
