@@ -1190,11 +1190,9 @@ function handleEnemyDeath(enemy, player) {
             const remainingPlayers = getPlayersInBossRoom();
             
             remainingPlayers.forEach(player => {
-                // ワープ通知
-                const socket = io.sockets.sockets.get(player.playerId);
                 if (socket) {
-                    socket.emit('changeArea', {mapId: BOSS_CONFIG.warpTarget.map, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
-                    socket.emit('systemMessage', '拠点に帰還しました。');
+                    io.emit('changedArea', {mapId: BOSS_CONFIG.warpTarget.map, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
+                    io.emit('systemMessage', '拠点に帰還しました。');
                 }
                 savePlayer(player);
             });
