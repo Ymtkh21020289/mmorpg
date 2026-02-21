@@ -163,7 +163,7 @@ function create() {
     this.createMap("town");
 
     this.socket.on('changedArea', (data) => {
-        this.socket.emit('changeArea', {mapId: data.mapId, x: data.x, y: data.y } );
+        self.socket.emit('changeArea', {mapId: data.mapId, x: data.x, y: data.y } );
     });
     
     this.socket.on('currentPlayers', function (players) {
