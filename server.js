@@ -1100,7 +1100,7 @@ function handleEnemyDeath(enemy, player) {
             inventory: player.inventory, 
             gold: player.gold 
         });
-    }else if (enemy.respownType === 'boss') {
+    }else if (enemy.respawnType === 'boss') {
         const targetSpawnerIndex = enemy.spawnerIndex;
         const table = DROP_TABLE[enemy.name];
         const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
@@ -1182,6 +1182,7 @@ function handleEnemyDeath(enemy, player) {
             }, 10000);
         }
     } else {
+        console.log('ボス討伐完了！')
         delete enemies[enemy.id];
         setTimeout(async () => {
             // 10秒後、まだ部屋に残っているプレイヤーを再取得してワープさせる
