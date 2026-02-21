@@ -1591,6 +1591,19 @@ function updateBossState() {
     // クールダウン中（討伐直後）なら何もしない
     if (bossState.cooldown) return;
 
+    if (bossState.active && playersInRoom.length === 0) {
+        if (bossState.id && enemies[bossState.id]) {
+            delete enemies[bossState.id]; // ボスを削除
+        }
+        bossState.active = false;
+        bossState.id = null;
+        io.emit('updateEnemies', enemies); // クライアントにも削除を通知
+        return; // リセットしたフレームはここで終了
+    }
+
+    // 3. 誰もいないなら湧かせる必要がないので終了
+    if (playersInRoom.length === 0) return;
+    
     // 2. ボスがいない & プレイヤーがいる -> スポーンさせる
     if (!bossState.active && playersInRoom.length > 0) {
         spawnBoss();
