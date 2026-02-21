@@ -1110,6 +1110,7 @@ function handleEnemyDeath(enemy, player) {
             gold: player.gold 
         });
     }else if (enemy.respawnType === 'boss') {
+        console.log('ボス討伐報酬を渡します。');
         const targetSpawnerIndex = enemy.spawnerIndex;
         const table = DROP_TABLE[enemy.name];
         const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
