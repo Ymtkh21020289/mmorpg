@@ -371,7 +371,7 @@ const mapData = {
         portals: [
             {
                 x: 1152, y: 3808, width: 96, height: 32, 
-                targetMap: '1023', targetX: 48, targetY: 1472
+                targetMap: '1023', targetX: 576, targetY: 400
             },
             {
                 x: 1152, y: 0, width: 96, height: 32, 
