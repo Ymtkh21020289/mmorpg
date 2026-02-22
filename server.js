@@ -1194,8 +1194,8 @@ function handleEnemyDeath(enemy, player) {
         }
     } else {
         console.log('ボス討伐完了！');
-        io.emit('removeEnemy', enemy.id);
-        delete enemies[enemy.id];
+        io.emit('removeEnemy', bossState.id);
+        delete enemies[bossState.id];
         setTimeout(async () => {
             // 10秒後、まだ部屋に残っているプレイヤーを再取得してワープさせる
             const remainingPlayers = getPlayersInBossRoom();
@@ -1623,9 +1623,6 @@ function updateBossState() {
                 bossAttack8Way(boss);
                 boss.lastAttackTime = now;
             }
-        } else {
-            // バグ対策: enemiesから消えていたらstateもリセット
-            bossState.active = false;
         }
     }
 }
