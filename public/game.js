@@ -2216,7 +2216,7 @@ function createMenuUI(scene) {
     scene.menuStatus.add(scene.statusText);
 
     // ステータス画面の「戻る」ボタン
-    const btnBack = scene.add.rectangle(0, 150, 200, 40, 0x333333).setInteractive({ useHandCursor: true });
+    const btnBack = scene.add.rectangle(0, 150, 200, 40, 0x333333).setScrollFactor(0).setInteractive({ useHandCursor: true });
     const btnBackText = scene.add.text(0, 150, '戻る', { fontSize: '18px', fill: '#fff' }).setScrollFactor(0).setOrigin(0.5);
     btnBack.on('pointerdown', () => {
         scene.menuStatus.setVisible(false);
@@ -2236,7 +2236,7 @@ function createMenuUI(scene) {
     scene.menuSuicide.add(suicideWarnText);
 
     // はい
-    const btnDieYes = scene.add.rectangle(0, 40, 200, 40, 0xaa0000).setInteractive({ useHandCursor: true });
+    const btnDieYes = scene.add.rectangle(0, 40, 200, 40, 0xaa0000).setScrollFactor(0).setInteractive({ useHandCursor: true });
     const txtDieYes = scene.add.text(0, 40, '実行する', { fontSize: '18px', fill: '#fff' }).setScrollFactor(0).setOrigin(0.5);
     btnDieYes.on('pointerdown', () => {
         scene.socket.emit('forceRespawn');
@@ -2244,7 +2244,7 @@ function createMenuUI(scene) {
     });
 
     // いいえ
-    const btnDieNo = scene.add.rectangle(0, 100, 200, 40, 0x333333).setInteractive({ useHandCursor: true });
+    const btnDieNo = scene.add.rectangle(0, 100, 200, 40, 0x333333).setScrollFactor(0).setInteractive({ useHandCursor: true });
     const txtDieNo = scene.add.text(0, 100, 'やめる', { fontSize: '18px', fill: '#fff' }).setScrollFactor(0).setOrigin(0.5);
     btnDieNo.on('pointerdown', () => {
         scene.menuSuicide.setVisible(false);
