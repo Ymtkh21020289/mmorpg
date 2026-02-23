@@ -64,10 +64,10 @@ const RECIPES = [
 ];
 
 const RANKS = {
-    'C':      { id: 'C', name: 'C', rate: 60,  mult: 1.0, color: '#ffffff' },
+    'C':      { id: 'C', name: 'C', rate: 55,  mult: 1.0, color: '#ffffff' },
     'B':      { id: 'B', name: 'B', rate: 30,  mult: 1.2, color: '#00ff00' },
-    'A':      { id: 'A', name: 'A', rate: 8,   mult: 1.5, color: '#0000ff' },
-    'S':      { id: 'S', name: 'S', rate: 2, mult: 2, color: '#ff8800' }
+    'A':      { id: 'A', name: 'A', rate: 10,   mult: 1.5, color: '#0000ff' },
+    'S':      { id: 'S', name: 'S', rate: 5, mult: 2, color: '#ff8800' }
 };
 
 // 確率計算用の重み合計（100になるように調整してありますが、動的に計算します）
