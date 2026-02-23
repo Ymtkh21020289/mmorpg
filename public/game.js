@@ -2096,7 +2096,7 @@ function createMenuUI(scene) {
                     // --- コールバック: プレイヤーが選ばれた後の処理 ---
             
                     // 金額入力ダイアログ (ブラウザ標準)
-                    const input = prompt(`${targetName} さんにいくら送りますか？\n(所持金: ${scene.myPlayer.gold} G)`, "0");
+                    const input = prompt(`${targetName} さんにいくら送りますか？\n(所持金: ${scene.myGold} G)`, "0");
             
                     if (input === null) return; // キャンセル
 
@@ -2106,7 +2106,7 @@ function createMenuUI(scene) {
                         return;
                     }
 
-                    if (amount > scene.myPlayer.gold) {
+                    if (amount > scene.myGold) {
                         alert("所持金が足りません！");
                         return;
                     }
