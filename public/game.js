@@ -997,7 +997,7 @@ function update() {
                     if (Math.abs(angleDiff) < weapon.range * Math.PI / 180) {
                     
                         // ヒット確定！
-                        this.socket.emit('attackEnemy', { enemyId: enemy.id, damage: weapon_damage });
+                        this.socket.emit('attackEnemy', { enemyId: enemy.id, damage: weapon_damage, ratio: weapon.ratio || 0 });
                     
                         // ダメージ演出
                         enemy.setTint(0xff0000);
