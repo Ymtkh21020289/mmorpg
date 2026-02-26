@@ -1606,7 +1606,7 @@ function createMerchantUI(scene) {
     const itemHeight = 45;
     
     // 仮の商品データ
-    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring', 'wooden_axe', 'slime_gel']; 
+    const shopItems = ['potion', 'wood', 'sword', 'leather_helm', 'chain_mail', 'power_ring', 'wooden_axe', 'slime_gel', 'kingSlime_heart']; 
     
     shopItems.forEach((id) => {
         const item = ITEMS[id]; 
