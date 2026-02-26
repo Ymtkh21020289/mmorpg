@@ -31,6 +31,11 @@ const ITEMS = {
 
 const RECIPES = [
     {
+        id: 'potion',
+        materials: { 'slime_gel': 10, 'magic_stone': 1 },
+        cost: 10
+    },
+    {
         id: 'great_axe', 
         materials: { 'wolf_crow': 20, 'magic_stone': 10 }, // 必要な素材と数
         cost: 100 // 手数料
@@ -56,14 +61,19 @@ const RECIPES = [
         cost: 100
     },
     {
-        id: 'potion',
-        materials: { 'slime_gel': 10, 'magic_stone': 1 },
-        cost: 10
-    },
-    {
         id: 'ancient_wand',
         materials: { 'golem_heart': 1, 'magic_stone': 10 },
         cost: 100
+    },
+    {
+        id: 'ancient_anclet',
+        materials: { 'golem_core': 3, 'stone': 10 },
+        cost: 100
+    },
+    {
+        id: 'slime_sword_alpha',
+        materials: { 'kingSlime_heart': 1, 'slime_sword': 1 },
+        cost: 10000
     }
 ];
 
