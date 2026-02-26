@@ -2361,7 +2361,8 @@ function showTooltip(item, x, y) {
                 let label = key.toUpperCase();
                 if (key === 'atk') label = '攻撃力';
                 if (key === 'def') label = '防御力';
-                if (key === 'hp')  label = 'HP';
+                if (key === 'hp')  label = '最大HP+';
+                if (key === 'mana')  label = '最大MP+';
             
                 let valHtml = `${val}`;
                 let rangeHtml = ''; // 範囲表示用の変数
