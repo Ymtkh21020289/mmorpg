@@ -1260,7 +1260,7 @@ function addItemToInventory(player, itemId, amount) {
         
         if (stackSlot) {
             // スタック可能なら追加（1000個制限）
-            const addable = Math.min(amount, 1000 - stackSlot.count);
+            const addable = Math.min(amount, 10000 - stackSlot.count);
             stackSlot.count += addable;
             amount -= addable;
         }
@@ -1353,6 +1353,8 @@ function updatePlayerStats(player) {
     player.baseDef = player.level + 5
     player.totalAtk = player.baseAtk;
     player.totalDef = player.baseDef;
+    player.maxHp = player.level * 5 + 10;
+    player.maxMana = 50;
 
     // 2. 装備スロットを全部見て回る
     for (const slot in player.equipment) {
@@ -1367,14 +1369,22 @@ function updatePlayerStats(player) {
             if (itemData) {
                 if (item.stats.atk) player.totalAtk += item.stats.atk;
                 if (item.stats.def) player.totalDef += item.stats.def;
+                if (item.stats.hp) player.maxHp += item.stats.hp;
+                if (item.stats.mana) player.maxMana += item.stats.def;
             }
         }
+    }
+    if (player.hp > player.maxHp ){
+        player.hp = player.maxHp;
+    }
+    if (player.mana > player.maxMana ){
+        player.mana = player.maxMana;
     }
     
     // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
     io.to(player.id).emit('updateStats', { 
         level: player.level, exp: player.exp, maxExp: player.maxExp,
-        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
+        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp
     });
 }
 
