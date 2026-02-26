@@ -66,7 +66,7 @@ const RECIPES = [
         cost: 100
     },
     {
-        id: 'ancient_anclet',
+        id: 'ancient_anklet',
         materials: { 'golem_core': 3, 'stone': 10 },
         cost: 100
     },
