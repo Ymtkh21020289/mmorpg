@@ -307,7 +307,7 @@ io.on('connection', (socket) => {
         const player = players[socket.id];
 
         if (enemy && !enemy.isDead && player) {
-            const sum = Math.floor(( player.totalAtk + data.damage ) * ( 1 + data.ratio ));
+            const sum = Math.floor(( player.totalAtk + data.damage ) * ( 1 + ( data.ratio / 100 )));
             enemy.hp -= sum;
             io.emit('enemyDamaged', { enemyId: data.enemyId, damage: sum });
 
