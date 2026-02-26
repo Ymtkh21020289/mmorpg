@@ -2363,6 +2363,7 @@ function showTooltip(item, x, y) {
                 if (key === 'def') label = '防御力';
                 if (key === 'hp')  label = '最大HP+';
                 if (key === 'mana')  label = '最大MP+';
+                if (key === 'ratio')  label = '攻撃力（％）';
             
                 let valHtml = `${val}`;
                 let rangeHtml = ''; // 範囲表示用の変数
