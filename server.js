@@ -1354,7 +1354,7 @@ function updatePlayerStats(player) {
     player.totalAtk = player.baseAtk;
     player.totalDef = player.baseDef;
     player.maxHp = player.level * 5 + 10;
-    player.maxMana = 50;
+    player.maxMp = 50;
 
     // 2. 装備スロットを全部見て回る
     for (const slot in player.equipment) {
@@ -1370,15 +1370,15 @@ function updatePlayerStats(player) {
                 if (item.stats.atk) player.totalAtk += item.stats.atk;
                 if (item.stats.def) player.totalDef += item.stats.def;
                 if (item.stats.hp) player.maxHp += item.stats.hp;
-                if (item.stats.mana) player.maxMana += item.stats.def;
+                if (item.stats.mana) player.maxMp += item.stats.mana;
             }
         }
     }
     if (player.hp > player.maxHp ){
         player.hp = player.maxHp;
     }
-    if (player.mana > player.maxMana ){
-        player.mana = player.maxMana;
+    if (player.mp > player.maxMp ){
+        player.mp = player.maxMp;
     }
     
     // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
