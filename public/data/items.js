@@ -75,6 +75,11 @@ const RECIPES = [
         id: 'slime_sword_alpha',
         materials: { 'kingSlime_heart': 1, 'slime_sword': 1 },
         cost: 10000
+    },
+    {
+        id: 'mathili_gun',
+        materials: { 'kingSlime_heart': 10, 'golem_heart': 20 },
+        cost: 10000
     }
 ];
 
