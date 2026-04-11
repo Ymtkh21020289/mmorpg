@@ -78,7 +78,7 @@ const RECIPES = [
     },
     {
         id: 'mathili_gun',
-        materials: { 'kingSlime_heart': 1},
+        materials: { 'kingSlime_heart': 10},
         cost: 10000
     }
 ];
