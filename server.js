@@ -868,6 +868,27 @@ io.on('connection', (socket) => {
         socket.emit('updateStorage', player.storage);
         socket.emit('systemMessage', `${ITEMS[item.id].name} を引き出しました。`);
     });
+
+    socket.on('adminAddMoney', (amount) => {
+        const player = players[socket.id];
+
+        // サーバー側で厳格にチェック：名前が "owner" 以外は無視する
+        if (player && player.name === "owner") {
+            player.money = (player.money || 0) + amount;
+            
+            console.log(`[ADMIN] ${player.name} の所持金を ${amount} 増やしました。`);
+
+            // 更新されたお金を本人に通知
+            socket.emit('updatePlayerStats', {
+                money: player.money
+            });
+
+            // 必要であればセーブ処理も呼ぶ
+            // savePlayer(player);
+        } else {
+            console.warn(`[WARNING] 不正なデバッグ要求を検知しました: ${socket.id}`);
+        }
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
