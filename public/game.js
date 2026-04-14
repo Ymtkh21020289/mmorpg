@@ -827,6 +827,27 @@ function create() {
             this.refreshWarehouseList(); 
         }
     });
+    this.debugUI = this.add.container(100, 100).setScrollFactor(0).setDepth(1000).setVisible(false);
+    
+    const bg = this.add.rectangle(0, 0, 300, 200, 0x000000, 0.8).setOrigin(0);
+    const title = this.add.text(10, 10, '--- DEBUG MENU (OWNER ONLY) ---', { fill: '#0f0' });
+    const moneyBtn = this.add.text(10, 50, '[ 10,000G 追加 ]', { fill: '#ff0', backgroundColor: '#333' })
+        .setInteractive({ useHandCursor: true });
+
+    this.debugUI.add([bg, title, moneyBtn]);
+
+    // 金を増やすボタンのクリックイベント
+    moneyBtn.on('pointerdown', () => {
+        this.socket.emit('adminAddMoney', 10000);
+    });
+
+    // Pキーでデバッグメニュー開閉
+    this.input.keyboard.on('keydown-P', () => {
+        // 名前が "owner" の場合のみトグル（切り替え）可能
+        if (this.playerName === "owner") {
+            this.debugUI.setVisible(!this.debugUI.visible);
+        }
+    });
 }
 
 function update() {
