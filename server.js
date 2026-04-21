@@ -869,6 +869,11 @@ io.on('connection', (socket) => {
         socket.emit('systemMessage', `${ITEMS[item.id].name} を引き出しました。`);
     });
 
+    sockrt.on('save' => {
+        const player = players[socket.id];
+        savePlayer(player);
+    });
+
     socket.on('adminAddMoney', (amount) => {
         const player = players[socket.id];
 
