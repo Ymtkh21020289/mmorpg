@@ -85,6 +85,7 @@ function create() {
 
     // 2. サーバーに「この名前で遊びたい」と伝える
     this.socket.emit('joinGame', myUsername);
+    this.playerName = myUsername;
 
     this.createMap = (roomName) => {
         // 1. マップ更新中はフラグを下ろす
@@ -2159,7 +2160,7 @@ function createMenuUI(scene) {
         { text: 'スキル (未実装)', callback: () => console.log('Skill') },
         { text: 'クエスト (未実装)', callback: () => console.log('Quest') },
         { text: '設定 (未実装)', callback: () => console.log('Config') },
-        { text: 'ログアウト (未実装)', callback: () => console.log('Logout') },
+        { text: 'セーブ', callback: () => scene.socket.emit('save') },
         
         {
             text: '閉じる',
