@@ -849,6 +849,57 @@ function create() {
             this.debugUI.setVisible(!this.debugUI.visible);
         }
     });
+    const jobNpc = this.add.rectangle(400, 300, 40, 40, 0x0000ff);
+    this.physics.add.existing(jobNpc, true); // 静的な物理オブジェクトとして設定
+
+    // 2. 転職メニューUIの作成（初期状態は非表示）
+    this.jobUI = this.add.container(200, 150).setScrollFactor(0).setDepth(1000).setVisible(false);
+    const bg = this.add.rectangle(0, 0, 400, 300, 0x000000, 0.9).setOrigin(0);
+    const title = this.add.text(20, 20, '【 転職所 】職業を選んでください', { fill: '#fff', fontSize: '20px' });
+    this.jobUI.add([bg, title]);
+
+    // 職業ボタンのリスト
+    const jobs = [
+        { id: 'normal', name: 'ノーマル' },
+        { id: 'warrior', name: 'ウォリアー' },
+        { id: 'mage', name: 'メイジ' }
+    ];
+
+    // ボタンを並べて生成
+    jobs.forEach((job, index) => {
+        const btn = this.add.text(40, 80 + (index * 50), `> ${job.name} になる`, { fill: '#ff0', fontSize: '18px' })
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                // クリックされたらサーバーへ転職リクエストを送信
+                this.socket.emit('changeJob', job.id);
+                this.jobUI.setVisible(false); // メニューを閉じる
+            });
+        this.jobUI.add(btn);
+    });
+
+    // メニューを閉じるボタン
+    const closeBtn = this.add.text(320, 260, '[ 閉じる ]', { fill: '#f00' })
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => this.jobUI.setVisible(false));
+    this.jobUI.add(closeBtn);
+
+    // 3. プレイヤーとNPCの接触判定（近づいて Xキー を押すと開く）
+    // ※ this.player は既に作成されている前提です
+    this.physics.add.overlap(this.player, jobNpc, () => {
+        // 例: Xキーが押された瞬間だけ反応する
+        if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey('X'))) {
+            this.jobUI.setVisible(true);
+        }
+    });
+
+    // 4. サーバーからの転職完了通知を受け取る
+    this.socket.on('jobChanged', (data) => {
+        // ここで画面上のHPバーや、ステータス表示UIを data の内容で書き換えます
+        console.log("転職完了！現在のデータ:", data);
+        
+        // 例: HPテキストの更新など
+        // this.hpText.setText(`HP: ${data.stats.hp} / ${data.stats.maxHp}`);
+    });
 }
 
 function update() {
