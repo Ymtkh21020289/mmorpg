@@ -338,7 +338,6 @@ io.on('connection', (socket) => {
         const player = players[socket.id];
 
         if (enemy && !enemy.isDead && player) {
-            console.log(`${player.totalAtk},${data.damage},${data.ratio}`);
             const sum = Math.floor(( player.totalAtk + data.damage ) * ( 1 + ( data.ratio / 100 )));
             enemy.hp -= sum;
             io.emit('enemyDamaged', { enemyId: data.enemyId, damage: sum });
@@ -1426,12 +1425,12 @@ function updatePlayerStats(player) {
     const jobData = player.jobs[jobKey];
     const config = JOB_CONFIG[jobKey];
     
-    player.baseAtk = (config.level * config.atkGrowth) + 10;
-    player.baseDef = (config.level * config.defGrowth) + 5
+    player.baseAtk = (jobData.level * config.atkGrowth) + 10;
+    player.baseDef = (jobData.level * config.defGrowth) + 5
     player.totalAtk = player.baseAtk;
     player.totalDef = player.baseDef;
-    player.maxHp = (config.level * config.hpGrowth) + 10;
-    player.maxMp = (config.level * config.mpGrowth) + 50;
+    player.maxHp = (jobData.level * config.hpGrowth) + 10;
+    player.maxMp = (jobData.level * config.mpGrowth) + 50;
 
     // 2. 装備スロットを全部見て回る
     for (const slot in player.equipment) {
