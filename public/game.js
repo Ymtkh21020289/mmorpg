@@ -430,9 +430,9 @@ function create() {
     createGoldTransferButton(this);
 
     // 背景（黒い四角）
-    //const tooltipBg = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
-    //tooltipBg.setOrigin(0, 0); // 左上基準
-    //tooltipBg.setStrokeStyle(2, 0xffffff); // 白い枠線
+    //const tooltip = this.add.rectangle(0, 0, 200, 100, 0x000000, 0.8);
+    //tooltip.setOrigin(0, 0); // 左上基準
+    //tooltip.setStrokeStyle(2, 0xffffff); // 白い枠線
 
     // 文字
     //const tooltipText = this.add.text(10, 10, '', {
@@ -442,10 +442,10 @@ function create() {
     //});
 
     // コンテナにまとめる
-    //this.tooltip.add([tooltipBg, tooltipText]);
+    //this.tooltip.add([tooltip, tooltipText]);
     
     // あとでアクセスしやすいように参照を保存
-    //this.tooltipBg = tooltipBg;
+    //this.tooltip = tooltip;
     //this.tooltipText = tooltipText;
 
     this.tooltipDiv = document.createElement('div');
@@ -854,9 +854,9 @@ function create() {
 
     // 2. 転職メニューUIの作成（初期状態は非表示）
     this.jobUI = this.add.container(200, 150).setScrollFactor(0).setDepth(1000).setVisible(false);
-    const bg = this.add.rectangle(0, 0, 400, 300, 0x000000, 0.9).setOrigin(0);
-    const title = this.add.text(20, 20, '【 転職所 】職業を選んでください', { fill: '#fff', fontSize: '20px' });
-    this.jobUI.add([bg, title]);
+    const jobBg = this.add.rectangle(0, 0, 400, 300, 0x000000, 0.9).setOrigin(0);
+    const jobTitle = this.add.text(20, 20, '【 転職所 】職業を選んでください', { fill: '#fff', fontSize: '20px' });
+    this.jobUI.add([jobBg, jobTitle]);
 
     // 職業ボタンのリスト
     const jobs = [
