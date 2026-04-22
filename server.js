@@ -1812,8 +1812,8 @@ function addExp(playerId, amount) {
     if (jobData.exp >= nextLevelExp) {
         jobData.exp = 0;
         jobData.level++;
-        playerInRoom.hp = playerInRoom.maxHp;
-        playerInRoom.mp = playerInRoom.maxMp;
+        player.hp = player.maxHp;
+        player.mp = player.maxMp;
 
         // ★修正：現在の職業のSPを加算する
         if (jobData.level % 2 === 0) {
