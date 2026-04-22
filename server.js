@@ -1809,6 +1809,7 @@ function addExp(playerId, amount) {
     jobData.exp += amount;
 
     const nextLevelExp = Math.floor( 2 * (jobData.level ** 2) + (jobData.level * 10) + 100);
+    console.log(`${nextLevel}`);
     player.maxExp = nextLevelExp;
 
     if (jobData.exp >= nextLevelExp) {
