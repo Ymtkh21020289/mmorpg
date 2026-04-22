@@ -1828,7 +1828,8 @@ function addExp(playerId, amount) {
         // クライアントへの通知を送る
         io.emit('playerLevelUp', {
             playerId: player.playerId,
-            level: jobData.level
+            level: jobData.level,
+            maxExp: player.maxExp
         });
     }
 }
