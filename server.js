@@ -919,6 +919,38 @@ io.on('connection', (socket) => {
             console.warn(`[WARNING] 不正なデバッグ要求を検知しました: ${socket.id}`);
         }
     });
+
+    socket.on('changeJob', (targetJob) => {
+        const player = players[socket.id];
+        if (!player) return;
+
+        // 要求された職業が JOB_CONFIG に存在するか（不正防止）
+        if (JOB_CONFIG[targetJob]) {
+            // 職業を変更
+            player.currentJob = targetJob;
+            
+            // 以前作った関数で、新職業のレベルに応じたステータスに再計算
+            refreshPlayerStats(player);
+
+            console.log(`${player.name} が ${JOB_CONFIG[targetJob].name} に転職しました。`);
+
+            // クライアントへ転職完了と最新情報を通知
+            socket.emit('jobChanged', {
+                newJob: targetJob,
+                stats: { 
+                    hp: player.hp, 
+                    maxHp: player.maxHp, 
+                    atk: player.atk 
+                },
+                jobData: player.jobs[targetJob] // 新しい職業のレベルやSP
+            });
+
+            // 全体または個人にシステムメッセージ
+            socket.emit('systemMessage', `${JOB_CONFIG[targetJob].name} に転職しました！`);
+        } else {
+            console.warn(`[WARNING] 存在しない職業への転職要求: ${targetJob}`);
+        }
+    });
 });
 
 // Renderなどの環境では process.env.PORT を使う
