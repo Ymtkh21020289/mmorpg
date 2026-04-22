@@ -894,7 +894,7 @@ io.on('connection', (socket) => {
         socket.emit('systemMessage', `${ITEMS[item.id].name} を引き出しました。`);
     });
 
-    sockrt.on('save', (data) => {
+    socket.on('save', (data) => {
         const player = players[socket.id];
         savePlayer(player);
     });
