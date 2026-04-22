@@ -930,7 +930,7 @@ io.on('connection', (socket) => {
             player.currentJob = targetJob;
             
             // 以前作った関数で、新職業のレベルに応じたステータスに再計算
-            refreshPlayerStats(player);
+            updatePlayerStats(player);
 
             console.log(`${player.name} が ${JOB_CONFIG[targetJob].name} に転職しました。`);
 
