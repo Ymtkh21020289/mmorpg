@@ -143,6 +143,29 @@ let bossState = {
     warpTimer: null   // ワープまでのタイマー
 };
 
+// server.js
+
+const JOB_CONFIG = {
+    'normal': {
+        name: 'ノーマル',
+        hpGrowth: 10,      // 1レベルごとのHP上昇値
+        atkGrowth: 2,      // 1レベルごとの攻撃力上昇値
+        allowedWeapons: ['sword', 'axe'] // 装備可能な武器ID
+    },
+    'warrior': {
+        name: 'ウォリアー',
+        hpGrowth: 25,
+        atkGrowth: 5,
+        allowedWeapons: ['sword', 'axe']
+    },
+    'mage': {
+        name: 'メイジ',
+        hpGrowth: 8,
+        atkGrowth: 8,
+        allowedWeapons: ['wand', 'staff']
+    }
+};
+
 // --- 関数：群れをスポーンさせる ---
 function spawnGroup(spawner) {
     const spawnerIndex = spawners.indexOf(spawner);
@@ -209,6 +232,8 @@ io.on('connection', (socket) => {
             playerId: socket.id,    // クライアント側で使っている変数名に合わせる
             name: playerData.username // 表示名はusernameを使う
         };
+
+        initializePlayer(player);
     
         // ★重要: totalAtkなどの再計算が必要ならここで行う
         // updatePlayerStats(player); 
@@ -228,7 +253,7 @@ io.on('connection', (socket) => {
         // クライアント側で「マップ切り替え処理」をするためのイベント
         socket.emit('mapChanged', { room: player.room, players: roomPlayers, x: player.x, y: player.y });
         socket.emit('updateStats', {
-                level: player.level, exp: player.exp, maxExp: player.maxExp,
+                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
                 mp: player.mp, maxMp: player.maxMp // ★MPも含める
             });
@@ -246,7 +271,7 @@ io.on('connection', (socket) => {
             inventory: players[socket.id].inventory,
             gold: players[socket.id].gold
         });
-        console.log(`${username} が参加しました (Lv.${player.level})`);
+        console.log(`${username} が参加しました (Lv.${player.jobs[player.currentJob].level})`);
     });
 
     // メッセージを受け取る
@@ -281,7 +306,7 @@ io.on('connection', (socket) => {
 
             // MPが減ったことを本人に通知
             socket.emit('updateStats', {
-                level: player.level, exp: player.exp, maxExp: player.maxExp,
+                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
                 mp: player.mp, maxMp: player.maxMp // ★MPも含める
             });
@@ -1108,7 +1133,7 @@ setInterval(() => {
             
             // 本人に通知
             io.to(id).emit('updateStats', {
-                level: player.level, exp: player.exp, maxExp: player.maxExp,
+                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
             });
         }
@@ -1120,7 +1145,6 @@ function handleEnemyDeath(enemy, player) {
     const expGain = enemy.exp;
     
     if (enemy.respawnType === 'group') {
-        player.exp += expGain;
         const targetSpawnerIndex = enemy.spawnerIndex;
         const spawner = spawners[targetSpawnerIndex];
         const table = DROP_TABLE[spawner.type];
@@ -1155,37 +1179,17 @@ function handleEnemyDeath(enemy, player) {
                 inventory: playerInRoom.inventory, 
                 gold: playerInRoom.gold 
             });
-            if (playerInRoom.exp >= playerInRoom.maxExp) {
-                playerInRoom.level++;
-                playerInRoom.exp = 0;
-                playerInRoom.maxExp = Math.floor( 15 * (playerInRoom.level ** 2) + (playerInRoom.level * 90) + 200);
-                playerInRoom.hp = playerInRoom.maxHp;
-                playerInRoom.mp = playerInRoom.maxMp;
-                updatePlayerStats(playerInRoom);
-                io.emit('playerLevelUp', { playerId: playerInRoom.playerId, level: playerInRoom.level });
-            }
+            addExp(playerInRoom.playerId,expGain);
             return;
         });
     }
 
-    if (player.exp >= player.maxExp) {
-        player.level++;
-        player.exp = 0;
-        if (player.level <= 20){
-            player.maxExp = Math.floor( 5 * (player.level ** 2) + (player.level * 40) + 200);
-        }else {
-            player.maxExp = Math.floor( 10 * (player.level ** 2) + (player.level * 120) + 400);
-        }
-        player.hp = player.maxHp;
-        player.mp = player.maxMp;
-        updatePlayerStats(player);
-        io.emit('playerLevelUp', { playerId: player.playerId, level: player.level });
-    }
+    addExp(playerInRoom.playerId,expGain);
 
     // プレイヤー本人にステータス更新を通知
     // (socket経由ではなくio.toを使うことで、どこから呼ばれても動くようにする)
     io.to(player.playerId).emit('updateStats', {
-        level: player.level, exp: player.exp, maxExp: player.maxExp,
+        level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
         baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
     });
 
@@ -1379,12 +1383,16 @@ function isMapWall(mapId, x, y) {
 
 function updatePlayerStats(player) {
     // 1. まず「素のステータス」にリセット（レベルに応じた基礎値など）
-    player.baseAtk = (player.level * 2) + 10;
-    player.baseDef = player.level + 5
+    const jobKey = player.currentJob;
+    const jobData = player.jobs[jobKey];
+    const config = JOB_CONFIG[jobKey];
+    
+    player.baseAtk = (config.level * config.atkGrowth) + 10;
+    player.baseDef = (config.level * config.defGrowth) + 5
     player.totalAtk = player.baseAtk;
     player.totalDef = player.baseDef;
-    player.maxHp = player.level * 5 + 10;
-    player.maxMp = 50;
+    player.maxHp = (config.level * config.hpGrowth) + 10;
+    player.maxMp = (config.level * config.mpGrowth) + 50;
 
     // 2. 装備スロットを全部見て回る
     for (const slot in player.equipment) {
@@ -1413,7 +1421,7 @@ function updatePlayerStats(player) {
     
     // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
     io.to(player.id).emit('updateStats', { 
-        level: player.level, exp: player.exp, maxExp: player.maxExp,
+        level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
         baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp
     });
 }
@@ -1505,9 +1513,9 @@ async function savePlayer(player) {
         lastDamageTime: player.lastDamageTime, // 必要であれば保存
 
         // --- レベル・経験値 ---
-        level: player.level,
-        exp: player.exp,
-        maxExp: player.maxExp,
+        level: player.jobs[player.currentJob].level,
+        exp: player.jobs[player.currentJob].exp,
+        maxExp: player.jobs[player.currentJob].maxExp,
 
         // --- 戦闘パラメータ ---
         baseAtk: player.baseAtk,
@@ -1519,7 +1527,11 @@ async function savePlayer(player) {
         gold: player.gold,
         inventory: player.inventory, // 配列の中身ごと保存されます
         storage: player.storage,
-        equipment: player.equipment  // オブジェクトの中身ごと保存されます
+        equipment: player.equipment,  // オブジェクトの中身ごと保存されます
+
+        // --- 職業---
+        jobs: player.jobs,
+        currentJob: player.currentJob
     };
 
     try {
@@ -1725,4 +1737,55 @@ function bossAttack8Way(boss) {
             respawnType: 'boss'
         };
     });
+}
+
+function initializePlayer(player) {
+    const legacyLevel = player.jobs[player.currentJob].level || 1;
+    const legacyExp = player.jobs[player.currentJob].exp || 0;
+    // 過去の共有SPがあれば取得、なければ0
+    const legacySp = player.skillPoints || 0; 
+
+    // 職業ごとの個別データに「sp」を追加！
+    player.jobs = player.jobs || {
+        'normal': { level: legacyLevel, exp: legacyExp, sp: legacySp },
+        'warrior': { level: 1, exp: 0, sp: 0 },
+        'mage': { level: 1, exp: 0, sp: 0 }
+    };
+
+    player.currentJob = player.currentJob || 'normal';
+    
+    // ※ 全体共有の player.skillPoints はもう使わないので初期化不要です
+
+    updatePlayerStats(player);
+}
+
+function addExp(playerId, amount) {
+    const player = players[playerId];
+    const jobKey = player.currentJob;
+    const jobData = player.jobs[jobKey];
+
+    jobData.exp += amount;
+
+    const nextLevelExp = Math.floor( 10 * (playerInRoom.level ** 2) + (playerInRoom.level * 90) + 200);jobData.level * 100;
+
+    if (jobData.exp >= nextLevelExp) {
+        jobData.exp = 0;
+        jobData.level++;
+        playerInRoom.hp = playerInRoom.maxHp;
+        playerInRoom.mp = playerInRoom.maxMp;
+
+        // ★修正：現在の職業のSPを加算する
+        if (jobData.level % 2 === 0) {
+            jobData.sp += 1;
+            console.log(`${player.name} が ${JOB_CONFIG[jobKey].name} のレベル ${jobData.level} に到達！ 専用SPを1獲得。`);
+        }
+
+        updatePlayerStats(player);
+
+        // クライアントへの通知を送る
+        io.emit('playerLevelUp', {
+            playerId: player.playerId,
+            level: jobData.level
+        });
+    }
 }
