@@ -1791,6 +1791,8 @@ function initializePlayer(player) {
     };
 
     player.currentJob = player.currentJob || 'normal';
+    const nextLevelExp = Math.floor( 2 * (player.level ** 2) + (player.level * 10) + 100);
+    player.maxExp = nextLevelExp;
     
     // ※ 全体共有の player.skillPoints はもう使わないので初期化不要です
 
@@ -1804,7 +1806,8 @@ function addExp(playerId, amount) {
 
     jobData.exp += amount;
 
-    const nextLevelExp = Math.floor( 10 * (playerInRoom.level ** 2) + (playerInRoom.level * 90) + 200);jobData.level * 100;
+    const nextLevelExp = Math.floor( 2 * (player.level ** 2) + (player.level * 10) + 100);
+    player.maxExp = nextLevelExp;
 
     if (jobData.exp >= nextLevelExp) {
         jobData.exp = 0;
