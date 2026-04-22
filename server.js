@@ -1791,7 +1791,9 @@ function initializePlayer(player) {
     };
 
     player.currentJob = player.currentJob || 'normal';
-    const nextLevelExp = Math.floor( 2 * (player.level ** 2) + (player.level * 10) + 100);
+    const jobKey = player.currentJob;
+    const jobData = player.jobs[jobKey];
+    const nextLevelExp = Math.floor( 2 * (jobData.level ** 2) + (jobData.level * 10) + 100);
     player.maxExp = nextLevelExp;
     
     // ※ 全体共有の player.skillPoints はもう使わないので初期化不要です
