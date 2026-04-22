@@ -881,15 +881,6 @@ function create() {
         .on('pointerdown', () => this.jobUI.setVisible(false));
     this.jobUI.add(closeBtn);
 
-    // 3. プレイヤーとNPCの接触判定（近づいて Xキー を押すと開く）
-    // ※ this.player は既に作成されている前提です
-    this.physics.add.overlap(this.player, jobNpc, () => {
-        // 例: Xキーが押された瞬間だけ反応する
-        if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey('X'))) {
-            this.jobUI.setVisible(true);
-        }
-    });
-
     // 4. サーバーからの転職完了通知を受け取る
     this.socket.on('jobChanged', (data) => {
         // ここで画面上のHPバーや、ステータス表示UIを data の内容で書き換えます
@@ -1099,6 +1090,8 @@ function update() {
                             updateAppraiserList(this);
                         }else if (enemy.getData('type') === 'warehouse' && !this.isWarehouseOpen) {
                             this.openWarehouseUI();
+                        }else if (enemy.getData('type') === 'job') {
+                            this.jobUI.setVisible(true);
                         }
                     }
                 }
