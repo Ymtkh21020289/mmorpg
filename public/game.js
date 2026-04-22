@@ -849,8 +849,6 @@ function create() {
             this.debugUI.setVisible(!this.debugUI.visible);
         }
     });
-    const jobNpc = this.add.rectangle(400, 300, 40, 40, 0x0000ff);
-    this.physics.add.existing(jobNpc, true); // 静的な物理オブジェクトとして設定
 
     // 2. 転職メニューUIの作成（初期状態は非表示）
     this.jobUI = this.add.container(200, 150).setScrollFactor(0).setDepth(1000).setVisible(false);
