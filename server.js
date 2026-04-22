@@ -151,7 +151,7 @@ const JOB_CONFIG = {
         hpGrowth: 10,      // 1レベルごとのHP上昇値
         atkGrowth: 2,      // 1レベルごとの攻撃力上昇値
         defGrowth: 1,
-        mpGrowth: 0
+        mpGrowth: 0,
         allowedWeapons: ['sword', 'axe'] // 装備可能な武器ID
     },
     'warrior': {
@@ -159,7 +159,7 @@ const JOB_CONFIG = {
         hpGrowth: 25,
         atkGrowth: 5,      // 1レベルごとの攻撃力上昇値
         defGrowth: 1,
-        mpGrowth: 0
+        mpGrowth: 0,
         allowedWeapons: ['sword', 'axe']
     },
     'mage': {
@@ -167,7 +167,7 @@ const JOB_CONFIG = {
         hpGrowth: 8,
         atkGrowth: 8,      // 1レベルごとの攻撃力上昇値
         defGrowth: 1,
-        mpGrowth: 0
+        mpGrowth: 0,
         allowedWeapons: ['wand', 'staff']
     }
 };
