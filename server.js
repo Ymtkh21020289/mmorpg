@@ -259,7 +259,7 @@ io.on('connection', (socket) => {
         // クライアント側で「マップ切り替え処理」をするためのイベント
         socket.emit('mapChanged', { room: player.room, players: roomPlayers, x: player.x, y: player.y });
         socket.emit('updateStats', {
-                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
+                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
                 mp: player.mp, maxMp: player.maxMp // ★MPも含める
             });
@@ -312,7 +312,7 @@ io.on('connection', (socket) => {
 
             // MPが減ったことを本人に通知
             socket.emit('updateStats', {
-                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
+                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
                 mp: player.mp, maxMp: player.maxMp // ★MPも含める
             });
@@ -1171,7 +1171,7 @@ setInterval(() => {
             
             // 本人に通知
             io.to(id).emit('updateStats', {
-                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
+                level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
             });
         }
@@ -1227,7 +1227,7 @@ function handleEnemyDeath(enemy, player) {
     // プレイヤー本人にステータス更新を通知
     // (socket経由ではなくio.toを使うことで、どこから呼ばれても動くようにする)
     io.to(player.playerId).emit('updateStats', {
-        level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.jobs[player.currentJob].maxExp,
+        level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
         baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
     });
 
