@@ -1772,8 +1772,8 @@ function bossAttack8Way(boss) {
 }
 
 function initializePlayer(player) {
-    const legacyLevel = player.jobs[player.currentJob].level || 1;
-    const legacyExp = player.jobs[player.currentJob].exp || 0;
+    const legacyLevel = player.level || 1;
+    const legacyExp = player.exp || 0;
     // 過去の共有SPがあれば取得、なければ0
     const legacySp = player.skillPoints || 0; 
 
