@@ -2211,7 +2211,7 @@ function createMenuUI(scene) {
         { text: 'スキル (未実装)', callback: () => console.log('Skill') },
         { text: 'クエスト (未実装)', callback: () => console.log('Quest') },
         { text: '設定 (未実装)', callback: () => console.log('Config') },
-        { text: 'セーブ', callback: () => scene.socket.emit('save') },
+        { text: 'セーブ', callback: () => scene.socket.emit('save',this.player) },
         
         {
             text: '閉じる',
