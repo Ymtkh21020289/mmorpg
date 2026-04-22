@@ -1669,7 +1669,7 @@ function updateBossState() {
 
 // --- B. プレイヤー検出ヘルパー ---
 function getPlayersInBossRoom() {
-    return Object.values(players).filter(p => 
+    return Object.keys(players).filter(p => 
         p.room === BOSS_CONFIG.roomId
     );
 }
