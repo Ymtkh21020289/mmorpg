@@ -51,7 +51,7 @@ const npcs = {
         x: 96, y: 96,        // 配置座標
         mapId: '1023',        // 配置マップ
         name: '転職台',
-        type: 'signboard',
+        type: 'job',
         color: 0x00ff00,
         radius: 30             // 当たり判定の大きさ
     }
