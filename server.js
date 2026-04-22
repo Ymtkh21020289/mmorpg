@@ -1832,4 +1832,8 @@ function addExp(playerId, amount) {
             maxExp: player.maxExp
         });
     }
+    io.to(player.id).emit('updateStats', { 
+        level: jobData.level, exp: jobData.exp, maxExp: player.maxExp,
+        hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp
+    });
 }
