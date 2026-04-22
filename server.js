@@ -1216,7 +1216,7 @@ function handleEnemyDeath(enemy, player) {
         });
     }
 
-    addExp(playerInRoom.playerId,expGain);
+    addExp(player.playerId,expGain);
 
     // プレイヤー本人にステータス更新を通知
     // (socket経由ではなくio.toを使うことで、どこから呼ばれても動くようにする)
