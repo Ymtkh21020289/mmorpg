@@ -40,11 +40,19 @@ const npcs = {
         radius: 30             // 当たり判定の大きさ
     },
     'guide2': { 
-        x: 96, y: 96,        // 配置座標
-        mapId: '1023',        // 配置マップ
+        x: 720, y: 464,        // 配置座標
+        mapId: 'town',        // 配置マップ
         name: '街への近道（一方通行）',
         type: 'signboard',
         color: 0x0000ff,
+        radius: 30             // 当たり判定の大きさ
+    },
+    'jobNPC': { 
+        x: 96, y: 96,        // 配置座標
+        mapId: '1023',        // 配置マップ
+        name: '転職台',
+        type: 'signboard',
+        color: 0x00ff00,
         radius: 30             // 当たり判定の大きさ
     }
 };
