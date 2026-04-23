@@ -24,6 +24,12 @@ const defaultEquipment = {
     accessory3: null
 };
 
+const defaultjob = {
+        'normal': { level: 1, exp: 0, sp: 0 },
+        'warrior': { level: 1, exp: 0, sp: 0 },
+        'mage': { level: 1, exp: 0, sp: 0 }
+    };
+
 const playerSchema = new mongoose.Schema({
     // --- 必須情報 ---
     username: { type: String, required: true, unique: true }, // 永続化用のID
