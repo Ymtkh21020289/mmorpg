@@ -922,14 +922,12 @@ io.on('connection', (socket) => {
 
         // サーバー側で厳格にチェック：名前が "owner" 以外は無視する
         if (player && player.name === "owner") {
-            player.money = (player.money || 0) + amount;
+            player.gold = (player.gold || 0) + amount;
             
             console.log(`[ADMIN] ${player.name} の所持金を ${amount} 増やしました。`);
 
             // 更新されたお金を本人に通知
-            socket.emit('updatePlayerStats', {
-                money: player.money
-            });
+            io.to(socket.id).emit('inventoryUpdate', { inventory: player.inventory, gold: player.gold });
 
             // 必要であればセーブ処理も呼ぶ
             // savePlayer(player);
@@ -1229,7 +1227,6 @@ function handleEnemyDeath(enemy, player) {
                 inventory: playerInRoom.inventory, 
                 gold: playerInRoom.gold 
             });
-            addExp(playerInRoom.playerId,expGain);
             return;
         });
     }
