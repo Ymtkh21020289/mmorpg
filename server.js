@@ -79,7 +79,7 @@ const playerSchema = new mongoose.Schema({
     },
 
     jobs: {
-        type: Array,
+        type: Object,
         default: defaultjob
     },
     currentJob: { type: String, default: 'normal'} 
