@@ -70,7 +70,13 @@ const playerSchema = new mongoose.Schema({
     equipment: {
         type: Object,
         default: defaultEquipment
-    }
+    },
+
+    jobs: {
+        type: Array,
+        default: []
+    },
+    currentJob: { type: String, default: 'normal'} 
 });
 
 const PlayerModel = mongoose.model('Player', playerSchema);
