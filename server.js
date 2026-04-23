@@ -1582,7 +1582,7 @@ async function savePlayer(player) {
         );
         
         // デバッグ用（保存頻度が高い場合はコメントアウト推奨）
-        console.log(`${player.currentjob},${player.jobs}`);
+        console.log(`${player.currentJob},${player.jobs}`);
         console.log(`[Save] ${player.username} のデータを保存しました。`);
 
     } catch (e) {
