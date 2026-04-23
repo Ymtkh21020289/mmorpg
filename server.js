@@ -1551,9 +1551,9 @@ async function savePlayer(player) {
         lastDamageTime: player.lastDamageTime, // 必要であれば保存
 
         // --- レベル・経験値 ---
-        level: player.jobs[player.currentJob].level,
+        level: player.level,
         exp: player.jobs[player.currentJob].exp,
-        maxExp: player.jobs[player.currentJob].maxExp,
+        maxExp: player.maxExp,
 
         // --- 戦闘パラメータ ---
         baseAtk: player.baseAtk,
@@ -1582,6 +1582,7 @@ async function savePlayer(player) {
         );
         
         // デバッグ用（保存頻度が高い場合はコメントアウト推奨）
+        console.log(`${player.currentjob},${player.jobs}`);
         console.log(`[Save] ${player.username} のデータを保存しました。`);
 
     } catch (e) {
