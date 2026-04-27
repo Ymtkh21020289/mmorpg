@@ -946,7 +946,7 @@ io.on('connection', (socket) => {
             player.currentJob = targetJob;
             
             // 以前作った関数で、新職業のレベルに応じたステータスに再計算
-            addExp(player,0);
+            addExp(player.playerId,0);
 
             console.log(`${player.name} が ${JOB_CONFIG[targetJob].name} に転職しました。`);
 
