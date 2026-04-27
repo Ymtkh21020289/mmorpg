@@ -553,7 +553,7 @@ function create() {
         if (self.hpUI) {
             self.hpUI.setText(`HP: ${stats.hp}`);
         }
-        if (self.currentJobUI && stats.currentJob) {
+        if (self.currentJobUI) {
             self.currentJobUI.setText(`職業: ${stats.currentJob}`);
         }
         if (self.statusText) {
