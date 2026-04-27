@@ -553,6 +553,9 @@ function create() {
         if (self.hpUI) {
             self.hpUI.setText(`HP: ${stats.hp}`);
         }
+        if (self.jobUI && stats.job) {
+            self.jobUI.setText(`職業: ${stats.currentJob}`);
+        }
         if (self.statusText) {
             const equipAtk = stats.totalAtk - stats.baseAtk;
             const equipDef = stats.totalDef - stats.baseDef;
@@ -1153,7 +1156,7 @@ function addPlayer(self, playerInfo) {
     self.hpUI.setDepth(100);      // 最前面に表示
 
     // ★追加：MP表示UI
-    self.mpUI = self.add.text(20, self.cameras.main.height - 110, `MP: ${playerInfo.mp}/${playerInfo.maxMp}`, { 
+    self.jobUI = self.add.text(20, self.cameras.main.height - 110, `MP: ${playerInfo.mp}/${playerInfo.maxMp}`, { 
         fontSize: '18px',
         fill: '#00ffff', // 水色
         stroke: '#000000',
@@ -1161,6 +1164,15 @@ function addPlayer(self, playerInfo) {
     });
     self.mpUI.setScrollFactor(0);
     self.mpUI.setDepth(100);
+
+    self.jobUI = self.add.text(20, self.cameras.main.height - 140, `職業:${playerInfo.currentJob}`, { 
+        fontSize: '18px',
+        fill: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3
+    });
+    self.jobUI.setScrollFactor(0); // 画面固定
+    self.jobUI.setDepth(100);
     
     // マップがあれば衝突判定設定
     if (self.layer) {
