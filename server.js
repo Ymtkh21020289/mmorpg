@@ -326,7 +326,7 @@ io.on('connection', (socket) => {
             socket.emit('updateStats', {
                 level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
-                mp: player.mp, maxMp: player.maxMp // ★MPも含める
+                mp: player.mp, maxMp: player.maxMp, currentJob: player.currentJob // ★MPも含める
             });
         }
     });
@@ -1182,7 +1182,7 @@ setInterval(() => {
             // 本人に通知
             io.to(id).emit('updateStats', {
                 level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
-                baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
+                baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp, currentJob: player.currentJob
             });
         }
     });
@@ -1237,7 +1237,7 @@ function handleEnemyDeath(enemy, player) {
     // (socket経由ではなくio.toを使うことで、どこから呼ばれても動くようにする)
     io.to(player.playerId).emit('updateStats', {
         level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
-        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp
+        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, mp: player.mp, maxMp: player.maxMp, currentJob: player.currentJob
     });
 
     // 2. 死亡・復活処理
@@ -1844,6 +1844,6 @@ function addExp(playerId, amount) {
     }
     io.to(player.id).emit('updateStats', { 
         level: jobData.level, exp: jobData.exp, maxExp: player.maxExp,
-        hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp
+        hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp, currentJob: player.currentJob
     });
 }
