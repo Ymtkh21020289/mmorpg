@@ -553,8 +553,8 @@ function create() {
         if (self.hpUI) {
             self.hpUI.setText(`HP: ${stats.hp}`);
         }
-        if (self.jobUI && stats.job) {
-            self.jobUI.setText(`職業: ${stats.currentJob}`);
+        if (self.currentJobUI && stats.job) {
+            self.currentJobUI.setText(`職業: ${stats.currentJob}`);
         }
         if (self.statusText) {
             const equipAtk = stats.totalAtk - stats.baseAtk;
@@ -870,6 +870,7 @@ function create() {
     jobs.forEach((job, index) => {
         const btn = this.add.text(40, 80 + (index * 50), `> ${job.name} になる`, { fill: '#ff0', fontSize: '18px' })
             .setInteractive({ useHandCursor: true })
+            .setScrollFactor(0)
             .on('pointerdown', () => {
                 // クリックされたらサーバーへ転職リクエストを送信
                 this.socket.emit('changeJob', job.id);
@@ -881,6 +882,7 @@ function create() {
     // メニューを閉じるボタン
     const closeBtn = this.add.text(320, 260, '[ 閉じる ]', { fill: '#f00' })
         .setInteractive({ useHandCursor: true })
+        .setScrollFactor(0)
         .on('pointerdown', () => this.jobUI.setVisible(false));
     this.jobUI.add(closeBtn);
 
@@ -1165,14 +1167,14 @@ function addPlayer(self, playerInfo) {
     self.mpUI.setScrollFactor(0);
     self.mpUI.setDepth(100);
 
-    self.jobUI = self.add.text(20, self.cameras.main.height - 140, `職業:${playerInfo.currentJob}`, { 
+    self.currentJobUI = self.add.text(20, self.cameras.main.height - 140, `職業:${playerInfo.currentJob}`, { 
         fontSize: '18px',
         fill: '#ffffff',
         stroke: '#000000',
         strokeThickness: 3
     });
-    self.jobUI.setScrollFactor(0); // 画面固定
-    self.jobUI.setDepth(100);
+    self.currentJobUI.setScrollFactor(0); // 画面固定
+    self.currentJobUI.setDepth(100);
     
     // マップがあれば衝突判定設定
     if (self.layer) {
