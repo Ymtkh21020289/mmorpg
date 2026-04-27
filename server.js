@@ -273,7 +273,7 @@ io.on('connection', (socket) => {
         socket.emit('updateStats', {
                 level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
                 baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, 
-                mp: player.mp, maxMp: player.maxMp // ★MPも含める
+                mp: player.mp, maxMp: player.maxMp, currentJob:player.currentJob // ★MPも含める
             });
         socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
         socket.emit('updateStorage', player.storage);
@@ -1469,7 +1469,7 @@ function updatePlayerStats(player) {
     // 3. クライアントに最新ステータスを通知（HPバーなどの更新用）
     io.to(player.id).emit('updateStats', { 
         level: player.jobs[player.currentJob].level, exp: player.jobs[player.currentJob].exp, maxExp: player.maxExp,
-        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp
+        baseAtk: player.baseAtk, baseDef: player.baseDef, totalAtk: player.totalAtk, totalDef: player.totalDef, hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp, currentJob: player.currentJob
     });
 }
 
