@@ -1156,7 +1156,7 @@ function addPlayer(self, playerInfo) {
     self.hpUI.setDepth(100);      // 最前面に表示
 
     // ★追加：MP表示UI
-    self.jobUI = self.add.text(20, self.cameras.main.height - 110, `MP: ${playerInfo.mp}/${playerInfo.maxMp}`, { 
+    self.mpUI = self.add.text(20, self.cameras.main.height - 110, `MP: ${playerInfo.mp}/${playerInfo.maxMp}`, { 
         fontSize: '18px',
         fill: '#00ffff', // 水色
         stroke: '#000000',
