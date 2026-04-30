@@ -136,23 +136,44 @@ const spawners = [
 const mitigation = 300;
 
 const BOSS_CONFIG = {
-    roomId: 'boss1',
-    area: { minX: 0, maxX: 960, minY: 0, maxY: 960 }, 
-    // ボス出現位置
-    spawn: { x: 480, y: 480 },
-    // 討伐後のワープ先（街など）
-    warpTarget: { map: "1023", x: 576, y: 400 },
-    // ステータス
-    hp: 3000,
-    exp: 360,
+    "king_slime": {
+        roomId: 'boss1',
+        area: { minX: 0, maxX: 960, minY: 0, maxY: 960 }, 
+        // ボス出現位置
+        spawn: { x: 480, y: 480 },
+        // 討伐後のワープ先（街など）
+        warpTarget: { map: "1023", x: 576, y: 400 },
+        // ステータス
+        hp: 3000,
+        exp: 360
+    },
+    "fairy": {
+        roomId: 'boss2',
+        area: { minX: 0, maxX: 960, minY: 0, maxY: 960 }, 
+        // ボス出現位置
+        spawn: { x: 480, y: 480 },
+        // 討伐後のワープ先（街など）
+        warpTarget: { map: "1023", x: 576, y: 400 },
+        // ステータス
+        hp: 10000,
+        exp: 360
+    }
 };
 
 // ボスの状態管理
 let bossState = {
-    active: false,    // 存在するか
-    id: null,         // enemiesオブジェクト内のキー
-    cooldown: false,  // 討伐直後のクールダウン中か
-    warpTimer: null   // ワープまでのタイマー
+    "king_slime":{
+        active: false,    // 存在するか
+        id: null,         // enemiesオブジェクト内のキー
+        cooldown: false,  // 討伐直後のクールダウン中か
+        warpTimer: null
+    },// ワープまでのタイマー
+    "fairy":{
+        active: false,    // 存在するか
+        id: null,         // enemiesオブジェクト内のキー
+        cooldown: false,  // 討伐直後のクールダウン中か
+        warpTimer: null
+    }
 };
 
 // server.js
@@ -1688,54 +1709,56 @@ function createItemInstance(itemId, fixedRankId = null, isUnidentified = false) 
 
 function updateBossState() {
     // 1. プレイヤーがボス部屋にいるかチェック
-    const playersInRoom = getPlayersInBossRoom();
-
-    // クールダウン中（討伐直後）なら何もしない
-    if (bossState.cooldown) return;
-
-    if (playersInRoom.length === 0) {
-        if (bossState.id && enemies[bossState.id]) {
-            console.log('部屋にプレイヤーが存在しないためボスを消しました。');
-            delete enemies[bossState.id]; // ボスを削除
-            bossState.id = null;
-        }
-        bossState.active = false;
-        bossState.id = null;
-        io.emit('updateEnemies', enemies); // クライアントにも削除を通知
-        return; // リセットしたフレームはここで終了
-    }
-
-    // 3. 誰もいないなら湧かせる必要がないので終了
-    if (playersInRoom.length === 0) return;
+    bossState.forEach(stats =>{
+        const playersInRoom = getPlayersInBossRoom(stats.roomId);
     
-    // 2. ボスがいない & プレイヤーがいる -> スポーンさせる
-    if (!bossState.active && playersInRoom.length > 0) {
-        spawnBoss();
-    }
-
-    // 3. ボスがいる場合 -> 攻撃AI処理
-    if (bossState.active && bossState.id) {
-        const boss = enemies[bossState.id];
-        if (boss) {
-            // 例: 3秒ごとに特殊攻撃（8方向弾）
-            const now = Date.now();
-            if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
-                bossAttack8Way(boss);
-                boss.lastAttackTime = now;
+        // クールダウン中（討伐直後）なら何もしない
+        if (stats.cooldown) return;
+    
+        if (playersInRoom.length === 0) {
+            if (stats.id && enemies[stats.id]) {
+                console.log('部屋にプレイヤーが存在しないためボスを消しました。');
+                delete enemies[stats.id]; // ボスを削除
+                stats.id = null;
+            }
+            stats.active = false;
+            stats.id = null;
+            io.emit('updateEnemies', enemies); // クライアントにも削除を通知
+            return; // リセットしたフレームはここで終了
+        }
+    
+        // 3. 誰もいないなら湧かせる必要がないので終了
+        if (playersInRoom.length === 0) return;
+        
+        // 2. ボスがいない & プレイヤーがいる -> スポーンさせる
+        if (!stats.active && playersInRoom.length > 0) {
+            spawnBoss(stats);
+        }
+    
+        // 3. ボスがいる場合 -> 攻撃AI処理
+        if (stats.active && stats.id) {
+            const boss = enemies[stats.id];
+            if (boss) {
+                // 例: 3秒ごとに特殊攻撃（8方向弾）
+                const now = Date.now();
+                if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
+                    bossAttack8Way(boss);
+                    boss.lastAttackTime = now;
+                }
             }
         }
-    }
+    });
 }
 
 // --- B. プレイヤー検出ヘルパー ---
-function getPlayersInBossRoom() {
+function getPlayersInBossRoom(room) {
     return Object.values(players).filter(p => 
-        p.room === BOSS_CONFIG.roomId
+        p.room === room
     );
 }
 
 // --- C. ボス召喚 ---
-function spawnBoss() {
+function spawnBoss(boss) {
     const id = 'boss_' + Date.now();
     enemies[id] = {
         id: id,
