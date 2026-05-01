@@ -1244,6 +1244,7 @@ function handleEnemyDeath(enemy, player) {
                     addItemToInventory(playerInRoom, drop.id, 1);
                 }
             });
+            addExp(player.playerId,expGain);
             io.to(playerInRoom.playerId).emit('inventoryUpdate', { 
                 inventory: playerInRoom.inventory, 
                 gold: playerInRoom.gold 
