@@ -161,20 +161,22 @@ const BOSS_CONFIG = {
 };
 
 // ボスの状態管理
-let bossState = {
-    "king_slime":{
+let bossState = [
+    {
+        name: "king_slime",
         active: false,    // 存在するか
         id: null,         // enemiesオブジェクト内のキー
         cooldown: false,  // 討伐直後のクールダウン中か
         warpTimer: null
     },// ワープまでのタイマー
-    "fairy":{
+    {
+        name: "fairy",
         active: false,    // 存在するか
         id: null,         // enemiesオブジェクト内のキー
         cooldown: false,  // 討伐直後のクールダウン中か
         warpTimer: null
     }
-};
+];
 
 // server.js
 
@@ -1742,9 +1744,13 @@ function updateBossState() {
             if (boss) {
                 // 例: 3秒ごとに特殊攻撃（8方向弾）
                 const now = Date.now();
-                if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
-                    bossAttack8Way(boss);
-                    boss.lastAttackTime = now;
+                if (boss.name === "king_slime") {
+                    if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
+                        bossAttack8Way(boss);
+                        boss.lastAttackTime = now;
+                    }
+                } else (boss.name === "fairy") {
+                    
                 }
             }
         }
@@ -1771,12 +1777,12 @@ function spawnBoss(boss) {
         maxHp: BOSS_CONFIG.hp,
         exp: BOSS_CONFIG.exp,
         isDead: false,
-        name: 'kingSlime',
+        name: boss.name,
         respawnType: 'boss'
     };
     
-    bossState.active = true;
-    bossState.id = id;
+    boss.active = true;
+    boss.id = id;
 
     // クライアントに通知（ボスの出現演出などがあればここでemit）
     io.emit('systemMessage', '【警告】ボスエリアに侵入者が確認されました。ボスが出現します！');
@@ -1870,4 +1876,8 @@ function addExp(playerId, amount) {
         level: jobData.level, exp: jobData.exp, maxExp: player.maxExp,
         hp: player.hp, maxHp:player.maxHp, mp: player.mp, maxMp: player.maxMp, currentJob: player.currentJob
     });
+}
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
 }
