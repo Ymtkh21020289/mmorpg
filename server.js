@@ -1750,7 +1750,10 @@ function updateBossState() {
                         boss.lastAttackTime = now;
                     }
                 } else (boss.name === "fairy") {
-                    
+                    if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
+                        bossAttack8Way(boss);
+                        boss.lastAttackTime = now;
+                    }
                 }
             }
         }
