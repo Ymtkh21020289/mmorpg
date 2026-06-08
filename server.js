@@ -163,7 +163,7 @@ const BOSS_CONFIG = {
 // ボスの状態管理
 let bossState = [
     {
-        slime:"king_slime",
+        name:"king_slime",
         active: false,    // 存在するか
         id: null,         // enemiesオブジェクト内のキー
         cooldown: false,  // 討伐直後のクールダウン中か
@@ -1774,7 +1774,7 @@ function spawnBoss(boss) {
     const config = BOSS_CONFIG[boss.name];
     enemies[id] = {
         id: id,
-        room: 'boss1',
+        room: config.room,
         type: 'boss', // クライアント側で巨大描画するための識別子
         x: config.spawn.x,
         y: config.spawn.y,
