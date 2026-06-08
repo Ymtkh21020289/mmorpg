@@ -1713,7 +1713,8 @@ function createItemInstance(itemId, fixedRankId = null, isUnidentified = false) 
 function updateBossState() {
     // 1. プレイヤーがボス部屋にいるかチェック
     bossState.forEach(stats =>{
-        const playersInRoom = getPlayersInBossRoom(stats.roomId);
+        const config = BOSS_CONFIG[stats.name];
+        const playersInRoom = getPlayersInBossRoom(config.roomId);
     
         // クールダウン中（討伐直後）なら何もしない
         if (stats.cooldown) return;
@@ -1770,15 +1771,16 @@ function getPlayersInBossRoom(room) {
 // --- C. ボス召喚 ---
 function spawnBoss(boss) {
     const id = 'boss_' + Date.now();
+    const config = BOSS_CONFIG[boss.name];
     enemies[id] = {
         id: id,
         room: 'boss1',
         type: 'boss', // クライアント側で巨大描画するための識別子
-        x: BOSS_CONFIG.spawn.x,
-        y: BOSS_CONFIG.spawn.y,
-        hp: BOSS_CONFIG.hp,
-        maxHp: BOSS_CONFIG.hp,
-        exp: BOSS_CONFIG.exp,
+        x: config.spawn.x,
+        y: config.spawn.y,
+        hp: config.hp,
+        maxHp: config.hp,
+        exp: config.exp,
         isDead: false,
         name: boss.name,
         respawnType: 'boss'
