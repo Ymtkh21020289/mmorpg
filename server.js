@@ -161,22 +161,20 @@ const BOSS_CONFIG = {
 };
 
 // ボスの状態管理
-let bossState = [
-    {
-        name: "king_slime",
+let bossState = {
+    "king_slime": {
         active: false,    // 存在するか
         id: null,         // enemiesオブジェクト内のキー
         cooldown: false,  // 討伐直後のクールダウン中か
         warpTimer: null
     },// ワープまでのタイマー
-    {
-        name: "fairy",
+    "fairy": {
         active: false,    // 存在するか
         id: null,         // enemiesオブジェクト内のキー
         cooldown: false,  // 討伐直後のクールダウン中か
         warpTimer: null
     }
-];
+};
 
 // server.js
 
