@@ -52,17 +52,14 @@ const playerSchema = new mongoose.Schema({
     // --- 戦闘パラメータ ---
     baseAtk: { type: Number, default: 10 },
     baseDef: { type: Number, default: 0 },
-    // totalAtk/totalDef は計算結果なのでDB保存しなくても良いですが、
-    // キャッシュとして保存するなら以下のように設定
     totalAtk: { type: Number, default: 10 }, 
     totalDef: { type: Number, default: 0 },
-    
-    lastDamageTime: { type: Number, default: 0 }, // 基本は0
+    lastDamageTime: { type: Number, default: 0 },
 
     // --- 所持品 ---
     gold: { type: Number, default: 1000 },
     
-    // インベントリ（Mixed型またはObject配列）
+    // インベントリ
     inventory: { 
         type: Array, 
         default: createEmptyInventory // 関数を渡すと作成時に実行される
@@ -1774,7 +1771,7 @@ function spawnBoss(boss) {
     const config = BOSS_CONFIG[boss.name];
     enemies[id] = {
         id: id,
-        room: config.room,
+        room: config.roomId,
         type: 'boss', // クライアント側で巨大描画するための識別子
         x: config.spawn.x,
         y: config.spawn.y,
