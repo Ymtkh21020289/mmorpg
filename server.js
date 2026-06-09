@@ -101,7 +101,7 @@ const DROP_TABLE = {
     'slime': { money: 4, items: [{ id: 'slime_gel', rate: 0.2 }, { id: 'dagger', rate: 0.02 }, { id: 'magic_stone', rate: 0.05 }, { id: 'slime_heart', rate: 0.005}] },
     'wolf':  { money: 10, items: [{ id: 'wolf_fur', rate: 0.2 }, { id: 'wolf_crow', rate: 0.1 }, { id: 'sword', rate: 0.02 }, { id: 'magic_stone', rate: 0.05 }, { id: 'wolf_heart', rate: 0.005}] },
     'golem': { money: 20, items: [{ id: 'stone', rate: 0.2 }, { id: 'golem_core', rate: 0.1}, { id: 'spear', rate: 0.02}, { id: 'golem_heart', rate: 0.005}] },
-    'kingSlime': { money: 500, items: [{ id: 'slime_gel', rate: 0.99 }, { id: 'slime_sword', rate: 0.05 }, { id: 'magic_stone', rate: 0.5 }, { id: 'kingSlime_heart', rate: 0.01}]}
+    'king_slime': { money: 500, items: [{ id: 'slime_gel', rate: 0.99 }, { id: 'slime_sword', rate: 0.05 }, { id: 'magic_stone', rate: 0.5 }, { id: 'kingSlime_heart', rate: 0.01}]}
 };
 
 // 現在の敵リスト（初期状態は空にして、関数で生み出す）
