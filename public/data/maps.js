@@ -38,6 +38,10 @@ const mapData = {
                 x: 128, y: 192, width: 64, height: 32, 
                 // 行き先
                 targetMap: 'shop', targetX: 144, targetY: 240  
+            },
+            {
+                x: 416, y: 0, width: 64, height: 32, 
+                targetMap: 'boss2', targetX: 480, targetY: 912
             }
         ]
     },
