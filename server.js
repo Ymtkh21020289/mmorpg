@@ -1211,6 +1211,11 @@ setInterval(() => {
 function handleEnemyDeath(enemy, player) {
     // 1. 経験値とレベルアップ処理
     const expGain = enemy.exp;
+
+    if (enemy.respawnType === 'boss') {
+        handleBossDeath(enemy, player, expGain);
+        return;
+    }
     
     if (enemy.respawnType === 'group') {
         const targetSpawnerIndex = enemy.spawnerIndex;
@@ -1226,29 +1231,6 @@ function handleEnemyDeath(enemy, player) {
         io.to(player.playerId).emit('inventoryUpdate', { 
             inventory: player.inventory, 
             gold: player.gold 
-        });
-    }else if (enemy.respawnType === 'boss') {
-        console.log('ボス討伐報酬を渡します。');
-        const targetSpawnerIndex = enemy.spawnerIndex;
-        const table = DROP_TABLE[enemy.name];
-        const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
-        const playerRoom = player.room; 
-        const remainingPlayers = getPlayersInBossRoom();
-        remainingPlayers.forEach(playerInRoom => {
-            console.log(`${playerInRoom}にアイテムを渡します。`);
-            playerInRoom.exp += expGain;
-            playerInRoom.gold += moneyEarned;
-            table.items.forEach(drop => {
-                if (Math.random() < drop.rate) { // 確率判定
-                    addItemToInventory(playerInRoom, drop.id, 1);
-                }
-            });
-            addExp(player.playerId,expGain);
-            io.to(playerInRoom.playerId).emit('inventoryUpdate', { 
-                inventory: playerInRoom.inventory, 
-                gold: playerInRoom.gold 
-            });
-            return;
         });
     }
 
@@ -1294,59 +1276,88 @@ function handleEnemyDeath(enemy, player) {
                 }
             }, 10000);
         }
-    } else {
-        console.log('ボス討伐完了！');
-        io.emit('removeEnemy', bossState.id);
-        delete enemies[bossState.id];
-        setTimeout(async () => {
-            // 10秒後、まだ部屋に残っているプレイヤーを再取得してワープさせる
-            const remainingPlayers = getPlayersInBossRoom();
-            
-            remainingPlayers.forEach(player => {
-                const socket = io.sockets.sockets.get(player.playerId);
-                if (socket) {
-                    io.to(player.id).emit('changedArea');
-                    const currentRoom = 'boss1';
-        
-                    // 1. 今の部屋から出る
-                    socket.leave(currentRoom);
-                    // 今の部屋の人たちに「あいつ消えたよ」と伝える
-                    socket.to(currentRoom).emit('disconnectUser', player.playerId);
-            
-                    // 2. データ更新
-                    players[player.playerId].room = BOSS_CONFIG.warpTarget.map;
-                    // 座標もリセット（例：入り口にワープ）
-                    players[player.playerId].x = BOSS_CONFIG.warpTarget.x; 
-                    players[player.playerId].y = BOSS_CONFIG.warpTarget.y;
-            
-                    // 3. 新しい部屋に入る
-                    socket.join(BOSS_CONFIG.warpTarget.map);
-            
-                    // 4. 新しい部屋の人たちに「新入りが来たよ」と伝える
-                    socket.to(BOSS_CONFIG.warpTarget.map).emit('newPlayer', players[socket.id]);
-            
-                    // 5. 本人に「新しい部屋の現状」を伝える
-                    const roomPlayers = {};
-                    Object.keys(players).forEach(id => {
-                        if (players[id].room === BOSS_CONFIG.warpTarget.map) {
-                            roomPlayers[id] = players[id];
-                        }
-                    });
-                    // クライアント側で「マップ切り替え処理」をするためのイベント
-                    io.to(player.id).emit('mapChanged', { room: BOSS_CONFIG.warpTarget.map, players: roomPlayers, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
-                    io.to(player.id).emit('currentNPCs', npcs);
-                    console.log(`${player.id}はボスを討伐したためダンジョン前に強制送還されました。`);
-                }
-                savePlayer(player);
-            });
-            
-            
-    
-            // ボスのクールダウン解除（部屋から人がいなくなったら湧くように）
-            bossState.cooldown = false;
-    
-        }, 10000); // 10000ms = 10秒
     }
+}
+
+function handleBossDeath(enemy, player, expGain) {
+    console.log('ボス討伐完了！');
+
+    const state = bossState.find(stats => stats.id === enemy.id || stats.name === enemy.name);
+    const config = BOSS_CONFIG[enemy.name];
+    const roomId = enemy.room || (config && config.roomId);
+
+    if (!config || !roomId) {
+        console.error(`ボス設定が見つかりません: ${enemy.name}`);
+        return;
+    }
+
+    const participants = getPlayersInBossRoom(roomId);
+    const table = DROP_TABLE[enemy.name] || { money: 0, items: [] };
+    const moneyEarned = table.money || 0;
+
+    participants.forEach(playerInRoom => {
+        console.log(`${playerInRoom.name}にボス討伐報酬を渡します。`);
+        playerInRoom.gold += moneyEarned;
+        table.items.forEach(drop => {
+            if (Math.random() < drop.rate) {
+                addItemToInventory(playerInRoom, drop.id, 1);
+            }
+        });
+        addExp(playerInRoom.playerId, expGain);
+        io.to(playerInRoom.playerId).emit('inventoryUpdate', {
+            inventory: playerInRoom.inventory,
+            gold: playerInRoom.gold
+        });
+    });
+
+    enemy.isDead = true;
+    io.emit('removeEnemy', enemy.id);
+    delete enemies[enemy.id];
+
+    if (state) {
+        state.active = false;
+        state.id = null;
+        state.cooldown = true;
+    }
+
+    setTimeout(async () => {
+        // 10秒後、まだボス部屋に残っているプレイヤーを再取得してワープさせる
+        const remainingPlayers = getPlayersInBossRoom(roomId);
+        const warpTarget = config.warpTarget;
+
+        remainingPlayers.forEach(playerInRoom => {
+            const socket = io.sockets.sockets.get(playerInRoom.playerId);
+            if (socket) {
+                socket.emit('changedArea');
+
+                socket.leave(roomId);
+                socket.to(roomId).emit('disconnectUser', playerInRoom.playerId);
+
+                playerInRoom.room = warpTarget.map;
+                playerInRoom.x = warpTarget.x;
+                playerInRoom.y = warpTarget.y;
+
+                socket.join(warpTarget.map);
+                socket.to(warpTarget.map).emit('newPlayer', playerInRoom);
+
+                const roomPlayers = {};
+                Object.keys(players).forEach(id => {
+                    if (players[id].room === warpTarget.map) {
+                        roomPlayers[id] = players[id];
+                    }
+                });
+
+                socket.emit('mapChanged', { room: warpTarget.map, players: roomPlayers, x: warpTarget.x, y: warpTarget.y });
+                socket.emit('currentNPCs', npcs);
+                console.log(`${playerInRoom.id}はボスを討伐したためダンジョン前に強制送還されました。`);
+            }
+            savePlayer(playerInRoom);
+        });
+
+        if (state) {
+            state.cooldown = false;
+        }
+    }, 10000); // 10000ms = 10秒
 }
 
 // アイテムをカバンに入れる関数（スタック処理含む）
@@ -1780,6 +1791,7 @@ function spawnBoss(boss) {
         exp: config.exp,
         isDead: false,
         name: boss.name,
+        spriteKey: 'bossSprite',
         respawnType: 'boss'
     };
     
@@ -1788,7 +1800,7 @@ function spawnBoss(boss) {
 
     // クライアントに通知（ボスの出現演出などがあればここでemit）
     io.emit('systemMessage', '【警告】ボスエリアに侵入者が確認されました。ボスが出現します！');
-    io.emit('updateEnemies', enemies);
+    io.emit('currentEnemies', enemies);
     console.log(`ボス${boss.name}をid:${id}で召喚しました。`);
 }
 
