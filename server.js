@@ -175,6 +175,20 @@ let bossState = [
     }
 ];
 
+const FAIRY_ATTACK_CONFIG = {
+    idleTime: 3000,
+    verticalSweepDuration: 6000,
+    verticalSweepInterval: 700,
+    spiralDuration: 4500,
+    spiralInterval: 250,
+    barrageMoveDuration: 2500,
+    barrageDuration: 5000,
+    barrageInterval: 180,
+    minY: 32,
+    maxY: 640,
+    farY: 1000
+};
+
 // server.js
 
 const JOB_CONFIG = {
@@ -1110,6 +1124,9 @@ setInterval(() => {
         const p = projectiles[id];
         
         // 移動
+        if (p.angularVelocity) {
+            p.angle += p.angularVelocity;
+        }
         p.x += Math.cos(p.angle) * p.speed;
         p.y += Math.sin(p.angle) * p.speed;
         p.timeLeft -= 50; // 寿命を減らす
@@ -1211,6 +1228,11 @@ setInterval(() => {
 function handleEnemyDeath(enemy, player) {
     // 1. 経験値とレベルアップ処理
     const expGain = enemy.exp;
+
+    if (enemy.respawnType === 'boss') {
+        handleBossDeath(enemy, player, expGain);
+        return;
+    }
     
     if (enemy.respawnType === 'group') {
         const targetSpawnerIndex = enemy.spawnerIndex;
@@ -1226,29 +1248,6 @@ function handleEnemyDeath(enemy, player) {
         io.to(player.playerId).emit('inventoryUpdate', { 
             inventory: player.inventory, 
             gold: player.gold 
-        });
-    }else if (enemy.respawnType === 'boss') {
-        console.log('ボス討伐報酬を渡します。');
-        const targetSpawnerIndex = enemy.spawnerIndex;
-        const table = DROP_TABLE[enemy.name];
-        const moneyEarned = table.money; // 本来はランダム幅を持たせてもOK
-        const playerRoom = player.room; 
-        const remainingPlayers = getPlayersInBossRoom();
-        remainingPlayers.forEach(playerInRoom => {
-            console.log(`${playerInRoom}にアイテムを渡します。`);
-            playerInRoom.exp += expGain;
-            playerInRoom.gold += moneyEarned;
-            table.items.forEach(drop => {
-                if (Math.random() < drop.rate) { // 確率判定
-                    addItemToInventory(playerInRoom, drop.id, 1);
-                }
-            });
-            addExp(player.playerId,expGain);
-            io.to(playerInRoom.playerId).emit('inventoryUpdate', { 
-                inventory: playerInRoom.inventory, 
-                gold: playerInRoom.gold 
-            });
-            return;
         });
     }
 
@@ -1294,59 +1293,88 @@ function handleEnemyDeath(enemy, player) {
                 }
             }, 10000);
         }
-    } else {
-        console.log('ボス討伐完了！');
-        io.emit('removeEnemy', bossState.id);
-        delete enemies[bossState.id];
-        setTimeout(async () => {
-            // 10秒後、まだ部屋に残っているプレイヤーを再取得してワープさせる
-            const remainingPlayers = getPlayersInBossRoom();
-            
-            remainingPlayers.forEach(player => {
-                const socket = io.sockets.sockets.get(player.playerId);
-                if (socket) {
-                    io.to(player.id).emit('changedArea');
-                    const currentRoom = 'boss1';
-        
-                    // 1. 今の部屋から出る
-                    socket.leave(currentRoom);
-                    // 今の部屋の人たちに「あいつ消えたよ」と伝える
-                    socket.to(currentRoom).emit('disconnectUser', player.playerId);
-            
-                    // 2. データ更新
-                    players[player.playerId].room = BOSS_CONFIG.warpTarget.map;
-                    // 座標もリセット（例：入り口にワープ）
-                    players[player.playerId].x = BOSS_CONFIG.warpTarget.x; 
-                    players[player.playerId].y = BOSS_CONFIG.warpTarget.y;
-            
-                    // 3. 新しい部屋に入る
-                    socket.join(BOSS_CONFIG.warpTarget.map);
-            
-                    // 4. 新しい部屋の人たちに「新入りが来たよ」と伝える
-                    socket.to(BOSS_CONFIG.warpTarget.map).emit('newPlayer', players[socket.id]);
-            
-                    // 5. 本人に「新しい部屋の現状」を伝える
-                    const roomPlayers = {};
-                    Object.keys(players).forEach(id => {
-                        if (players[id].room === BOSS_CONFIG.warpTarget.map) {
-                            roomPlayers[id] = players[id];
-                        }
-                    });
-                    // クライアント側で「マップ切り替え処理」をするためのイベント
-                    io.to(player.id).emit('mapChanged', { room: BOSS_CONFIG.warpTarget.map, players: roomPlayers, x: BOSS_CONFIG.warpTarget.x, y: BOSS_CONFIG.warpTarget.y });
-                    io.to(player.id).emit('currentNPCs', npcs);
-                    console.log(`${player.id}はボスを討伐したためダンジョン前に強制送還されました。`);
-                }
-                savePlayer(player);
-            });
-            
-            
-    
-            // ボスのクールダウン解除（部屋から人がいなくなったら湧くように）
-            bossState.cooldown = false;
-    
-        }, 10000); // 10000ms = 10秒
     }
+}
+
+function handleBossDeath(enemy, player, expGain) {
+    console.log('ボス討伐完了！');
+
+    const state = bossState.find(stats => stats.id === enemy.id || stats.name === enemy.name);
+    const config = BOSS_CONFIG[enemy.name];
+    const roomId = enemy.room || (config && config.roomId);
+
+    if (!config || !roomId) {
+        console.error(`ボス設定が見つかりません: ${enemy.name}`);
+        return;
+    }
+
+    const participants = getPlayersInBossRoom(roomId);
+    const table = DROP_TABLE[enemy.name] || { money: 0, items: [] };
+    const moneyEarned = table.money || 0;
+
+    participants.forEach(playerInRoom => {
+        console.log(`${playerInRoom.name}にボス討伐報酬を渡します。`);
+        playerInRoom.gold += moneyEarned;
+        table.items.forEach(drop => {
+            if (Math.random() < drop.rate) {
+                addItemToInventory(playerInRoom, drop.id, 1);
+            }
+        });
+        addExp(playerInRoom.playerId, expGain);
+        io.to(playerInRoom.playerId).emit('inventoryUpdate', {
+            inventory: playerInRoom.inventory,
+            gold: playerInRoom.gold
+        });
+    });
+
+    enemy.isDead = true;
+    io.emit('removeEnemy', enemy.id);
+    delete enemies[enemy.id];
+
+    if (state) {
+        state.active = false;
+        state.id = null;
+        state.cooldown = true;
+    }
+
+    setTimeout(async () => {
+        // 10秒後、まだボス部屋に残っているプレイヤーを再取得してワープさせる
+        const remainingPlayers = getPlayersInBossRoom(roomId);
+        const warpTarget = config.warpTarget;
+
+        remainingPlayers.forEach(playerInRoom => {
+            const socket = io.sockets.sockets.get(playerInRoom.playerId);
+            if (socket) {
+                socket.emit('changedArea');
+
+                socket.leave(roomId);
+                socket.to(roomId).emit('disconnectUser', playerInRoom.playerId);
+
+                playerInRoom.room = warpTarget.map;
+                playerInRoom.x = warpTarget.x;
+                playerInRoom.y = warpTarget.y;
+
+                socket.join(warpTarget.map);
+                socket.to(warpTarget.map).emit('newPlayer', playerInRoom);
+
+                const roomPlayers = {};
+                Object.keys(players).forEach(id => {
+                    if (players[id].room === warpTarget.map) {
+                        roomPlayers[id] = players[id];
+                    }
+                });
+
+                socket.emit('mapChanged', { room: warpTarget.map, players: roomPlayers, x: warpTarget.x, y: warpTarget.y });
+                socket.emit('currentNPCs', npcs);
+                console.log(`${playerInRoom.id}はボスを討伐したためダンジョン前に強制送還されました。`);
+            }
+            savePlayer(playerInRoom);
+        });
+
+        if (state) {
+            state.cooldown = false;
+        }
+    }, 10000); // 10000ms = 10秒
 }
 
 // アイテムをカバンに入れる関数（スタック処理含む）
@@ -1748,10 +1776,7 @@ function updateBossState() {
                         boss.lastAttackTime = now;
                     }
                 } else if (boss.name === "fairy") {
-                    if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
-                        bossAttack8Way(boss);
-                        boss.lastAttackTime = now;
-                    }
+                    updateFairyBoss(boss, config, now);
                 }
             }
         }
@@ -1780,6 +1805,7 @@ function spawnBoss(boss) {
         exp: config.exp,
         isDead: false,
         name: boss.name,
+        spriteKey: 'bossSprite',
         respawnType: 'boss'
     };
     
@@ -1788,21 +1814,179 @@ function spawnBoss(boss) {
 
     // クライアントに通知（ボスの出現演出などがあればここでemit）
     io.emit('systemMessage', '【警告】ボスエリアに侵入者が確認されました。ボスが出現します！');
-    io.emit('updateEnemies', enemies);
+    io.emit('currentEnemies', enemies);
     console.log(`ボス${boss.name}をid:${id}で召喚しました。`);
 }
 
+function updateFairyBoss(boss, config, now) {
+    if (!boss.fairyPhase) {
+        setFairyIdle(boss, config, now);
+    }
+
+    if (boss.fairyPhase === 'idle') {
+        boss.x = config.spawn.x;
+        boss.y = config.spawn.y;
+        if (now >= boss.fairyNextActionTime) {
+            startFairyRandomPattern(boss, config, now);
+        }
+        return;
+    }
+
+    if (boss.fairyPhase === 'verticalSweep') {
+        updateFairyVerticalSweep(boss, config, now);
+        return;
+    }
+
+    if (boss.fairyPhase === 'spiral') {
+        updateFairySpiral(boss, config, now);
+        return;
+    }
+
+    if (boss.fairyPhase === 'barrage') {
+        updateFairyBarrage(boss, config, now);
+    }
+}
+
+function setFairyIdle(boss, config, now) {
+    boss.fairyPhase = 'idle';
+    boss.fairyPatternStartedAt = now;
+    boss.fairyNextActionTime = now + FAIRY_ATTACK_CONFIG.idleTime;
+    boss.x = config.spawn.x;
+    boss.y = config.spawn.y;
+}
+
+function startFairyRandomPattern(boss, config, now) {
+    const patterns = ['verticalSweep', 'spiral', 'barrage'];
+    const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+    boss.fairyPhase = selectedPattern;
+    boss.fairyPatternStartedAt = now;
+    boss.fairyLastShotTime = 0;
+    if (selectedPattern === 'verticalSweep') {
+        boss.x = config.spawn.x;
+        boss.y = FAIRY_ATTACK_CONFIG.minY;
+    } else if (selectedPattern === 'spiral') {
+        boss.x = config.spawn.x;
+        boss.y = config.spawn.y;
+    } else if (selectedPattern === 'barrage') {
+        boss.x = config.spawn.x;
+        boss.y = config.spawn.y;
+        boss.fairyBarrageReadyAt = now + FAIRY_ATTACK_CONFIG.barrageMoveDuration;
+    }
+}
+
+function updateFairyVerticalSweep(boss, config, now) {
+    const elapsed = now - boss.fairyPatternStartedAt;
+    const progress = Math.min(elapsed / FAIRY_ATTACK_CONFIG.verticalSweepDuration, 1);
+    const easedProgress = easeInOutSine(progress);
+
+    boss.x = config.spawn.x;
+    boss.y = FAIRY_ATTACK_CONFIG.minY + ((FAIRY_ATTACK_CONFIG.maxY - FAIRY_ATTACK_CONFIG.minY) * easedProgress);
+
+    if (!boss.fairyLastShotTime || now - boss.fairyLastShotTime >= FAIRY_ATTACK_CONFIG.verticalSweepInterval) {
+        bossAttack8Way(boss, 4, 3000, 35);
+        boss.fairyLastShotTime = now;
+    }
+
+    if (progress >= 1) {
+        setFairyIdle(boss, config, now);
+    }
+}
+
+function updateFairySpiral(boss, config, now) {
+    const elapsed = now - boss.fairyPatternStartedAt;
+    boss.x = config.spawn.x;
+    boss.y = config.spawn.y;
+
+    if (!boss.fairyLastShotTime || now - boss.fairyLastShotTime >= FAIRY_ATTACK_CONFIG.spiralInterval) {
+        const baseAngle = elapsed / 250;
+        fireFairySpiralProjectiles(boss, baseAngle);
+        boss.fairyLastShotTime = now;
+    }
+
+    if (elapsed >= FAIRY_ATTACK_CONFIG.spiralDuration) {
+        setFairyIdle(boss, config, now);
+    }
+}
+
+function updateFairyBarrage(boss, config, now) {
+    const moveElapsed = now - boss.fairyPatternStartedAt;
+    const moveProgress = Math.min(moveElapsed / FAIRY_ATTACK_CONFIG.barrageMoveDuration, 1);
+    const easedProgress = easeInOutSine(moveProgress);
+
+    boss.x = config.spawn.x;
+    boss.y = config.spawn.y + ((FAIRY_ATTACK_CONFIG.farY - config.spawn.y) * easedProgress);
+
+    if (moveProgress < 1) return;
+
+    if (!boss.fairyLastShotTime || now - boss.fairyLastShotTime >= FAIRY_ATTACK_CONFIG.barrageInterval) {
+        fireFairyBarrageProjectile(boss, config);
+        boss.fairyLastShotTime = now;
+    }
+
+    if (now - boss.fairyBarrageReadyAt >= FAIRY_ATTACK_CONFIG.barrageDuration) {
+        setFairyIdle(boss, config, now);
+    }
+}
+
+function fireFairySpiralProjectiles(boss, baseAngle) {
+    const count = 4;
+    for (let i = 0; i < count; i++) {
+        const angle = baseAngle + ((Math.PI * 2) / count) * i;
+        const projectileId = `fairy_spiral_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`;
+        projectiles[projectileId] = {
+            id: projectileId,
+            ownerId: boss.id,
+            ownerType: 'enemy',
+            angle: angle,
+            angularVelocity: 0.08,
+            x: boss.x,
+            y: boss.y,
+            room: boss.room,
+            speed: 4,
+            damage: 35,
+            timeLeft: 3500,
+            respawnType: 'boss'
+        };
+    }
+}
+
+function fireFairyBarrageProjectile(boss, config) {
+    const fromTop = Math.random() < 0.5;
+    const area = config.area || { minX: 0, maxX: 960, minY: 0, maxY: 960 };
+    const projectileId = `fairy_barrage_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    projectiles[projectileId] = {
+        id: projectileId,
+        ownerId: boss.id,
+        ownerType: 'enemy',
+        angle: fromTop ? (Math.PI / 2) : 0,
+        x: fromTop ? randomBetween(area.minX, area.maxX) : area.minX,
+        y: fromTop ? area.minY : randomBetween(area.minY, area.maxY),
+        room: boss.room,
+        speed: 7,
+        damage: 45,
+        timeLeft: 3500,
+        respawnType: 'boss'
+    };
+}
+
+function randomBetween(min, max) {
+    return min + (Math.random() * (max - min));
+}
+
+function easeInOutSine(progress) {
+    return -(Math.cos(Math.PI * progress) - 1) / 2;
+}
+
 // --- D. ボス攻撃（八方向弾） ---
-function bossAttack8Way(boss) {
+function bossAttack8Way(boss, speed = 5, timeLeft = 2000, damage = 50) {
     // 8方向の角度
     const angles = [0, 45, 90, 135, 180, 225, 270, 315];
     
     angles.forEach(deg => {
         const rad = deg * (Math.PI / 180);
-        const speed = 5; // 弾速
-        
         // 既存の弾丸生成ロジックを利用
-        const projectileId =`boss_atk_${Date.now()}_${deg}`
+        const projectileId = `boss_atk_${Date.now()}_${deg}_${Math.random().toString(36).slice(2, 7)}`;
         projectiles[projectileId] = {
             id: projectileId,
             ownerId: boss.id, // ダメージ計算で「敵の攻撃」と判定させるため
@@ -1812,8 +1996,8 @@ function bossAttack8Way(boss) {
             y: boss.y,
             room: boss.room,
             speed: speed,
-            damage: 50, // ボスの攻撃力
-            timeLeft: 2000, // 弾の消滅時間
+            damage: damage, // ボスの攻撃力
+            timeLeft: timeLeft, // 弾の消滅時間
             respawnType: 'boss'
         };
     });
