@@ -1945,7 +1945,7 @@ function fireFairySpiralProjectiles(boss, baseAngle) {
             x: boss.x,
             y: boss.y,
             room: boss.room,
-            speed: 4,
+            speed: 20,
             damage: 35,
             timeLeft: 3500,
             respawnType: 'boss'
