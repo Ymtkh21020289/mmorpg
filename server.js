@@ -177,6 +177,20 @@ let bossState = [
     }
 ];
 
+const FAIRY_ATTACK_CONFIG = {
+    idleTime: 3000,
+    verticalSweepDuration: 6000,
+    verticalSweepInterval: 700,
+    spiralDuration: 4500,
+    spiralInterval: 250,
+    barrageMoveDuration: 2500,
+    barrageDuration: 5000,
+    barrageInterval: 180,
+    minY: 32,
+    maxY: 640,
+    farY: 1000
+};
+
 // server.js
 
 const JOB_CONFIG = {
@@ -1112,6 +1126,9 @@ setInterval(() => {
         const p = projectiles[id];
         
         // 移動
+        if (p.angularVelocity) {
+            p.angle += p.angularVelocity;
+        }
         p.x += Math.cos(p.angle) * p.speed;
         p.y += Math.sin(p.angle) * p.speed;
         p.timeLeft -= 50; // 寿命を減らす
@@ -1761,10 +1778,7 @@ function updateBossState() {
                         boss.lastAttackTime = now;
                     }
                 } else if (boss.name === "fairy") {
-                    if (!boss.lastAttackTime || now - boss.lastAttackTime > 3000) {
-                        bossAttack8Way(boss);
-                        boss.lastAttackTime = now;
-                    }
+                    updateFairyBoss(boss, config, now);
                 }
             }
         }
@@ -1806,17 +1820,175 @@ function spawnBoss(boss) {
     console.log(`ボス${boss.name}をid:${id}で召喚しました。`);
 }
 
+function updateFairyBoss(boss, config, now) {
+    if (!boss.fairyPhase) {
+        setFairyIdle(boss, config, now);
+    }
+
+    if (boss.fairyPhase === 'idle') {
+        boss.x = config.spawn.x;
+        boss.y = config.spawn.y;
+        if (now >= boss.fairyNextActionTime) {
+            startFairyRandomPattern(boss, config, now);
+        }
+        return;
+    }
+
+    if (boss.fairyPhase === 'verticalSweep') {
+        updateFairyVerticalSweep(boss, config, now);
+        return;
+    }
+
+    if (boss.fairyPhase === 'spiral') {
+        updateFairySpiral(boss, config, now);
+        return;
+    }
+
+    if (boss.fairyPhase === 'barrage') {
+        updateFairyBarrage(boss, config, now);
+    }
+}
+
+function setFairyIdle(boss, config, now) {
+    boss.fairyPhase = 'idle';
+    boss.fairyPatternStartedAt = now;
+    boss.fairyNextActionTime = now + FAIRY_ATTACK_CONFIG.idleTime;
+    boss.x = config.spawn.x;
+    boss.y = config.spawn.y;
+}
+
+function startFairyRandomPattern(boss, config, now) {
+    const patterns = ['verticalSweep', 'spiral', 'barrage'];
+    const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+    boss.fairyPhase = selectedPattern;
+    boss.fairyPatternStartedAt = now;
+    boss.fairyLastShotTime = 0;
+    if (selectedPattern === 'verticalSweep') {
+        boss.x = config.spawn.x;
+        boss.y = FAIRY_ATTACK_CONFIG.minY;
+    } else if (selectedPattern === 'spiral') {
+        boss.x = config.spawn.x;
+        boss.y = config.spawn.y;
+    } else if (selectedPattern === 'barrage') {
+        boss.x = config.spawn.x;
+        boss.y = config.spawn.y;
+        boss.fairyBarrageReadyAt = now + FAIRY_ATTACK_CONFIG.barrageMoveDuration;
+    }
+}
+
+function updateFairyVerticalSweep(boss, config, now) {
+    const elapsed = now - boss.fairyPatternStartedAt;
+    const progress = Math.min(elapsed / FAIRY_ATTACK_CONFIG.verticalSweepDuration, 1);
+    const easedProgress = easeInOutSine(progress);
+
+    boss.x = config.spawn.x;
+    boss.y = FAIRY_ATTACK_CONFIG.minY + ((FAIRY_ATTACK_CONFIG.maxY - FAIRY_ATTACK_CONFIG.minY) * easedProgress);
+
+    if (!boss.fairyLastShotTime || now - boss.fairyLastShotTime >= FAIRY_ATTACK_CONFIG.verticalSweepInterval) {
+        bossAttack8Way(boss, 4, 3000, 35);
+        boss.fairyLastShotTime = now;
+    }
+
+    if (progress >= 1) {
+        setFairyIdle(boss, config, now);
+    }
+}
+
+function updateFairySpiral(boss, config, now) {
+    const elapsed = now - boss.fairyPatternStartedAt;
+    boss.x = config.spawn.x;
+    boss.y = config.spawn.y;
+
+    if (!boss.fairyLastShotTime || now - boss.fairyLastShotTime >= FAIRY_ATTACK_CONFIG.spiralInterval) {
+        const baseAngle = elapsed / 250;
+        fireFairySpiralProjectiles(boss, baseAngle);
+        boss.fairyLastShotTime = now;
+    }
+
+    if (elapsed >= FAIRY_ATTACK_CONFIG.spiralDuration) {
+        setFairyIdle(boss, config, now);
+    }
+}
+
+function updateFairyBarrage(boss, config, now) {
+    const moveElapsed = now - boss.fairyPatternStartedAt;
+    const moveProgress = Math.min(moveElapsed / FAIRY_ATTACK_CONFIG.barrageMoveDuration, 1);
+    const easedProgress = easeInOutSine(moveProgress);
+
+    boss.x = config.spawn.x;
+    boss.y = config.spawn.y + ((FAIRY_ATTACK_CONFIG.farY - config.spawn.y) * easedProgress);
+
+    if (moveProgress < 1) return;
+
+    if (!boss.fairyLastShotTime || now - boss.fairyLastShotTime >= FAIRY_ATTACK_CONFIG.barrageInterval) {
+        fireFairyBarrageProjectile(boss, config);
+        boss.fairyLastShotTime = now;
+    }
+
+    if (now - boss.fairyBarrageReadyAt >= FAIRY_ATTACK_CONFIG.barrageDuration) {
+        setFairyIdle(boss, config, now);
+    }
+}
+
+function fireFairySpiralProjectiles(boss, baseAngle) {
+    const count = 4;
+    for (let i = 0; i < count; i++) {
+        const angle = baseAngle + ((Math.PI * 2) / count) * i;
+        const projectileId = `fairy_spiral_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}`;
+        projectiles[projectileId] = {
+            id: projectileId,
+            ownerId: boss.id,
+            ownerType: 'enemy',
+            angle: angle,
+            angularVelocity: 0.08,
+            x: boss.x,
+            y: boss.y,
+            room: boss.room,
+            speed: 4,
+            damage: 35,
+            timeLeft: 3500,
+            respawnType: 'boss'
+        };
+    }
+}
+
+function fireFairyBarrageProjectile(boss, config) {
+    const fromTop = Math.random() < 0.5;
+    const area = config.area || { minX: 0, maxX: 960, minY: 0, maxY: 960 };
+    const projectileId = `fairy_barrage_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    projectiles[projectileId] = {
+        id: projectileId,
+        ownerId: boss.id,
+        ownerType: 'enemy',
+        angle: fromTop ? (Math.PI / 2) : 0,
+        x: fromTop ? randomBetween(area.minX, area.maxX) : area.minX,
+        y: fromTop ? area.minY : randomBetween(area.minY, area.maxY),
+        room: boss.room,
+        speed: 7,
+        damage: 45,
+        timeLeft: 3500,
+        respawnType: 'boss'
+    };
+}
+
+function randomBetween(min, max) {
+    return min + (Math.random() * (max - min));
+}
+
+function easeInOutSine(progress) {
+    return -(Math.cos(Math.PI * progress) - 1) / 2;
+}
+
 // --- D. ボス攻撃（八方向弾） ---
-function bossAttack8Way(boss) {
+function bossAttack8Way(boss, speed = 5, timeLeft = 2000, damage = 50) {
     // 8方向の角度
     const angles = [0, 45, 90, 135, 180, 225, 270, 315];
     
     angles.forEach(deg => {
         const rad = deg * (Math.PI / 180);
-        const speed = 5; // 弾速
-        
         // 既存の弾丸生成ロジックを利用
-        const projectileId =`boss_atk_${Date.now()}_${deg}`
+        const projectileId = `boss_atk_${Date.now()}_${deg}_${Math.random().toString(36).slice(2, 7)}`;
         projectiles[projectileId] = {
             id: projectileId,
             ownerId: boss.id, // ダメージ計算で「敵の攻撃」と判定させるため
@@ -1826,8 +1998,8 @@ function bossAttack8Way(boss) {
             y: boss.y,
             room: boss.room,
             speed: speed,
-            damage: 50, // ボスの攻撃力
-            timeLeft: 2000, // 弾の消滅時間
+            damage: damage, // ボスの攻撃力
+            timeLeft: timeLeft, // 弾の消滅時間
             respawnType: 'boss'
         };
     });
