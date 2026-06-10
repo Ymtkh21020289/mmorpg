@@ -142,7 +142,8 @@ const BOSS_CONFIG = {
         warpTarget: { map: "1023", x: 576, y: 400 },
         // ステータス
         hp: 3000,
-        exp: 360
+        exp: 360,
+        spriteKey: 'slimeSprite'
     },
     "fairy": {
         roomId: 'boss2',
@@ -153,7 +154,8 @@ const BOSS_CONFIG = {
         warpTarget: { map: "1023", x: 576, y: 400 },
         // ステータス
         hp: 10000,
-        exp: 360
+        exp: 360,
+        spriteKey: 'fairySprite'
     }
 };
 
