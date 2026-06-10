@@ -47,6 +47,14 @@ const npcs = {
         color: 0x0000ff,
         radius: 30             // 当たり判定の大きさ
     },
+    'guide3': { 
+        x: 512, y: 64,        // 配置座標
+        mapId: 'town',        // 配置マップ
+        name: '強めのボス（仮）',
+        type: 'signboard',
+        color: 0x0000ff,
+        radius: 30             // 当たり判定の大きさ
+    },
     'jobNPC': { 
         x: 720, y: 464,        // 配置座標
         mapId: 'town',        // 配置マップ
