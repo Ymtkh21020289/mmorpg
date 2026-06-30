@@ -155,7 +155,7 @@ const BOSS_CONFIG = {
         warpTarget: { map: "1023", x: 576, y: 400 },
         // ステータス
         hp: 10000,
-        exp: 360,
+        exp: 420,
         spriteKey: 'fairySprite'
     }
 };
