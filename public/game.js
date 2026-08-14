@@ -26,6 +26,7 @@ function preload() {
     this.load.image('slimeSprite', 'assets/slime.png');
     this.load.image('wolfSprite', 'assets/wolf.png');
     this.load.image('golemSprite', 'assets/golem.png');
+    this.load.image('fairySprite', 'assets/fairy.png');
     // プレイヤー画像がない場合の生成処理はcreate内で行うのでここでは不要
     this.load.spritesheet('playerSprite', 'assets/player.png', { 
         frameWidth: 32,  // キャラクター1体の幅
@@ -1282,27 +1283,39 @@ function createEnemy(scene, enemyInfo) {
     const textureKey = enemyInfo.spriteKey || 'slimeSprite';
     const enemy = scene.physics.add.sprite(enemyInfo.x, enemyInfo.y, textureKey);
     enemy.id = enemyInfo.id
-    switch (enemyInfo.spriteKey) {
-        case 'wolfSprite':
-            enemy.setDisplaySize(48, 48);
-            enemy.body.setSize(48, 48); // 当たり判定
-            break;
+    if (enemyInfo.type === 'boss') {
+        // ボスは種類ごとに大きく描画する
+        switch (enemyInfo.spriteKey) {
+            case 'fairySprite':
+                // fairy.png は 1600x1200 (4:3) なので比率を維持して大きく表示
+                enemy.setDisplaySize(160, 120);
+                enemy.body.setSize(160, 120); // 当たり判定
+                break;
 
-        case 'golemSprite':
-            enemy.setDisplaySize(64, 64);
-            enemy.body.setSize(64, 64); // 当たり判定
-            break;
-            
-        case 'bossSprite':
-            enemy.setDisplaySize(128, 128); // めっちゃでかい
-            enemy.body.setSize(100, 100);
-            break;
-            
-        case 'slimeSprite':
-        default:
-            enemy.setDisplaySize(32, 32);
-            enemy.body.setSize(32, 32);
-            break;
+            case 'slimeSprite':
+            default:
+                enemy.setDisplaySize(128, 128); // めっちゃでかい
+                enemy.body.setSize(128, 128);
+                break;
+        }
+    } else {
+        switch (enemyInfo.spriteKey) {
+            case 'wolfSprite':
+                enemy.setDisplaySize(48, 48);
+                enemy.body.setSize(48, 48); // 当たり判定
+                break;
+
+            case 'golemSprite':
+                enemy.setDisplaySize(64, 64);
+                enemy.body.setSize(64, 64); // 当たり判定
+                break;
+
+            case 'slimeSprite':
+            default:
+                enemy.setDisplaySize(32, 32);
+                enemy.body.setSize(32, 32);
+                break;
+        }
     }
 
     enemy.setImmovable(true);
