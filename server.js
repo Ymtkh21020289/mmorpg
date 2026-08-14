@@ -1808,7 +1808,7 @@ function spawnBoss(boss) {
         exp: config.exp,
         isDead: false,
         name: boss.name,
-        spriteKey: 'bossSprite',
+        spriteKey: config.spriteKey || 'bossSprite',
         respawnType: 'boss'
     };
     
