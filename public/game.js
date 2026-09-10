@@ -2543,7 +2543,7 @@ function createAppraiserUI(scene) {
     scene.appraiserContainer.add(title);
     
     // 閉じるボタン
-    const closeBtn = scene.add.text(UI_X + UI_W/2, UI_Y + UI_H - 25, '(SPACEキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
+    const closeBtn = scene.add.text(UI_X + UI_W/2, UI_Y + UI_H - 25, '(Bキーで閉じる)', { fontSize: '12px', fill: '#aaa' }).setOrigin(0.5);
     scene.appraiserContainer.add(closeBtn);
 
 
