@@ -417,6 +417,7 @@ function create() {
         this.myInventory = data.inventory;
         this.myGold = data.gold;
         updateInventoryUI(this); // 見た目を更新
+        updateCraftingUI(this); // 素材・所持金の変化を作成リストにも反映
     });
 
     // 現在選択されている武器の番号（0:ダガー, 1:ソード, 2:スピア）
@@ -1087,8 +1088,7 @@ function update() {
                         if (enemy.getData('type') === 'merchant' && !this.isMerchantOpen) {
                             this.openMerchantUI();
                         }else if (enemy.getData('type') === 'blacksmith' && !this.isCraftingOpen) {
-                            this.isCraftingOpen = true;
-                            this.craftContainer.setVisible(true);
+                            this.openCraftingUI();
                         }else if (enemy.getData('type') === 'identify' && !this.isAppraiserOpen) {
                             this.isAppraiserOpen = true;
                             this.appraiserContainer.setVisible(true);
@@ -1461,6 +1461,38 @@ function updateInventoryUI(scene) {
     }
 }
 
+// 現在のインベントリと所持金でレシピを作成できるか判定する
+function canCraftRecipe(scene, recipe) {
+    if (!recipe || scene.myGold < recipe.cost) return false;
+
+    const materialCounts = {};
+    (scene.myInventory || []).forEach((slot) => {
+        if (slot) {
+            materialCounts[slot.id] = (materialCounts[slot.id] || 0) + (slot.count || 1);
+        }
+    });
+
+    return Object.entries(recipe.materials || {}).every(([materialId, requiredCount]) =>
+        (materialCounts[materialId] || 0) >= requiredCount
+    );
+}
+
+// 鍛冶屋の各ボタンを、現在クラフト可能かどうかに合わせて更新する
+function updateCraftingUI(scene) {
+    if (!scene.craftingButtons) return;
+
+    scene.craftingButtons.forEach(({ btn, recipe }) => {
+        const isCraftable = canCraftRecipe(scene, recipe);
+        btn.setFillStyle(isCraftable ? 0x442200 : 0x2b1600);
+        if (isCraftable) {
+            btn.setInteractive({ useHandCursor: true });
+        } else {
+            btn.disableInteractive();
+        }
+        btn.isCraftable = isCraftable;
+    });
+}
+
 // ■ UI作成関数（game.jsの末尾に追加・修正）
 
 function createInventoryUI(scene) {
@@ -1827,6 +1859,7 @@ function createMerchantUI(scene) {
 
 function createCraftingUI(scene) {
     scene.isCraftingOpen = false;
+    scene.craftingButtons = [];
 
     // --- 1. 設定値 ---
     const UI_X = 200; // 画面上のX座標
@@ -1905,6 +1938,7 @@ function createCraftingUI(scene) {
             const btn = scene.add.rectangle(itemX, currentY + itemHeight / 2, 350, 60, 0x442200)
                 .setInteractive({ useHandCursor: true });
             btn.setStrokeStyle(1, 0x884400);
+            scene.craftingButtons.push({ btn, recipe });
 
             // テキスト情報
             const nameText = scene.add.text(itemX, currentY + 15, `作る: ${resultItem.name}`, { fontSize: '18px', fill: '#ffdd00', fontStyle: 'bold' }).setOrigin(0.5);
@@ -1912,6 +1946,8 @@ function createCraftingUI(scene) {
 
             // 作成イベント
             btn.on('pointerdown', () => {
+                if (!btn.isCraftable) return;
+
                 // アニメーション的なフィードバック
                 scene.tweens.add({
                     targets: btn,
@@ -1924,8 +1960,12 @@ function createCraftingUI(scene) {
             });
 
             // ホバー効果
-            btn.on('pointerover', () => btn.setFillStyle(0x663300));
-            btn.on('pointerout', () => btn.setFillStyle(0x442200));
+            btn.on('pointerover', () => {
+                if (btn.isCraftable) btn.setFillStyle(0x663300);
+            });
+            btn.on('pointerout', () => {
+                if (btn.isCraftable) btn.setFillStyle(0x442200);
+            });
 
             // コンテナに追加
             listContainer.add([btn, nameText, infoText]);
@@ -1936,6 +1976,7 @@ function createCraftingUI(scene) {
 
     // コンテンツ全体の高さを保存
     listContainer.contentHeight = currentY;
+    updateCraftingUI(scene);
 
 
     // --- 5. マスク（切り抜き）設定 ---
@@ -1991,6 +2032,7 @@ function createCraftingUI(scene) {
     
     // UIを開く時のヘルパー（イベント再登録のため）
     scene.openCraftingUI = () => {
+        updateCraftingUI(scene);
         scene.craftContainer.setVisible(true);
         scene.isCraftingOpen = true;
         
