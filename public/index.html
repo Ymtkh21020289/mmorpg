@@ -60,12 +60,46 @@
         .rank-B { color: #00ff00; }
         .rank-A { color: #0088ff; }
         .rank-S { color: #ff0000; } /* Sランクのベース色 */
+
+        #system-log {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: min(360px, calc(100vw - 40px));
+            max-height: 220px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 6px;
+            font-family: 'DotGothic16', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        #system-log-title {
+            margin-bottom: 6px;
+            color: #ffd54a;
+            font-size: 13px;
+        }
+
+        .system-log-entry + .system-log-entry {
+            margin-top: 4px;
+        }
     </style>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
     <div id="game-container"></div>
+    <aside id="system-log" aria-live="polite" aria-label="システムログ">
+        <div id="system-log-title">SYSTEM LOG</div>
+        <div id="system-log-entries"></div>
+    </aside>
     <input type="text" id="chatInput" placeholder="Enterでチャット..." 
            style="position: absolute; bottom: 20px; left: 20px; width: 300px; padding: 10px; display: none;">
     <script src="data/maps.js"></script>
