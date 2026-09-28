@@ -694,6 +694,21 @@ function create() {
 
     // --- チャット入力の制御 ---
     const chatInput = document.getElementById('chatInput');
+    const systemLogEntries = document.getElementById('system-log-entries');
+
+    // サーバーからの通知を右下のシステムログへ追加する
+    this.socket.on('systemMessage', (message) => {
+        const entry = document.createElement('div');
+        entry.className = 'system-log-entry';
+        entry.textContent = String(message);
+        systemLogEntries.appendChild(entry);
+
+        // 表示する件数を制限し、最新の通知が常に見えるようにする
+        while (systemLogEntries.children.length > 8) {
+            systemLogEntries.firstElementChild.remove();
+        }
+        systemLogEntries.parentElement.scrollTop = systemLogEntries.parentElement.scrollHeight;
+    });
 
     this.socket.on('identifySuccess', (data) => {
         const item = data.item;
