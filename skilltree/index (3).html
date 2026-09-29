@@ -1,0 +1,440 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Skill Tree Editor (v6 - URL Sharing)</title>
+<style>
+/* --- レイアウトと基本設定 --- */
+body{margin:0;font-family:sans-serif;display:flex;height:100vh;overflow:hidden;}
+#gridWrapper{overflow:auto;height:100vh;padding:20px;background:#333;flex:2;}
+#grid{display:grid;grid-template-columns:repeat(11,50px);grid-template-rows:repeat(50,50px);gap:0;background:#444;border:1px solid #555;width:max-content;}
+
+
+/* --- セルのスタイル --- */
+.cell{width:50px;height:50px;background:#eee;cursor:pointer;box-sizing:border-box;position:relative;border:1px solid #ccc; z-index: 0;}
+.cell.ability{background:#2f6fff;border-color:#1a4bb3;}
+.cell.start{background:#00c853;border-color:#009624;}
+.cell.path{background:#eee;border:1px solid #ddd;} 
+
+
+/* --- 実戦モード用の状態クラス --- */
+.cell.active .path-line{background:#ff9800 !important;}
+.cell.available{background:#ffd84d;box-shadow:inset 0 0 10px #fff;}
+.cell.locked{background:#ff4d4d; opacity: 0.8;}
+.cell.sealed{background:#222;color:#888;}
+.cell.taken{background:#4caf50; border-color:#2e7d32;}
+.cell.selected{outline:4px solid #ff00ea; z-index:10; position:relative;}
+
+
+/* --- 経路の描画 --- */
+.path-line{position:absolute;background:#555;z-index:1; pointer-events: none;} 
+.v{width:10px;left:20px;}
+.v.up{top:0;height:55%;}
+.v.down{bottom:0;height:55%;}
+.h{height:10px;top:20px;width:55%;}
+.h.left{left:0;}
+.h.right{right:0;}
+
+
+/* --- サイドパネル --- */
+#side{flex:1;min-width:320px;padding:15px;background:#f5f5f5;overflow-y:auto;border-left:1px solid #999;}
+.hidden{display:none !important;} 
+input,select,textarea,button{width:100%;box-sizing:border-box;margin:5px 0;padding:8px;}
+h3,h4{margin:15px 0 5px;border-bottom:2px solid #ddd;padding-bottom:3px;}
+ul{padding-left:20px; margin: 5px 0;}
+li{font-size: 0.9em;}
+hr{border:none; border-top:1px dashed #bbb; margin: 15px 0;}
+
+
+/* 実戦モードのボタンスタイル */
+#acquireBtn { background: #ff9800; color: white; font-weight: bold; font-size: 1.1em; cursor: pointer; }
+#acquireBtn:hover { background: #f57c00; }
+</style>
+</head>
+<body>
+
+
+<div id="gridWrapper"><div id="grid"></div></div>
+
+
+<div id="side">
+    <h3>基本設定</h3>
+    <button id="modeBtn">実戦モードへ</button>
+    <div id="statusDisplay" style="margin-top:5px;font-weight:bold;color:#333;">編集中</div>
+
+
+    <div class="editOnly" style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;">
+        <label>初期所持ポイント:</label>
+        <input id="maxPointInput" type="number" min="1" value="20">
+    </div>
+
+
+    <div class="editOnly" style="margin-top:15px; background:#e3f2fd; padding:10px; border-radius:5px;">
+        <h4 style="margin-top:0; border-bottom:1px solid #90caf9;">共有と保存</h4>
+        <button id="shareUrlBtn" onclick="shareURL()" style="background:#673ab7; color:white; font-weight:bold;">共有URLをコピー</button>
+        <hr>
+        <button onclick="saveToBrowser()">ブラウザに一時保存</button>
+        <button onclick="loadFromBrowser()">一時保存から読込</button>
+        <button onclick="downloadJSON()">JSONファイル出力</button>
+        <input type="file" id="fileInput" style="display:none" accept=".json" onchange="loadJSON(this)">
+        <button onclick="document.getElementById('fileInput').click()">JSONファイル読込</button>
+    </div>
+
+
+    <div class="editOnly">
+        <h3>マス設定</h3>
+        <div style="display:flex;gap:5px;">
+            <button onclick="setType('empty')">削除</button>
+            <button onclick="setType('start')">開始地点</button>
+            <button onclick="setType('ability')">能力</button>
+            <button onclick="setType('path')">経路</button>
+        </div>
+    </div>
+
+
+    <div id="pathPanel" class="hidden editOnly">
+        <h4>経路形状</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+            <button onclick="setPath('v')">┃ 縦</button>
+            <button onclick="setPath('h')">━ 横</button>
+            <button onclick="setPath('x')">╋ 十字</button>
+            <button onclick="setPath('dr')">┏ 下右</button>
+            <button onclick="setPath('dl')">┓ 下左</button>
+            <button onclick="setPath('ur')">┗ 上右</button>
+            <button onclick="setPath('ul')">┛ 上左</button>
+            <button onclick="setPath('t')">┳ T字</button>
+            <button onclick="setPath('it')">┻ 逆T</button>
+        </div>
+    </div>
+
+
+    <div id="abilityPanel" class="hidden editOnly">
+        <h4>能力データの編集</h4>
+        <label>スキル名:</label>
+        <input id="skillName" placeholder="例: 攻撃力アップ">
+        <label>必要コスト:</label>
+        <input id="skillCost" type="number" min="0" value="1">
+        <label>説明文:</label>
+        <textarea id="skillDesc" rows="3"></textarea>
+
+
+        <h4>必須スキル (AND条件)</h4>
+        <select id="req1"></select>
+        <select id="req2"></select>
+
+
+        <h4>排除スキル (OR条件)</h4>
+        <select id="lock1"></select>
+        <select id="lock2"></select>
+
+
+        <button id="saveBtn" onclick="saveAbility()" style="background:#2196f3;color:white;margin-top:15px;">設定を保存</button>
+    </div>
+
+
+    <div id="playInfo" class="hidden">
+        <h3 id="pName"></h3>
+        <p>コスト: <span id="pCost" style="font-weight:bold;"></span></p>
+        <div id="pDesc" style="background:#fff;padding:8px;border:1px solid #ccc;margin-bottom:10px;min-height:40px;"></div>
+        <strong>必須:</strong> <ul id="pReq"></ul>
+        <strong>排除:</strong> <ul id="pLock"></ul>
+        <hr>
+        <p>所持: <span id="pPoint" style="font-size:1.5em;color:#d32f2f;font-weight:bold;"></span> / <span id="pMaxPoint"></span></p>
+        <button id="acquireBtn" class="hidden">このスキルを習得する</button>
+        <div id="msg" style="margin-top:10px;font-weight:bold;"></div>
+    </div>
+</div>
+
+
+<script>
+const COLS=11, ROWS=50;
+const grid=document.getElementById('grid');
+let mode='edit', selected=null;
+let maxPoint=20, currentPoint=20;
+
+
+let data=[...Array(COLS*ROWS)].map((_,i)=>({
+    id: i, type:'empty', path:null, taken:false, 
+    available: false, locked: false, sealed: false, active: false,
+    skill:{name:'', cost:1, desc:'', requires:[], locks:[]}
+}));
+
+
+// --- URL共有ロジック ---
+
+
+function shareURL() {
+    const saveData = {
+        g: data.filter(c => c.type !== 'empty').map(c => ({
+            i: c.id, t: c.type, p: c.path, s: c.skill
+        })),
+        m: document.getElementById('maxPointInput').value
+    };
+    
+    // JSON -> UTF-8 String -> Base64
+    const json = JSON.stringify(saveData);
+    const base64 = btoa(encodeURIComponent(json));
+    const url = window.location.origin + window.location.pathname + "?d=" + base64;
+    
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('shareUrlBtn');
+        btn.textContent = "コピー完了！";
+        btn.style.background = "#4caf50";
+        setTimeout(() => {
+            btn.textContent = "共有URLをコピー";
+            btn.style.background = "#673ab7";
+        }, 2000);
+    });
+}
+
+
+function loadFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const d = params.get('d');
+    if(!d) return;
+
+
+    try {
+        const json = decodeURIComponent(atob(d));
+        const parsed = JSON.parse(json);
+        
+        // データを初期化してから流し込む
+        data.forEach(c => {
+            c.type='empty'; c.path=null; c.taken=false;
+            c.skill={name:'', cost:1, desc:'', requires:[], locks:[]};
+        });
+
+
+        parsed.g.forEach(savedCell => {
+            const target = data[savedCell.i];
+            if(target) {
+                target.type = savedCell.t;
+                target.path = savedCell.p;
+                target.skill = savedCell.s;
+                if(target.type === 'start') target.taken = true;
+            }
+        });
+
+
+        maxPoint = parseInt(parsed.m) || 20;
+        document.getElementById('maxPointInput').value = maxPoint;
+        draw();
+    } catch(e) {
+        console.error("URL読込失敗", e);
+    }
+}
+
+
+// --- その他の保存機能 ---
+
+
+function saveToBrowser(){
+    localStorage.setItem('skillTreeDataV6', JSON.stringify({data, maxPoint: document.getElementById('maxPointInput').value}));
+    alert("ブラウザに保存しました");
+}
+function loadFromBrowser(){
+    const json = localStorage.getItem('skillTreeDataV6');
+    if(json) applyData(json);
+}
+function downloadJSON(){
+    const blob = new Blob([JSON.stringify({data, maxPoint: document.getElementById('maxPointInput').value})], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'skilltree.json';
+    a.click();
+}
+function loadJSON(input){
+    const reader = new FileReader();
+    reader.onload = (e) => applyData(e.target.result);
+    reader.readAsText(input.files[0]);
+}
+function applyData(json){
+    const p = JSON.parse(json);
+    data = p.data;
+    maxPoint = p.maxPoint;
+    document.getElementById('maxPointInput').value = maxPoint;
+    draw();
+}
+
+
+// --- 以下、既存のロジック ---
+function draw(){
+    grid.innerHTML='';
+    data.forEach((c,i)=>{
+        const d=document.createElement('div');
+        d.className='cell';
+        if(c.type!=='empty') d.classList.add(c.type);
+        if(c.type==='path' && c.path) drawPathLines(d, c.path);
+        if(mode === 'play'){
+            if(c.active) d.classList.add('active');
+            if(c.taken) d.classList.add('taken');
+            else if(c.sealed) d.classList.add('sealed');
+            else if(c.available) d.classList.add('available');
+            else if(c.locked) d.classList.add('locked');
+        }
+        if(i===selected && mode==='edit') d.classList.add('selected');
+        d.onclick = () => clickCell(i);
+        grid.appendChild(d);
+    });
+}
+function drawPathLines(el, p){
+    const add=(cls)=> {const e=document.createElement('div'); e.className='path-line '+cls; el.appendChild(e);}
+    if(p==='v'){add('v up');add('v down');}
+    if(p==='h'){add('h left');add('h right');}
+    if(p==='x'){add('v up');add('v down');add('h left');add('h right');}
+    if(p==='t'){add('v down');add('h left');add('h right');}
+    if(p==='it'){add('v up');add('h left');add('h right');}
+    if(p==='dr'){add('v down');add('h right');}
+    if(p==='dl'){add('v down');add('h left');}
+    if(p==='ur'){add('v up');add('h right');}
+    if(p==='ul'){add('v up');add('h left');}
+}
+function clickCell(i){
+    if(mode === 'play'){
+        if(data[i].type === 'ability') showInfo(i);
+        return; 
+    }
+    selected = i;
+    updatePanels();
+    draw();
+}
+function updatePanels(){
+    pathPanel.classList.add('hidden');
+    abilityPanel.classList.add('hidden');
+    if(selected===null) return;
+    const c=data[selected];
+    if(c.type==='path') pathPanel.classList.remove('hidden');
+    if(c.type==='ability'){
+        abilityPanel.classList.remove('hidden');
+        skillName.value = c.skill.name;
+        skillCost.value = c.skill.cost;
+        skillDesc.value = c.skill.desc;
+        updateSkillSelects();
+    }
+}
+function updateSkillSelects(){
+    const opts=['<option value="">設定なし</option>'];
+    data.forEach((c,i)=>{
+        if(c.type==='ability' && i!==selected) opts.push(`<option value="${i}">${c.skill.name || 'ID:'+i}</option>`);
+    });
+    [req1,req2,lock1,lock2].forEach(s => s.innerHTML = opts.join(''));
+    const sk = data[selected].skill;
+    req1.value = sk.requires[0] || ""; req2.value = sk.requires[1] || "";
+    lock1.value = sk.locks[0] || ""; lock2.value = sk.locks[1] || "";
+}
+function saveAbility(){
+    const c=data[selected];
+    c.skill.name = skillName.value;
+    c.skill.cost = parseInt(skillCost.value) || 0;
+    c.skill.desc = skillDesc.value;
+    c.skill.requires = [req1.value, req2.value].filter(v => v !== "");
+    c.skill.locks = [lock1.value, lock2.value].filter(v => v !== "");
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = "保存完了！"; btn.style.background = "#4caf50";
+    setTimeout(()=>{ btn.textContent = "設定を保存"; btn.style.background = "#2196f3"; }, 700);
+    draw();
+}
+function setType(t){
+    const c=data[selected];
+    c.type = t; c.path = null;
+    c.skill = {name:'', cost:1, desc:'', requires:[], locks:[]};
+    if(t==='path') c.path = 'v';
+    c.taken = (t==='start');
+    updatePanels(); draw();
+}
+function setPath(p){ data[selected].type = 'path'; data[selected].path = p; draw(); }
+
+
+function showInfo(i){
+    const c = data[i];
+    pName.textContent = c.skill.name || '未設定';
+    pCost.textContent = c.skill.cost;
+    pDesc.textContent = c.skill.desc;
+    pPoint.textContent = currentPoint;
+    document.getElementById('pMaxPoint').textContent = maxPoint;
+    const nameList = (ids) => ids.map(id => data[id]?.skill.name || `ID:${id}`).join(', ') || 'なし';
+    pReq.textContent = nameList(c.skill.requires);
+    pLock.textContent = nameList(c.skill.locks);
+    acquireBtn.classList.add('hidden');
+    msg.textContent = '';
+    if(c.taken){ msg.textContent = "【習得済み】"; msg.style.color = "green"; }
+    else if(c.sealed){ msg.textContent = "【封印】"; msg.style.color = "black"; }
+    else if(c.available){ acquireBtn.classList.remove('hidden'); acquireBtn.onclick = () => tryAcquire(i); }
+    else if(c.locked){ msg.textContent = "【条件不足】"; msg.style.color = "red"; }
+    else { msg.textContent = "【到達不能】"; msg.style.color = "gray"; }
+}
+function tryAcquire(i){
+    if(currentPoint < data[i].skill.cost){ alert("ポイント不足"); return; }
+    data[i].taken = true; currentPoint -= data[i].skill.cost;
+    calcPlay(); draw(); showInfo(i);
+}
+
+
+function getConnections(cell){
+    if(cell.type==='start') return ['up','down','left','right'];
+    if(cell.type!=='path') return []; 
+    const map = { v:['up','down'], h:['left','right'], x:['up','down','left','right'], t:['down','left','right'], it:['up','left','right'], dr:['down','right'], dl:['down','left'], ur:['up','right'], ul:['up','left'] };
+    return map[cell.path] || [];
+}
+function move(i, d){
+    const x=i%COLS, y=Math.floor(i/COLS);
+    if(d==='up' && y>0) return i-COLS; if(d==='down' && y<ROWS-1) return i+COLS;
+    if(d==='left' && x>0) return i-1; if(d==='right' && x<COLS-1) return i+1;
+    return null;
+}
+function opposite(d){ return {up:'down', down:'up', left:'right', right:'left'}[d]; }
+
+
+function calcPlay(){
+    data.forEach(c => { c.active = false; c.available = false; c.locked = false; c.sealed = false; });
+    const queue = []; const visited = new Set();
+    data.forEach(c => { if(c.taken && (c.type==='start' || c.type==='ability')){ queue.push(c.id); visited.add(c.id); } });
+    while(queue.length > 0){
+        const currId = queue.shift(); const curr = data[currId];
+        let dirs = (curr.type === 'path') ? getConnections(curr) : ['up','down','left','right'];
+        if(curr.type==='path') curr.active = true;
+        dirs.forEach(d => {
+            const nextId = move(currId, d); if(nextId === null) return;
+            const next = data[nextId];
+            if(next.type === 'path' && getConnections(next).includes(opposite(d))){
+                if(!visited.has(nextId)){ visited.add(nextId); queue.push(nextId); }
+            } else if(next.type === 'ability'){
+                if(!next.taken) checkAbilityStatus(next);
+                else if(!visited.has(nextId)){ visited.add(nextId); queue.push(nextId); }
+            }
+        });
+    }
+}
+function checkAbilityStatus(c){
+    const reqOK = c.skill.requires.every(rid => data[rid] && data[rid].taken);
+    const lockNG = c.skill.locks.some(lid => data[lid] && data[lid].taken);
+    if(lockNG) c.sealed = true; else if(reqOK) c.available = true; else c.locked = true;
+}
+
+
+modeBtn.onclick = () => {
+    if(mode === 'edit'){
+        mode = 'play'; modeBtn.textContent = '編集モードへ';
+        document.querySelectorAll('.editOnly').forEach(e => e.style.display = 'none');
+        playInfo.classList.remove('hidden');
+        maxPoint = parseInt(document.getElementById('maxPointInput').value) || 20;
+        currentPoint = maxPoint;
+        data.forEach(c => { if(c.type!=='start') c.taken=false; });
+        calcPlay(); selected = null;
+    } else {
+        mode = 'edit'; modeBtn.textContent = '実戦モードへ';
+        document.querySelectorAll('.editOnly').forEach(e => e.style.display = '');
+        playInfo.classList.add('hidden');
+        data.forEach(c => { c.active = false; c.available = false; c.locked = false; c.sealed = false; });
+        selected = null; updatePanels();
+    }
+    draw();
+};
+
+
+// 起動時にURLから読込
+window.onload = loadFromURL;
+draw();
+</script>
+</body>
+</html>
