@@ -108,6 +108,33 @@ const DROP_TABLE = {
 // 現在の敵リスト（初期状態は空にして、関数で生み出す）
 let enemies = {};
 
+function getEntitiesInRoom(entities, room) {
+    return Object.fromEntries(
+        Object.entries(entities).filter(([, entity]) => entity.room === room)
+    );
+}
+
+function emitEnemiesForRoom(room) {
+    io.to(room).emit('currentEnemies', getEntitiesInRoom(enemies, room));
+}
+
+function emitProjectilesByRoom() {
+    const activeRooms = new Set(Object.values(players).map(player => player.room));
+    const projectilesByRoom = {};
+
+    Object.entries(projectiles).forEach(([id, projectile]) => {
+        if (!projectilesByRoom[projectile.room]) {
+            projectilesByRoom[projectile.room] = {};
+        }
+        projectilesByRoom[projectile.room][id] = projectile;
+    });
+
+    // 空のスナップショットも送信して、部屋移動後に古い弾を確実に消す。
+    activeRooms.forEach(room => {
+        io.to(room).emit('updateProjectiles', projectilesByRoom[room] || {});
+    });
+}
+
 // 3. 群れを管理するスポーナーの定義
 const spawners = [
     // カカシ（単体）
@@ -251,9 +278,9 @@ function spawnGroup(spawner) {
             respawnType: template.respawnType        // 復活タイプ
         };
     }
-    // 全員に通知
+    // 同じ部屋のプレイヤーだけに、更新後の敵一覧を通知
     console.error(`${enemies} を作成しました。`);
-    io.emit('currentEnemies', enemies);
+    emitEnemiesForRoom(spawner.room);
 }
 
 // サーバー起動時に全スポーナーを稼働
@@ -320,7 +347,7 @@ io.on('connection', (socket) => {
         // io.to('room名').emit(...) で、その部屋の人だけに送信できます
         socket.to(player.room).emit('newPlayer', player);
 
-        socket.emit('currentEnemies', enemies);
+        socket.emit('currentEnemies', getEntitiesInRoom(enemies, player.room));
         socket.emit('currentNPCs', npcs);
         socket.emit('inventoryUpdate', {
             inventory: players[socket.id].inventory,
@@ -379,7 +406,10 @@ io.on('connection', (socket) => {
     socket.emit('currentPlayers', playersInRoom);
 
     socket.on('requestEnemies', () => {
-        socket.emit('currentEnemies', enemies);
+        const player = players[socket.id];
+        if (player) {
+            socket.emit('currentEnemies', getEntitiesInRoom(enemies, player.room));
+        }
     });
 
     socket.on('attackEnemy', (data) => {
@@ -389,13 +419,13 @@ io.on('connection', (socket) => {
         if (enemy && !enemy.isDead && player) {
             const sum = Math.floor(( player.totalAtk + data.damage ) * ( 1 + ( data.ratio / 100 )));
             enemy.hp -= sum;
-            io.emit('enemyDamaged', { enemyId: data.enemyId, damage: sum });
+            io.to(enemy.room).emit('enemyDamaged', { enemyId: data.enemyId, damage: sum });
 
             if (enemy.hp <= 0) {
                 // ★たったこれだけでOK！
                 handleEnemyDeath(enemy, player);
             } else {
-                io.emit('updateEnemy', enemy);
+                io.to(enemy.room).emit('updateEnemy', enemy);
             }
         }
     });
@@ -1114,8 +1144,8 @@ setInterval(() => {
                 }
             }   
         }
-        // 位置情報を全員に送信
-        io.emit('updateEnemy', enemy);
+        // 位置情報は同じ部屋にいるプレイヤーだけに送信
+        io.to(enemy.room).emit('updateEnemy', enemy);
     });
 }, 100);
 
@@ -1158,7 +1188,7 @@ setInterval(() => {
                     enemy.hp -= damage;
                     
                     // ダメージ通知
-                    io.emit('enemyDamaged', { enemyId: enemyId, damage: damage });
+                    io.to(enemy.room).emit('enemyDamaged', { enemyId: enemyId, damage: damage });
     
                     if (enemy.hp <= 0) {
                         const owner = players[p.ownerId];
@@ -1168,7 +1198,7 @@ setInterval(() => {
                         }
                     } else {
                         // 生きていれば更新通知
-                        io.emit('updateEnemy', enemy);
+                        io.to(enemy.room).emit('updateEnemy', enemy);
                     }
                 }
             });
@@ -1204,8 +1234,8 @@ setInterval(() => {
         }
     });
 
-    // 弾の位置情報を全員に送信
-    io.emit('updateProjectiles', projectiles);
+    // 弾の位置情報は部屋別のスナップショットとして送信する。
+    emitProjectilesByRoom();
 
     updateBossState()
 }, 50); // 50ミリ秒間隔
@@ -1272,15 +1302,15 @@ function handleEnemyDeath(enemy, player) {
         setTimeout(() => {
             enemy.hp = enemy.maxHp;
             enemy.isDead = false;
-            io.emit('updateEnemy', enemy);
+            io.to(enemy.room).emit('updateEnemy', enemy);
         }, 5000);
-        io.emit('updateEnemy', enemy); 
+        io.to(enemy.room).emit('updateEnemy', enemy);
 
     } else if (enemy.respawnType === 'group') {
         const targetSpawnerIndex = enemy.spawnerIndex;
         const spawner = spawners[targetSpawnerIndex];
         // B. 群れタイプ
-        io.emit('removeEnemy', enemy.id);
+        io.to(enemy.room).emit('removeEnemy', enemy.id);
         
         // 削除
         delete enemies[enemy.id];
@@ -1331,7 +1361,7 @@ function handleBossDeath(enemy, player, expGain) {
     });
 
     enemy.isDead = true;
-    io.emit('removeEnemy', enemy.id);
+    io.to(roomId).emit('removeEnemy', enemy.id);
     delete enemies[enemy.id];
 
     if (state) {
@@ -1755,7 +1785,6 @@ function updateBossState() {
             }
             stats.active = false;
             stats.id = null;
-            io.emit('updateEnemies', enemies); // クライアントにも削除を通知
             return; // リセットしたフレームはここで終了
         }
     
@@ -1817,7 +1846,7 @@ function spawnBoss(boss) {
 
     // クライアントに通知（ボスの出現演出などがあればここでemit）
     io.emit('systemMessage', '【警告】ボスエリアに侵入者が確認されました。ボスが出現します！');
-    io.emit('currentEnemies', enemies);
+    emitEnemiesForRoom(config.roomId);
     console.log(`ボス${boss.name}をid:${id}で召喚しました。`);
 }
 
