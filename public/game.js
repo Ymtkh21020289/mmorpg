@@ -1359,7 +1359,7 @@ function showSlashEffect(scene, player, angle, weapon) {
     const slash = scene.add.graphics();
     
     // 2. 色と透明度の設定 (黄色, 透明度MAX)
-    slash.fillStyle(0xffff00, 0.8);
+    slash.fillStyle(weapon.color, 0.8);
 
     // 3. 扇形（Slice）を描く
     // slice(x, y, 半径, 開始角度, 終了角度)
