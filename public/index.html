@@ -90,6 +90,21 @@
         .system-log-entry + .system-log-entry {
             margin-top: 4px;
         }
+
+        #skill-tree-overlay { position: fixed; inset: 0; display: none; z-index: 3000; background: rgba(0,0,0,.88); color: #fff; font-family: 'DotGothic16', sans-serif; }
+        #skill-tree-overlay.open { display: flex; flex-direction: column; }
+        .skill-tree-header { padding: 14px 20px; display:flex; gap:20px; align-items:center; border-bottom:1px solid #aaa; }
+        #skill-tree-close { margin-left:auto; padding:8px 14px; cursor:pointer; }
+        #skill-tree-grid { overflow:auto; display:grid; grid-template-columns:repeat(11, 58px); grid-template-rows:repeat(50, 58px); padding:24px; justify-content:center; }
+        .skill-node { width:50px; height:50px; box-sizing:border-box; border:2px solid #444; background:#20242d; font-size:10px; display:flex; text-align:center; align-items:center; justify-content:center; padding:3px; cursor:default; white-space:pre-wrap; }
+        .skill-node.path { background:#57606a; border-color:#8a939f; }
+        .skill-node.start { background:#159957; border-color:#b7f7c9; }
+        .skill-node.available { background:#8a6500; border-color:#ffe26a; cursor:pointer; }
+        .skill-node.taken { background:#1264a3; border-color:#72c5ff; }
+        .skill-node.locked { opacity:.4; }
+        #skill-tree-details { position:fixed; right:22px; bottom:22px; width:310px; min-height:100px; padding:14px; background:#111; border:1px solid #aaa; white-space:pre-line; }
+        .skill-hotbar { position:fixed; right:20px; bottom:20px; z-index:110; display:flex; gap:7px; }
+        .skill-hotbar button { font-family:'DotGothic16',sans-serif; color:#fff; background:#263238; border:1px solid #7dd3fc; padding:7px; cursor:pointer; }
     </style>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>

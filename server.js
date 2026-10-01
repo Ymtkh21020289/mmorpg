@@ -79,7 +79,9 @@ const playerSchema = new mongoose.Schema({
         type: Object,
         default: defaultjob
     },
-    currentJob: { type: String, default: 'normal'} 
+    currentJob: { type: String, default: 'normal'},
+    // ノーマル職のスキルツリーで解放済みのノードID
+    unlockedSkillTree: { type: [Number], default: [] }
 });
 
 const PlayerModel = mongoose.model('Player', playerSchema);
@@ -89,6 +91,10 @@ const MAP_DATA = require('./public/data/maps.js');
 const { ITEMS, RECIPES, RANKS, TOTAL_RATE } = require('./public/data/items.js');
 const ENEMY_TYPES = require('./public/data/enemies.js');
 const npcs = require('./public/data/npc.js');
+const NORMAL_SKILL_TREE = require('./skilltree/skilltree.json').data;
+const NORMAL_SKILLS = Object.fromEntries(NORMAL_SKILL_TREE
+    .filter(node => node.type === 'ability')
+    .map(node => [String(node.id), node.skill]));
 
 // プレイヤーデータを格納するオブジェクト
 let players = {};
@@ -133,6 +139,68 @@ function emitProjectilesByRoom() {
     activeRooms.forEach(room => {
         io.to(room).emit('updateProjectiles', projectilesByRoom[room] || {});
     });
+}
+
+function hasSkill(player, id) {
+    return player.currentJob === 'normal' && player.unlockedSkillTree.includes(Number(id));
+}
+
+function getConnectedSkillNodes(unlocked) {
+    const active = new Set([5, ...unlocked]);
+    const reachable = new Set(active);
+    const queue = [...active];
+    const width = 11;
+    while (queue.length) {
+        const id = queue.shift();
+        const node = NORMAL_SKILL_TREE[id];
+        if (!node) continue;
+        const row = Math.floor(id / width), col = id % width;
+        for (const [otherId, other] of NORMAL_SKILL_TREE.entries()) {
+            if (other.type === 'empty') continue;
+            const dr = Math.floor(otherId / width) - row;
+            const dc = otherId % width - col;
+            if (Math.abs(dr) > 1 || Math.abs(dc) > 1 || (dr === 0 && dc === 0)) continue;
+            // Paths have their graphic direction recorded, but adjacent grid nodes are
+            // intentionally treated as connected so branches work even for editor-made paths.
+            if (!reachable.has(otherId)) { reachable.add(otherId); queue.push(otherId); }
+        }
+    }
+    return reachable;
+}
+
+function skillStats(player) {
+    const stat = { normalDamage: 1, critChance: 0, critDamage: 1.5, attackSpeed: 1, range: 1, atkMultiplier: 1 };
+    if (player.currentJob !== 'normal') return stat;
+    if (hasSkill(player, 91)) { stat.normalDamage *= 1.10; stat.attackSpeed *= 1.10; }
+    if (hasSkill(player, 178)) { stat.normalDamage *= 1.15; stat.attackSpeed *= 1.10; }
+    if (hasSkill(player, 244)) { stat.normalDamage *= 1.10; stat.range *= 1.25; }
+    if (hasSkill(player, 95)) { stat.normalDamage *= .90; stat.attackSpeed *= .90; }
+    if (hasSkill(player, 184)) { stat.normalDamage *= .90; stat.attackSpeed *= .85; }
+    if (hasSkill(player, 250)) { stat.normalDamage *= .95; stat.attackSpeed *= .90; }
+    if (hasSkill(player, 112)) stat.critChance += .10;
+    if (hasSkill(player, 116)) stat.critDamage += .25;
+    if (hasSkill(player, 118)) stat.normalDamage *= 1.15;
+    if (hasSkill(player, 114)) stat.atkMultiplier *= 1.15;
+    if (player.tempAttackSpeedUntil > Date.now()) stat.attackSpeed *= 1.2;
+    return stat;
+}
+
+function sendSkillTree(socket, player) {
+    socket.emit('skillTreeUpdate', {
+        currentJob: player.currentJob,
+        sp: player.jobs[player.currentJob].sp,
+        unlocked: player.unlockedSkillTree,
+        attackSpeed: skillStats(player).attackSpeed
+    });
+}
+
+function damageEnemy(enemy, player, damage) {
+    const defenseDown = enemy.defenseDownUntil > Date.now() ? 1.2 : 1;
+    const amount = Math.max(1, Math.floor(damage * defenseDown));
+    enemy.hp -= amount;
+    io.to(enemy.room).emit('enemyDamaged', { enemyId: enemy.id, damage: amount });
+    if (enemy.hp <= 0) handleEnemyDeath(enemy, player);
+    else io.to(enemy.room).emit('updateEnemy', enemy);
 }
 
 // 3. 群れを管理するスポーナーの定義
@@ -342,6 +410,7 @@ io.on('connection', (socket) => {
         socket.emit('inventoryUpdate', {inventory: player.inventory, gold: player.gold});
         socket.emit('updateStorage', player.storage);
         socket.emit('equipmentUpdate', player.equipment);
+        sendSkillTree(socket, player);
 
         // ★ 'town' 部屋にいる人たちだけに、新入り情報を送る
         // io.to('room名').emit(...) で、その部屋の人だけに送信できます
@@ -416,22 +485,87 @@ io.on('connection', (socket) => {
         const enemy = enemies[data.enemyId];
         const player = players[socket.id];
 
-        if (enemy && !enemy.isDead && player) {
-            const sum = Math.floor(( player.totalAtk + data.damage ) * ( 1 + ( data.ratio / 100 )));
-            enemy.hp -= sum;
-            io.to(enemy.room).emit('enemyDamaged', { enemyId: data.enemyId, damage: sum });
-
-            if (enemy.hp <= 0) {
-                // ★たったこれだけでOK！
-                handleEnemyDeath(enemy, player);
-            } else {
-                io.to(enemy.room).emit('updateEnemy', enemy);
+        if (enemy && !enemy.isDead && player && enemy.room === player.room) {
+            const stats = skillStats(player);
+            let multiplier = stats.normalDamage * stats.atkMultiplier;
+            if (hasSkill(player, 70)) {
+                const cap = hasSkill(player, 266) ? .25 : .10;
+                multiplier *= 1 + Math.min(cap, ((player.maxHp - player.hp) / player.maxHp) * cap);
+            }
+            if (hasSkill(player, 72) && Object.values(enemies).some(e => !e.isDead && e.room === player.room && Math.hypot(e.x - player.x, e.y - player.y) <= 48)) multiplier *= hasSkill(player, 272) ? 1.5 : 1.25;
+            if (player.tempAtkUntil > Date.now()) multiplier *= 2;
+            if (player.sharpenedHits > 0) { multiplier *= player.sharpenedPower || 1.1; player.sharpenedHits--; }
+            if (hasSkill(player, 332)) multiplier *= 1 + Math.min(1, ((player.normalHits || 0) % 10) * .1);
+            if (Math.random() < stats.critChance) multiplier *= stats.critDamage;
+            if (hasSkill(player, 355) && enemy.lastMovedAt && Date.now() - enemy.lastMovedAt > 300) multiplier *= 2;
+            if (hasSkill(player, 289) && Date.now() >= (player.destructionCooldown || 0)) {
+                multiplier *= 1.5; player.destructionCooldown = Date.now() + 10000;
+            }
+            const sum = (player.totalAtk + Number(data.damage || 0)) * (1 + (Number(data.ratio || 0) / 100)) * multiplier;
+            damageEnemy(enemy, player, sum);
+            player.normalHits = (player.normalHits || 0) + 1;
+            if (hasSkill(player, 293) && player.sharpenedHits > 0) enemy.bleed = (enemy.bleed || 0) + 4;
+            if (hasSkill(player, 201) && player.normalHits % 5 === 0) {
+                const repeats = hasSkill(player, 310) ? 2 : 1;
+                Object.values(enemies).filter(e => !e.isDead && e.room === player.room && Math.hypot(e.x - player.x, e.y - player.y) <= 128)
+                    .forEach(e => damageEnemy(e, player, player.totalAtk * 1.5 * repeats));
+            }
+            const phantomInterval = hasSkill(player, 338) ? 3 : 5;
+            if (hasSkill(player, 205) && player.normalHits % phantomInterval === 0) {
+                const nearbyBleed = Object.values(enemies).filter(e => e.room === player.room).reduce((sum, e) => sum + (e.bleed || 0), 0);
+                damageEnemy(enemy, player, player.totalAtk * (hasSkill(player, 381) ? 1 + Math.min(1, nearbyBleed * .05) : 1));
             }
         }
+    });
+
+    socket.on('unlockSkillTreeNode', async (nodeId) => {
+        const player = players[socket.id];
+        const id = Number(nodeId), skill = NORMAL_SKILLS[String(id)];
+        if (!player || player.currentJob !== 'normal' || !Number.isInteger(id) || !skill) return;
+        if (player.unlockedSkillTree.includes(id)) return sendSkillTree(socket, player);
+        const connected = getConnectedSkillNodes(player.unlockedSkillTree);
+        const requirementsMet = skill.requires.every(required => player.unlockedSkillTree.includes(Number(required)));
+        const lockTaken = skill.locks.some(locked => player.unlockedSkillTree.includes(Number(locked)));
+        if (!connected.has(id) || !requirementsMet || lockTaken || player.jobs.normal.sp < skill.cost) {
+            return socket.emit('systemMessage', 'このスキルは現在解放できません。');
+        }
+        player.jobs.normal.sp -= skill.cost;
+        player.unlockedSkillTree.push(id);
+        updatePlayerStats(player);
+        sendSkillTree(socket, player);
+        await savePlayer(player);
+    });
+
+    socket.on('useSkillTreeAbility', (nodeId) => {
+        const player = players[socket.id], id = Number(nodeId), now = Date.now();
+        if (!player || !hasSkill(player, id)) return;
+        const config = {
+            27: { mana: hasSkill(player, 270) ? 5 : 15, cd: hasSkill(player, 246) ? 8000 : hasSkill(player, 180) ? 10000 : 15000 },
+            47: { mana: hasSkill(player, 224) ? 7 : 10, cd: hasSkill(player, 222) ? 7500 : hasSkill(player, 156) ? 10000 : 15000 },
+            49: { mana: hasSkill(player, 182) ? 20 : 25, cd: hasSkill(player, 248) ? 12000 : hasSkill(player, 158) ? 15000 : 20000 },
+            51: { mana: hasSkill(player, 226) ? 10 : 15, cd: hasSkill(player, 228) ? 5000 : hasSkill(player, 162) ? 7000 : 10000 }
+        }[id];
+        if (!config || player.mp < config.mana || now < (player.skillCooldowns?.[id] || 0)) return;
+        player.skillCooldowns = player.skillCooldowns || {}; player.skillCooldowns[id] = now + config.cd; player.mp -= config.mana;
+        const nearby = Object.values(enemies).filter(enemy => !enemy.isDead && enemy.room === player.room && Math.hypot(enemy.x - player.x, enemy.y - player.y) <= 96);
+        if (id === 27) { player.sharpenedHits = Math.min(hasSkill(player, 160) ? 20 : 10, (player.sharpenedHits || 0) + (hasSkill(player, 160) ? 10 : 5)); player.sharpenedPower = hasSkill(player, 160) ? 1.2 : 1.1; }
+        if (id === 47) {
+            nearby.forEach(enemy => { enemy.immobilizedUntil = now + (hasSkill(player, 135) ? 4000 : 2000); if (hasSkill(player, 377)) enemy.defenseDownUntil = now + 5000; });
+            if (hasSkill(player, 334)) { player.tempAttackSpeedUntil = now + 5000; player.tempAtkUntil = now + 5000; sendSkillTree(socket, player); }
+        }
+        if (id === 49) {
+            if (hasSkill(player, 312)) player.tempAtkUntil = now + 5000;
+            else { player.hp = Math.max(1, player.hp - Math.floor(player.maxHp * (hasSkill(player, 268) ? .15 : .25))); player.immobilizedUntil = now + 3000; }
+            nearby.filter(enemy => Math.hypot(enemy.x - player.x, enemy.y - player.y) <= 64).forEach(enemy => { damageEnemy(enemy, player, player.totalAtk * 3); if (hasSkill(player, 314)) enemy.bleed = (enemy.bleed || 0) + 15; });
+        }
+        if (id === 51) nearby.slice(0, 1).forEach(enemy => { const hits = hasSkill(player, 139) ? 2 : 1; for (let i = 0; i < hits; i++) damageEnemy(enemy, player, player.totalAtk * .1); enemy.bleed = (enemy.bleed || 0) + (hasSkill(player, 316) ? 10 : 4); });
+        updatePlayerStats(player);
+        socket.emit('skillUsed', { id, cooldown: config.cd });
     });
     // --- 移動処理 ---
     socket.on('playerMovement', (movementData) => {
         if (players[socket.id]) {
+            if (players[socket.id].immobilizedUntil > Date.now()) return;
             players[socket.id].x = movementData.x;
             players[socket.id].y = movementData.y;
             players[socket.id].rotation = movementData.rotation;
@@ -1030,6 +1164,8 @@ io.on('connection', (socket) => {
 
             // 全体または個人にシステムメッセージ
             socket.emit('systemMessage', `${JOB_CONFIG[targetJob].name} に転職しました！`);
+            sendSkillTree(socket, player);
+            savePlayer(player);
         } else {
             console.warn(`[WARNING] 存在しない職業への転職要求: ${targetJob}`);
         }
@@ -1055,6 +1191,10 @@ setInterval(() => {
             enemy.timer = 0;
         }
         const now = Date.now();
+        if (enemy.immobilizedUntil > now) {
+            io.to(enemy.room).emit('updateEnemy', enemy);
+            return;
+        }
         // 1. 一番近くにいるプレイヤーを探す
         if(enemy.type !== 'boss'){
             if (enemy.state === 'moving') {
@@ -1112,7 +1252,7 @@ setInterval(() => {
                             const checkX = nextX + (Math.cos(angle) > 0 ? 15 : -15);
                         
                             if (!isMapWall(enemy.room, checkX, enemy.y)) {
-                                enemy.x = nextX; // 壁じゃないなら進む
+                                enemy.x = nextX; enemy.lastMovedAt = now; // 壁じゃないなら進む
                             }
     
                             // ■ Y方向の移動チェック（Xとは独立して行う＝壁沿いを滑る）
@@ -1120,7 +1260,7 @@ setInterval(() => {
                             const checkY = nextY + (Math.sin(angle) > 0 ? 15 : -15);
     
                             if (!isMapWall(enemy.room, enemy.x, checkY)) {
-                                enemy.y = nextY; // 壁じゃないなら進む
+                                enemy.y = nextY; enemy.lastMovedAt = now; // 壁じゃないなら進む
                             }
                         } 
                     }
@@ -1148,6 +1288,20 @@ setInterval(() => {
         io.to(enemy.room).emit('updateEnemy', enemy);
     });
 }, 100);
+
+// 裂傷は0.5秒ごとに1スタックを消費する。ダメージの発生源は保持して
+// いないため、最後に付与したノーマル職プレイヤーの現在の攻撃力を使う。
+setInterval(() => {
+    Object.values(enemies).forEach(enemy => {
+        if (!enemy.bleed || enemy.isDead) return;
+        const owner = Object.values(players).find(player => player.room === enemy.room && player.currentJob === 'normal');
+        if (!owner) return;
+        enemy.bleed--;
+        const ratio = hasSkill(owner, 336) ? 2 : .4;
+        damageEnemy(enemy, owner, owner.totalAtk * ratio);
+        if (hasSkill(owner, 359) && enemy.bleed >= 100) { enemy.bleed -= 100; damageEnemy(enemy, owner, owner.totalAtk * 25); }
+    });
+}, 500);
 
 // --- 物理演算ループ（弾の移動とMP回復） ---
 setInterval(() => {
@@ -1261,6 +1415,7 @@ setInterval(() => {
 function handleEnemyDeath(enemy, player) {
     // 1. 経験値とレベルアップ処理
     const expGain = enemy.exp;
+    if (hasSkill(player, 368)) player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * .02));
 
     if (enemy.respawnType === 'boss') {
         handleBossDeath(enemy, player, expGain);
@@ -1660,7 +1815,8 @@ async function savePlayer(player) {
 
         // --- 職業---
         jobs: player.jobs,
-        currentJob: player.currentJob
+        currentJob: player.currentJob,
+        unlockedSkillTree: player.unlockedSkillTree
     };
 
     try {
@@ -2047,8 +2203,14 @@ function initializePlayer(player) {
         'warrior': { level: 1, exp: 0, sp: 0 },
         'mage': { level: 1, exp: 0, sp: 0 }
     };
+    for (const [key, fallback] of Object.entries(defaultjob)) {
+        player.jobs[key] = { ...fallback, ...(player.jobs[key] || {}) };
+        player.jobs[key].sp = Number(player.jobs[key].sp) || 0;
+    }
 
     player.currentJob = player.currentJob || 'normal';
+    player.unlockedSkillTree = [...new Set((player.unlockedSkillTree || []).map(Number))]
+        .filter(id => NORMAL_SKILLS[String(id)]);
     const jobKey = player.currentJob;
     const jobData = player.jobs[jobKey];
     const nextLevelExp = Math.floor( 2 * (jobData.level ** 2) + (jobData.level * 10) + 100);
