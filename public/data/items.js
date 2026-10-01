@@ -10,7 +10,7 @@ const ITEMS = {
     'slime_sword':{ name: 'スライムの剣', type: 'weapon', weapontype: 'direct', statsRange: { atk: { min: 10, max: 20 }}, range: 90, radius: 90, cooldown: 650, color: 0xffff00, price: 1000, desc: '初心者のための剣。\n広範囲に攻撃が可能。' },
     'slime_sword_alpha':{ name: 'スライムの剣α', type: 'weapon', weapontype: 'direct', statsRange: { atk: { min: 10, max: 20 }, ratio: { min: 5, max: 10 }}, range: 95, radius: 100, cooldown: 550, color: 0xffff00, price: 5000},
     'mathili_gun':{ name: 'ﾏﾃｨﾘ砲', type: 'weapon', weapontype: 'indirect', statsRange: { atk: { min: 200, max: 200 }, ratio: { min: 100, max: 200 }}, speed: 5, time: 10000, mana:1, cooldown:100, color: 0xffffff, price: 200, desc: 'めっちゃスゴイ槍。\n圧倒的射程。' },
-    'sword': { name: 'ﾑｯｿｳﾉﾋﾄﾀｯﾁ', type: 'weapon', weapontype: 'direct', statsRange: { atk: { min: 10000, max: 10000 }}, range: 30, radius: 100, cooldown: 1000, color: 0x800080, price: 100, desc: '初心者のための剣。\n広範囲に攻撃が可能。' }, // 普通・普通    
+    'sword': { name: 'ﾑｯｿｳﾉﾋﾄﾀｯﾁ', type: 'weapon', weapontype: 'direct', statsRange: { atk: { min: 10000, max: 10000 }}, range: 30, radius: 1000, cooldown: 1000, color: 0x800080, price: 100, desc: '初心者のための剣。\n広範囲に攻撃が可能。' }, // 普通・普通    
     
     'leather_helm': { name: '革の帽子', type: 'equipment', slot: 'head', statsRange: { def: { min: 2, max: 5 }, hp:  { min: 0, max: 10 } }, price: 50 },
     'chain_mail': { name: '鎖帷子', type: 'equipment', slot: 'body',　statsRange: {def: { min: 7, max: 12 }},price: 200 },
