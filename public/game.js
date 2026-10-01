@@ -486,8 +486,13 @@ function create() {
     });
 
     createMenuUI(this);
+    createSkillTreeUI(this);
 
     this.input.keyboard.on('keydown-Q', () => {
+        if (this.skillTreeOverlay && this.skillTreeOverlay.classList.contains('open')) {
+            closeSkillTree(this);
+            return;
+        }
         this.isMenuOpen = !this.isMenuOpen;
 
         if (this.isMenuOpen && !this.isCraftingOpen &&!this.isMerchantOpen) {
@@ -1053,7 +1058,7 @@ function update() {
         if (slotItem && ITEMS[slotItem.id] && ITEMS[slotItem.id].type === 'weapon') {
             weapon = ITEMS[slotItem.id];
         }
-        if(Date.now() - this.lastAttackTime < weapon.cooldown) return;
+        if(Date.now() - this.lastAttackTime < weapon.cooldown / (this.attackSpeedMultiplier || 1)) return;
         this.lastAttackTime = Date.now();
 
         if (weapon.weapontype === 'direct'){
@@ -2283,7 +2288,7 @@ function createMenuUI(scene) {
             }
         },
         // --- テスト用に項目を増やしてみる ---
-        { text: 'スキル (未実装)', callback: () => console.log('Skill') },
+        { text: 'スキルツリー', callback: () => openSkillTree(scene) },
         { text: 'クエスト (未実装)', callback: () => console.log('Quest') },
         { text: '設定 (未実装)', callback: () => console.log('Config') },
         { text: 'セーブ', callback: () => scene.socket.emit('save',this.player) },
@@ -3214,4 +3219,100 @@ function createWarehouseUI(scene) {
         scene.input.off('wheel', onScroll);
         scene.input.on('wheel', onScroll);
     };
+}
+
+// --- ノーマル職スキルツリー -------------------------------------------------
+function createSkillTreeUI(scene) {
+    scene.skillTreeState = { nodes: [], unlocked: [], currentJob: null, sp: 0, cooldowns: {} };
+    const overlay = document.createElement('section');
+    overlay.id = 'skill-tree-overlay';
+    overlay.innerHTML = '<div class="skill-tree-header"><strong>ノーマル スキルツリー</strong><span id="skill-tree-sp"></span><span>黄色のノードをクリックしてSPで解放</span><button id="skill-tree-close">閉じる (Q)</button></div><div id="skill-tree-grid"></div><aside id="skill-tree-details">スキルを選択すると詳細を表示します。</aside>';
+    document.body.appendChild(overlay);
+    scene.skillTreeOverlay = overlay;
+    document.getElementById('skill-tree-close').onclick = () => closeSkillTree(scene);
+
+    scene.socket.on('skillTreeUpdate', state => {
+        Object.assign(scene.skillTreeState, state);
+        scene.attackSpeedMultiplier = state.attackSpeed || 1;
+        renderSkillTree(scene);
+        renderSkillHotbar(scene);
+    });
+    scene.socket.on('skillUsed', ({ id, cooldown }) => {
+        scene.skillTreeState.cooldowns[id] = Date.now() + cooldown;
+        renderSkillHotbar(scene);
+    });
+    fetch('data/normal-skilltree.json').then(response => response.json()).then(tree => {
+        scene.skillTreeState.nodes = tree.data;
+        renderSkillTree(scene);
+    }).catch(() => { document.getElementById('skill-tree-details').textContent = 'スキルツリーデータを読み込めませんでした。'; });
+}
+
+function openSkillTree(scene) {
+    if (scene.skillTreeState.currentJob !== 'normal') {
+        scene.socket.emit('systemMessage', 'このスキルツリーはノーマル職専用です。');
+        return;
+    }
+    scene.isMenuOpen = false;
+    scene.menuContainer.setVisible(false);
+    scene.skillTreeOverlay.classList.add('open');
+    renderSkillTree(scene);
+}
+function closeSkillTree(scene) { if (scene.skillTreeOverlay) scene.skillTreeOverlay.classList.remove('open'); }
+
+function reachableSkillNodes(nodes, unlocked) {
+    const reached = new Set([5, ...unlocked]);
+    const queue = [...reached];
+    while (queue.length) {
+        const id = queue.shift(), row = Math.floor(id / 11), col = id % 11;
+        nodes.forEach((node, otherId) => {
+            if (node.type === 'empty' || reached.has(otherId)) return;
+            const otherRow = Math.floor(otherId / 11), otherCol = otherId % 11;
+            if (Math.abs(otherRow - row) <= 1 && Math.abs(otherCol - col) <= 1 && otherId !== id) {
+                reached.add(otherId); queue.push(otherId);
+            }
+        });
+    }
+    return reached;
+}
+function renderSkillTree(scene) {
+    const state = scene.skillTreeState, grid = document.getElementById('skill-tree-grid');
+    if (!grid || !state.nodes.length) return;
+    const allowed = state.currentJob === 'normal', unlocked = new Set(state.unlocked), connected = reachableSkillNodes(state.nodes, state.unlocked);
+    document.getElementById('skill-tree-sp').textContent = `SP: ${state.sp || 0}`;
+    grid.replaceChildren();
+    state.nodes.forEach((node, id) => {
+        const element = document.createElement('button');
+        element.className = `skill-node ${node.type}`;
+        element.style.gridColumn = (id % 11) + 1; element.style.gridRow = Math.floor(id / 11) + 1;
+        if (node.type === 'ability' || node.type === 'start') {
+            const skill = node.skill, requirements = skill.requires.every(required => unlocked.has(Number(required))), blocked = skill.locks.some(locked => unlocked.has(Number(locked)));
+            const learned = unlocked.has(id) || node.type === 'start';
+            const available = allowed && !learned && connected.has(id) && requirements && !blocked;
+            element.textContent = skill.name || '開始';
+            element.title = `${skill.name}\nSP ${skill.cost}\n${skill.desc}`;
+            element.classList.add(learned ? 'taken' : available ? 'available' : 'locked');
+            element.onclick = () => {
+                document.getElementById('skill-tree-details').textContent = `${skill.name}\n必要SP: ${skill.cost}\n${skill.desc}${learned ? '\n【習得済み】' : available ? '\nクリックして習得' : '\n【条件不足】'}`;
+                if (available && confirm(`${skill.name} をSP ${skill.cost}で習得しますか？`)) scene.socket.emit('unlockSkillTreeNode', id);
+            };
+        } else if (node.type === 'path') element.textContent = '◆';
+        else { element.disabled = true; element.style.visibility = 'hidden'; }
+        grid.appendChild(element);
+    });
+}
+function renderSkillHotbar(scene) {
+    let bar = document.getElementById('skill-hotbar');
+    if (!bar) { bar = document.createElement('div'); bar.id = 'skill-hotbar'; bar.className = 'skill-hotbar'; document.body.appendChild(bar); }
+    bar.replaceChildren();
+    if (scene.skillTreeState.currentJob !== 'normal') return;
+    const active = [27, 47, 49, 51];
+    active.filter(id => scene.skillTreeState.unlocked.includes(id)).forEach(id => {
+        const skill = scene.skillTreeState.nodes[id]?.skill, button = document.createElement('button');
+        button.textContent = skill ? skill.name : `Skill ${id}`;
+        button.onclick = () => {
+            if ((scene.skillTreeState.cooldowns[id] || 0) > Date.now()) return;
+            scene.socket.emit('useSkillTreeAbility', id);
+        };
+        bar.appendChild(button);
+    });
 }
