@@ -169,17 +169,17 @@ function getConnectedSkillNodes(unlocked) {
 }
 
 function skillStats(player) {
-    const stat = { normalDamage: 1, critChance: 0, critDamage: 1.5, attackSpeed: 1, range: 1, atkMultiplier: 1 };
+    const stat = { normalDamage: 1, critChance: 0.05, critDamage: 1, attackSpeed: 1, range: 1, atkMultiplier: 1 };
     if (player.currentJob !== 'normal') return stat;
-    if (hasSkill(player, 91)) { stat.normalDamage *= 1.10; stat.attackSpeed *= 1.10; }
-    if (hasSkill(player, 178)) { stat.normalDamage *= 1.15; stat.attackSpeed *= 1.10; }
-    if (hasSkill(player, 244)) { stat.normalDamage *= 1.10; stat.range *= 1.25; }
-    if (hasSkill(player, 95)) { stat.normalDamage *= .90; stat.attackSpeed *= .90; }
-    if (hasSkill(player, 184)) { stat.normalDamage *= .90; stat.attackSpeed *= .85; }
-    if (hasSkill(player, 250)) { stat.normalDamage *= .95; stat.attackSpeed *= .90; }
+    if (hasSkill(player, 91)) { stat.normalDamage += 0.10; stat.attackSpeed *= 1.10; }
+    if (hasSkill(player, 178)) { stat.normalDamage += 0.15; stat.attackSpeed *= 1.10; }
+    if (hasSkill(player, 244)) { stat.normalDamage += 0.10; stat.range *= 1.25; }
+    if (hasSkill(player, 95)) { stat.normalDamage -= .10; stat.attackSpeed *= .90; }
+    if (hasSkill(player, 184)) { stat.normalDamage -= .10; stat.attackSpeed *= .85; }
+    if (hasSkill(player, 250)) { stat.normalDamage -= .05; stat.attackSpeed *= .90; }
     if (hasSkill(player, 112)) stat.critChance += .10;
     if (hasSkill(player, 116)) stat.critDamage += .25;
-    if (hasSkill(player, 118)) stat.normalDamage *= 1.15;
+    if (hasSkill(player, 118)) stat.normalDamage += 0.15;
     if (hasSkill(player, 114)) stat.atkMultiplier *= 1.15;
     if (player.tempAttackSpeedUntil > Date.now()) stat.attackSpeed *= 1.2;
     return stat;
