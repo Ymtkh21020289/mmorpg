@@ -1,14 +1,14 @@
 const ENEMY_TYPES = {
     // 既存のカカシ（とりあえずボス扱い）
     kakashi: { 
-        hp: 10000,  
+        hp: 1000000000000,  
         maxHp: 10000, 
         exp: 0,
         speed: 0, 
-        attackRange: 0,      // 攻撃を開始する距離
-        attackRadius: 10,     // 攻撃が届く距離（射程）
-        attackAngle: Math.PI, // 攻撃角度（90度）
-        damage: 5,
+        attackRange: 1,      // 攻撃を開始する距離
+        attackRadius: 10000,     // 攻撃が届く距離（射程）
+        attackAngle: 2*Math.PI, // 攻撃角度（90度）
+        damage: 500000,
         chargeTime: 2000,     // 予兆時間（ミリ秒）
         cooldown: 4000,        // 攻撃後の休み時間 
         respawnType: 'static' 
