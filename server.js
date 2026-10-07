@@ -490,16 +490,16 @@ io.on('connection', (socket) => {
             let multiplier = stats.normalDamage * stats.atkMultiplier;
             if (hasSkill(player, 70)) {
                 const cap = hasSkill(player, 266) ? .25 : .10;
-                multiplier *= 1 + Math.min(cap, ((player.maxHp - player.hp) / player.maxHp) * cap);
+                multiplier += Math.min(cap, ((player.maxHp - player.hp) / player.maxHp) * cap);
             }
             if (hasSkill(player, 72) && Object.values(enemies).some(e => !e.isDead && e.room === player.room && Math.hypot(e.x - player.x, e.y - player.y) <= 48)) multiplier *= hasSkill(player, 272) ? 1.5 : 1.25;
-            if (player.tempAtkUntil > Date.now()) multiplier *= 2;
-            if (player.sharpenedHits > 0) { multiplier *= player.sharpenedPower || 1.1; player.sharpenedHits--; }
-            if (hasSkill(player, 332)) multiplier *= 1 + Math.min(1, ((player.normalHits || 0) % 10) * .1);
-            if (Math.random() < stats.critChance) multiplier *= stats.critDamage;
-            if (hasSkill(player, 355) && enemy.lastMovedAt && Date.now() - enemy.lastMovedAt > 300) multiplier *= 2;
+            if (player.tempAtkUntil > Date.now()) multiplier += 0.25;
+            if (player.sharpenedHits > 0) { multiplier += player.sharpenedPower || 1.1; player.sharpenedHits--; }
+            if (hasSkill(player, 332)) multiplier += 1 + Math.min(1, ((player.normalHits || 0) % 10) * .1);
+            if (Math.random() < stats.critChance) multiplier += stats.critDamage;
+            if (hasSkill(player, 355) && enemy.lastMovedAt && Date.now() - enemy.lastMovedAt > 300) multiplier += 1;
             if (hasSkill(player, 289) && Date.now() >= (player.destructionCooldown || 0)) {
-                multiplier *= 1.5; player.destructionCooldown = Date.now() + 10000;
+                multiplier += 0.5; player.destructionCooldown = Date.now() + 10000;
             }
             const sum = (player.totalAtk + Number(data.damage || 0)) * (1 + (Number(data.ratio || 0) / 100)) * multiplier;
             damageEnemy(enemy, player, sum);
